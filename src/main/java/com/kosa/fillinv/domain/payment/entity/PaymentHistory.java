@@ -38,5 +38,5 @@ public class PaymentHistory {
     private LocalDateTime deletedAt;
 
     @Column(name = "schedule_id", nullable = false)
-    private String schedule_id;
+    private String scheduleId;
 }

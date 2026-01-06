@@ -16,6 +16,9 @@ public class Lesson {
     @Column(name = "lesson_type", nullable = false)
     private LessonType lessonType; // 1:1, 1:N 등
 
+    @Column(name = "thumbnail_image", nullable = false)
+    private String thumbnailImage;
+
     @Column(name = "description", nullable = false)
     private String description;
 

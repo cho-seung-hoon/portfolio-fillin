@@ -23,6 +23,9 @@ public class AvailableTime {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
+    @Column(name = "price", nullable = false)
+    private Integer price;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

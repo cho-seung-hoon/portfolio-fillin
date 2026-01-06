@@ -63,11 +63,11 @@ public class Schedule {
     private LocalDateTime deletedAt;
 
     @Column(name = "lesson_id")
-    private String lesson_id;
+    private String lessonId;
 
     @Column(name = "mentee_id")
     private String mentee;
 
     @Column(name = "option_id")
-    private String option_id;
+    private String optionId;
 }
