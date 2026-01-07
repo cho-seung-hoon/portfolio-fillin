@@ -20,6 +20,9 @@ public class Lesson {
     @Column(name = "lesson_id", nullable = false)
     private String id;
 
+    @Column(name = "title", nullable = false)
+    private String title;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "lesson_type", nullable = false)
     private LessonType lessonType; // 1:1, 1:N 등
@@ -59,6 +62,7 @@ public class Lesson {
 
     @Builder
     public Lesson(String id,
+                  String title,
                   LessonType lessonType,
                   String thumbnailImage,
                   String description,
@@ -67,6 +71,7 @@ public class Lesson {
                   Long categoryId,
                   LocalDateTime closeAt) {
         this.id = id;
+        this.title = title;
         this.lessonType = lessonType;
         this.thumbnailImage = thumbnailImage;
         this.description = description;
@@ -77,6 +82,11 @@ public class Lesson {
         this.closeAt = closeAt;
         this.updatedAt = null;
         this.deletedAt = null;
+    }
+
+    public void updateTitle(String title) {
+        if (title.isBlank()) return;
+        this.title = title;
     }
 
     public void updateThumbnailImage(String thumbnailImageUrl) {

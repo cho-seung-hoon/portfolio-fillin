@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record CreateLessonCommand(
+        String title,
         LessonType lessonType,
         String thumbnailImage,
         String description,

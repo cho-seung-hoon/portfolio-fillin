@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 public record UpdateLessonResult(
         String id,
+        String title,
         LessonType lessonType,
         String thumbnailImage,
         String description,
@@ -22,6 +23,7 @@ public record UpdateLessonResult(
     public static UpdateLessonResult of(Lesson lesson) {
         return new UpdateLessonResult(
                 lesson.getId(),
+                lesson.getTitle(),
                 lesson.getLessonType(),
                 lesson.getThumbnailImage(),
                 lesson.getDescription(),

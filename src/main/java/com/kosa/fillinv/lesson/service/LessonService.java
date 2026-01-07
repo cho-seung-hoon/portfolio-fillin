@@ -7,6 +7,7 @@ import com.kosa.fillinv.lesson.exception.InvalidLessonCreateException;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +20,6 @@ import static com.kosa.fillinv.lesson.exception.LessonError.*;
 @Service
 @RequiredArgsConstructor
 public class LessonService {
-
     private final LessonRepository lessonRepository;
 
     @Transactional
@@ -27,9 +27,6 @@ public class LessonService {
         Lesson lesson = createLessonEntity(command);
 
         Lesson saved = lessonRepository.save(lesson);
-
-        addOption(saved.getId(), command.optionCommandList());
-        addAvailableTime(saved.getId(), command.availableTimeCommandList());
 
         return CreateLessonResult.of(saved);
     }
@@ -47,6 +44,7 @@ public class LessonService {
     public UpdateLessonResult updateLesson(String lessonId, UpdateLessonCommand command) {
         Lesson lesson = findActiveLesson(lessonId).orElseThrow();
 
+        lesson.updateTitle(command.title());
         lesson.updateThumbnailImage(command.thumbnailImage());
         lesson.updateDescription(command.description());
         lesson.updateLocation(command.location());
@@ -163,6 +161,10 @@ public class LessonService {
 
     private Lesson createLessonEntity(CreateLessonCommand command) {
 
+        if (command.title() == null || command.title().isBlank()) {
+            throw new InvalidLessonCreateException(TITLE_REQUIRED);
+        }
+
         if (command.lessonType() == null) {
             throw new InvalidLessonCreateException(LESSON_TYPE_REQUIRED);
         }
@@ -189,6 +191,7 @@ public class LessonService {
 
         return Lesson.builder()
                 .id(UUID.randomUUID().toString())
+                .title(command.title())
                 .lessonType(command.lessonType())
                 .thumbnailImage(command.thumbnailImage())
                 .description(command.description())

@@ -8,6 +8,7 @@ import java.util.List;
 
 public record CreateLessonResult(
         String id,
+        String title,
         LessonType lessonType,
         String thumbnailImage,
         String description,
@@ -25,6 +26,7 @@ public record CreateLessonResult(
     public static CreateLessonResult of(Lesson lesson) {
         return new CreateLessonResult(
                 lesson.getId(),
+                lesson.getTitle(),
                 lesson.getLessonType(),
                 lesson.getThumbnailImage(),
                 lesson.getDescription(),
