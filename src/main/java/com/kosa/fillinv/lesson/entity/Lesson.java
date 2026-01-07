@@ -55,10 +55,10 @@ public class Lesson {
     private Long categoryId;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
-    private List<AvailableTime> availableTimeList = new ArrayList<>();
+    private List<AvailableTime> availableTimeList;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
-    private List<Option> optionList = new ArrayList<>();
+    private List<Option> optionList;
 
     @Builder
     public Lesson(String id,
@@ -82,6 +82,8 @@ public class Lesson {
         this.closeAt = closeAt;
         this.updatedAt = null;
         this.deletedAt = null;
+        this.availableTimeList = new ArrayList<>();
+        this.optionList = new ArrayList<>();
     }
 
     public void updateTitle(String title) {
@@ -126,7 +128,7 @@ public class Lesson {
     }
 
     public void addAvailableTime(List<AvailableTime> availableTimeList) {
-        this.availableTimeList.addAll(availableTimeList);
+        availableTimeList.forEach(this::addAvailableTime);
     }
 
     public void removeAvailableTime(String availableTimeId) {
@@ -151,7 +153,7 @@ public class Lesson {
     }
 
     public void addOption(List<Option> optionList) {
-        this.optionList.addAll(optionList);
+        optionList.forEach(this::addOption);
     }
 
     public void removeOption(String optionId) {

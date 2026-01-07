@@ -26,6 +26,14 @@ public class LessonService {
     public CreateLessonResult createLesson(CreateLessonCommand command) {
         Lesson lesson = createLessonEntity(command);
 
+        command.optionCommandList().stream()
+                .map(c -> createOption(lesson, c))
+                .forEach(lesson::addOption);
+
+        command.availableTimeCommandList().stream()
+                .map(c -> createAvailableTimeEntity(lesson, c))
+                .forEach(lesson::addAvailableTime);
+
         Lesson saved = lessonRepository.save(lesson);
 
         return CreateLessonResult.of(saved);
