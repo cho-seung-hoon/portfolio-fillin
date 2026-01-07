@@ -74,18 +74,20 @@ class LessonServiceTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @CsvSource(
             value = {
-                    // description | lessonType | thumbnail | description | location | mentorId | categoryId
-                    "lessonType 누락,        , ONE.png, 설명, 서울, mentor-1, 1",
-                    "thumbnailImage 누락, MENTORING, , 설명, 서울, mentor-1, 1",
-                    "description 누락,    MENTORING, ONE.png, , 서울, mentor-1, 1",
-                    "mentorId 누락,       MENTORING, ONE.png, 설명, 서울, , 1",
-                    "categoryId 누락,     MENTORING, ONE.png, 설명, 서울, mentor-1, "
+                    // testName | title | lessonType | thumbnail | description | location | mentorId | categoryId
+                    "title 누락,        , MENTORING, ONE.png, 설명, 서울, mentor-1, 1",
+                    "lessonType 누락,  제목,        , ONE.png, 설명, 서울, mentor-1, 1",
+                    "thumbnail 누락,   제목, MENTORING,        , 설명, 서울, mentor-1, 1",
+                    "description 누락, 제목, MENTORING, ONE.png,        , 서울, mentor-1, 1",
+                    "mentorId 누락,    제목, MENTORING, ONE.png, 설명, 서울,        , 1",
+                    "categoryId 누락,  제목, MENTORING, ONE.png, 설명, 서울, mentor-1, "
             },
             nullValues = {""}
     )
     @DisplayName("레슨 필수 항목이 누락되면 예외를 던진다.")
     void createLessonWithMissingRequiredField(
             String caseName,
+            String title,
             LessonType lessonType,
             String thumbnailImage,
             String description,
@@ -95,6 +97,7 @@ class LessonServiceTest {
     ) {
         // given
         CreateLessonCommand command = createCommand(
+                title,
                 lessonType,
                 thumbnailImage,
                 description,
@@ -154,6 +157,7 @@ class LessonServiceTest {
         CreateLessonResult created = lessonService.createLesson(createCommand());
 
         UpdateLessonCommand updateCommand = new UpdateLessonCommand(
+                "title",
                 "updated-thumbnail.png",
                 "수정된 설명",
                 "부산",
@@ -205,17 +209,17 @@ class LessonServiceTest {
         entityManager.flush();
         entityManager.clear();
 
-        LessonDTO lessonDTO = lessonService.readLessonById(created.id()).orElseThrow();
+        LessonDTO result = lessonService.readLessonById(created.id()).orElseThrow();
 
         // then
-        assertEquals(created.availableTimeDTOList().size() + 1, lessonDTO.availableTimeDTOList().size());
+        assertEquals(created.availableTimeDTOList().size() + 1, result.availableTimeDTOList().size());
         assertTrue(
-                created.availableTimeDTOList().stream()
+                result.availableTimeDTOList().stream()
                         .anyMatch(at ->
                             at.startTime().equals(command.startTime()) &&
                                     at.endTime().equals(command.endTime()) &&
                                     at.price().equals(command.price()) &&
-                                    at.lessonId().equals(lessonDTO.id())
+                                    at.lessonId().equals(created.id())
                         )
         );
     }
@@ -242,13 +246,13 @@ class LessonServiceTest {
         entityManager.flush();
         entityManager.clear();
 
-        LessonDTO lessonDTO = lessonService.readLessonById(created.id()).orElseThrow();
+        LessonDTO result = lessonService.readLessonById(created.id()).orElseThrow();
 
         // then
-        assertEquals(created.availableTimeDTOList().size() + commands.size(), lessonDTO.availableTimeDTOList().size());
+        assertEquals(created.availableTimeDTOList().size() + commands.size(), result.availableTimeDTOList().size());
 
         assertTrue(
-                lessonDTO.availableTimeDTOList().stream()
+                result.availableTimeDTOList().stream()
                         .anyMatch(at ->
                                 at.startTime().equals(start1.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
                                         at.endTime().equals(end1.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
@@ -257,10 +261,10 @@ class LessonServiceTest {
         );
 
         assertTrue(
-                lessonDTO.availableTimeDTOList().stream()
+                result.availableTimeDTOList().stream()
                         .anyMatch(at ->
-                                at.startTime().withNano(0).equals(start2.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
-                                        at.endTime().withNano(0).equals(end2.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
+                                at.startTime().equals(start2.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
+                                        at.endTime().equals(end2.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
                                         at.price() == 2000
                         )
         );
@@ -321,8 +325,8 @@ class LessonServiceTest {
         entityManager.clear();
 
         // then
-        LessonDTO lessonDTO = lessonService.readLessonById(created.id()).orElseThrow();
-        assertEquals(created.availableTimeDTOList().size(), lessonDTO.availableTimeDTOList().size());
+        LessonDTO result = lessonService.readLessonById(created.id()).orElseThrow();
+        assertEquals(created.availableTimeDTOList().size(), result.availableTimeDTOList().size());
     }
 
     @Test
@@ -337,12 +341,12 @@ class LessonServiceTest {
         entityManager.flush();
         entityManager.clear();
 
-        LessonDTO lessonDTO = lessonService.readLessonById(created.id()).orElseThrow();
+        LessonDTO result = lessonService.readLessonById(created.id()).orElseThrow();
 
         // then
-        assertEquals(created.optionResultList().size() + 1, lessonDTO.optionDTOList().size());
+        assertEquals(created.optionResultList().size() + 1, result.optionDTOList().size());
         assertTrue(
-                lessonDTO.optionDTOList().stream()
+                result.optionDTOList().stream()
                         .anyMatch(op ->
                                 op.name().equals(command.name()) &&
                                         op.minute().equals(command.minute()) &&
@@ -368,13 +372,13 @@ class LessonServiceTest {
         entityManager.flush();
         entityManager.clear();
 
-        LessonDTO lessonDTO = lessonService.readLessonById(created.id()).orElseThrow();
+        LessonDTO result = lessonService.readLessonById(created.id()).orElseThrow();
 
         // then
-        assertEquals(created.optionResultList().size() + 2, lessonDTO.optionDTOList().size());
+        assertEquals(created.optionResultList().size() + 2, result.optionDTOList().size());
 
         assertTrue(
-                lessonDTO.optionDTOList().stream()
+                result.optionDTOList().stream()
                         .anyMatch(op ->
                                 op.name().equals(command1.name()) &&
                                         Objects.equals(op.minute(), command1.minute()) &&
@@ -382,7 +386,7 @@ class LessonServiceTest {
                         )
         );
         assertTrue(
-                lessonDTO.optionDTOList().stream()
+                result.optionDTOList().stream()
                         .anyMatch(op ->
                                 op.name().equals(command2.name()) &&
                                         Objects.equals(op.minute(), command2.minute()) &&
@@ -411,8 +415,8 @@ class LessonServiceTest {
         entityManager.clear();
 
         // then
-        LessonDTO lessonDTO = lessonService.readLessonById(created.id()).orElseThrow();
-        assertEquals(created.optionResultList().size() + commandList.size() - 1, lessonDTO.optionDTOList().size());
+        LessonDTO result = lessonService.readLessonById(created.id()).orElseThrow();
+        assertEquals(created.optionResultList().size() + commandList.size() - 1, result.optionDTOList().size());
     }
 
     @Test
@@ -434,8 +438,8 @@ class LessonServiceTest {
         entityManager.clear();
 
         // then
-        LessonDTO lessonDTO = lessonService.readLessonById(created.id()).orElseThrow();
-        assertEquals(created.optionResultList().size(), lessonDTO.optionDTOList().size());
+        LessonDTO result = lessonService.readLessonById(created.id()).orElseThrow();
+        assertEquals(created.optionResultList().size(), result.optionDTOList().size());
     }
 
 
@@ -461,6 +465,7 @@ class LessonServiceTest {
 
     private CreateLessonCommand createCommand() {
         return new CreateLessonCommand(
+                "title",
                 LessonType.ONEDAY,
                 "thumbnail.png",
                 "테스트 레슨 설명",
@@ -496,6 +501,7 @@ class LessonServiceTest {
     }
 
     private CreateLessonCommand createCommand(
+            String title,
             LessonType lessonType,
             String thumbnailImage,
             String description,
@@ -506,6 +512,7 @@ class LessonServiceTest {
             List<CreateAvailableTimeCommand> availableTimeList
     ) {
         return new CreateLessonCommand(
+                title,
                 lessonType,
                 thumbnailImage,
                 description,
