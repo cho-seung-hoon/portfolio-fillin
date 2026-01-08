@@ -18,11 +18,10 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public LessonReviewListResponseDTO getReviewListByLesson(String lessonId, Pageable pageable) {
         Double averageScore = reviewRepository.findAverageScoreByLessonId(lessonId);
-        long totalCount = reviewRepository.countByLessonId(lessonId);
         Page<LessonReviewResponseDTO> reviews = reviewRepository
                 .findReviewsWithNicknameByLessonId(lessonId, pageable)
                 .map(LessonReviewResponseDTO::from);
 
-        return LessonReviewListResponseDTO.of(averageScore, totalCount, reviews);
+        return LessonReviewListResponseDTO.of(averageScore, reviews.getTotalElements(), reviews);
     }
 }

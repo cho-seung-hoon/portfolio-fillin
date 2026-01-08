@@ -19,6 +19,4 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
             "FROM Review r JOIN Member m ON r.writerId = m.id " +
             "WHERE r.lessonId = :lessonId")
     Page<ReviewWithNicknameVO> findReviewsWithNicknameByLessonId(@Param("lessonId") String lessonId, Pageable pageable);
-
-    long countByLessonId(String lessonId);
 }
