@@ -4,6 +4,7 @@ import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.Option;
 import com.kosa.fillinv.lesson.exception.InvalidLessonCreateException;
+import com.kosa.fillinv.lesson.exception.LessonNotFoundException;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,7 @@ public class LessonService {
 
     @Transactional
     public UpdateLessonResult updateLesson(String lessonId, UpdateLessonCommand command) {
-        Lesson lesson = findActiveLesson(lessonId).orElseThrow();
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
 
         lesson.updateTitle(command.title());
         lesson.updateThumbnailImage(command.thumbnailImage());
@@ -69,7 +70,7 @@ public class LessonService {
 
     @Transactional
     public CreateAvailableTimeResult addAvailableTime(String lessonId, CreateAvailableTimeCommand command) {
-        Lesson lesson = findActiveLesson(lessonId).orElseThrow();
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
 
         AvailableTime availableTime = createAvailableTimeEntity(lesson, command);
         lesson.addAvailableTime(availableTime);
@@ -80,7 +81,7 @@ public class LessonService {
 
     @Transactional
     public List<CreateAvailableTimeResult> addAvailableTime(String lessonId, List<CreateAvailableTimeCommand> command) {
-        Lesson lesson = findActiveLesson(lessonId).orElseThrow();
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
 
         List<AvailableTime> availableTimeList = command.stream().map(c -> createAvailableTimeEntity(lesson, c)).toList();
         lesson.addAvailableTime(availableTimeList);;
@@ -91,21 +92,21 @@ public class LessonService {
 
     @Transactional
     public void deleteAvailableTime(String lessonId, String availableTimeId) {
-        findActiveLesson(lessonId).ifPresent(l -> {
-            l.removeAvailableTime(availableTimeId);
-        });
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
+
+        lesson.removeAvailableTime(availableTimeId);
     }
 
     @Transactional
     public void deleteAvailableTime(String lessonId, List<String> availableTimeIdList) {
-        findActiveLesson(lessonId).ifPresent(l -> {
-            l.removeAvailableTime(availableTimeIdList);
-        });
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
+
+        lesson.removeAvailableTime(availableTimeIdList);
     }
 
     @Transactional
     public CreateOptionResult addOption(String lessonId, CreateOptionCommand command) {
-        Lesson lesson = findActiveLesson(lessonId).orElseThrow();
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
 
         Option option = createOption(lesson, command);
         lesson.addOption(option);
@@ -116,7 +117,7 @@ public class LessonService {
 
     @Transactional
     public List<CreateOptionResult> addOption(String lessonId, List<CreateOptionCommand> commandList) {
-        Lesson lesson = findActiveLesson(lessonId).orElseThrow();
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
 
         List<Option> optionList = commandList.stream().map(c -> createOption(lesson, c)).toList();
         lesson.addOption(optionList);
@@ -127,16 +128,16 @@ public class LessonService {
 
     @Transactional
     public void deleteOption(String lessonId, String optionId) {
-        findActiveLesson(lessonId).ifPresent(l -> {
-            l.removeOption(optionId);
-        });
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
+
+        lesson.removeOption(optionId);
     }
 
     @Transactional
     public void deleteOption(String lessonId, List<String> optionIdList) {
-        findActiveLesson(lessonId).ifPresent(l -> {
-            l.removeOption(optionIdList);
-        });
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new LessonNotFoundException(lessonId));
+
+        lesson.removeOption(optionIdList);
     }
 
     private Optional<Lesson> findActiveLesson(String id) {
