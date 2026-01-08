@@ -2,7 +2,8 @@ package com.kosa.fillinv.lesson.service.dto;
 
 import com.kosa.fillinv.lesson.entity.LessonType;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public record CreateLessonCommand(
@@ -13,7 +14,7 @@ public record CreateLessonCommand(
         String location,
         String mentorId,
         Long categoryId,
-        LocalDateTime closeAt,
+        Instant closeAt,
         List<CreateOptionCommand> optionCommandList,
         List<CreateAvailableTimeCommand> availableTimeCommandList
 ) {

@@ -3,7 +3,8 @@ package com.kosa.fillinv.lesson.service.dto;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.LessonType;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public record CreateLessonResult(
@@ -15,10 +16,10 @@ public record CreateLessonResult(
         String location,
         String mentorId,
         Long categoryId,
-        LocalDateTime createdAt,
-        LocalDateTime closeAt,
-        LocalDateTime updatedAt,
-        LocalDateTime deletedAt,
+        Instant createdAt,
+        Instant closeAt,
+        Instant updatedAt,
+        Instant deletedAt,
         List<CreateOptionResult> optionResultList,
         List<AvailableTimeDTO> availableTimeDTOList
 

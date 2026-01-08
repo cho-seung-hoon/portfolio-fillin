@@ -1,8 +1,6 @@
 package com.kosa.fillinv.lesson.service.dto;
 
-import com.kosa.fillinv.lesson.entity.LessonType;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record UpdateLessonCommand(
         String title,
@@ -10,6 +8,6 @@ public record UpdateLessonCommand(
         String description,
         String location,
         Long categoryId,
-        LocalDateTime closeAt
+        Instant closeAt
 ) {
 }

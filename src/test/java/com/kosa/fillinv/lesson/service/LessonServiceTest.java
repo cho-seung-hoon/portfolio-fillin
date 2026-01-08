@@ -19,7 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import com.kosa.fillinv.lesson.entity.LessonType;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
@@ -165,7 +167,7 @@ class LessonServiceTest {
                 "수정된 설명",
                 "부산",
                 1L,
-                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusDays(7)
+                Instant.now().truncatedTo(ChronoUnit.SECONDS) .plus(7, ChronoUnit.DAYS)
         );
 
         // when
@@ -234,11 +236,11 @@ class LessonServiceTest {
         // given
         CreateLessonResult created = lessonService.createLesson(createCommand());
 
-        LocalDateTime start1 = LocalDateTime.of(2025, 1, 10, 14, 0);
-        LocalDateTime end1   = LocalDateTime.of(2025, 1, 10, 16, 0);
+        Instant start1 = toInstant(LocalDateTime.of(2025, 1, 10, 14, 0));
+        Instant end1   = toInstant(LocalDateTime.of(2025, 1, 10, 16, 0));
 
-        LocalDateTime start2 = LocalDateTime.of(2025, 1, 17, 14, 0);
-        LocalDateTime end2   = LocalDateTime.of(2025, 1, 17, 16, 0);
+        Instant start2 = toInstant(LocalDateTime.of(2025, 1, 17, 14, 0));
+        Instant end2   = toInstant(LocalDateTime.of(2025, 1, 17, 16, 0));
 
         List<CreateAvailableTimeCommand> commands = List.of(
                 createAvailableTimeCommand(start1, end1, 1000),
@@ -258,8 +260,8 @@ class LessonServiceTest {
         assertTrue(
                 result.availableTimeDTOList().stream()
                         .anyMatch(at ->
-                                at.startTime().equals(start1.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
-                                        at.endTime().equals(end1.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
+                                at.startTime().equals(start1.truncatedTo(ChronoUnit.MINUTES)) &&
+                                        at.endTime().equals(end1.truncatedTo(ChronoUnit.MINUTES)) &&
                                         at.price() == 1000
                         )
         );
@@ -267,8 +269,8 @@ class LessonServiceTest {
         assertTrue(
                 result.availableTimeDTOList().stream()
                         .anyMatch(at ->
-                                at.startTime().equals(start2.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
-                                        at.endTime().equals(end2.toLocalTime().truncatedTo(ChronoUnit.MINUTES)) &&
+                                at.startTime().equals(start2.truncatedTo(ChronoUnit.MINUTES)) &&
+                                        at.endTime().equals(end2.truncatedTo(ChronoUnit.MINUTES)) &&
                                         at.price() == 2000
                         )
         );
@@ -281,11 +283,11 @@ class LessonServiceTest {
         // given
         CreateLessonResult created = lessonService.createLesson(createCommand());
 
-        LocalDateTime start1 = LocalDateTime.of(2025, 1, 10, 14, 0);
-        LocalDateTime end1   = LocalDateTime.of(2025, 1, 10, 16, 0);
+        Instant start1 = toInstant(LocalDateTime.of(2025, 1, 10, 14, 0));
+        Instant end1   = toInstant(LocalDateTime.of(2025, 1, 10, 16, 0));
 
-        LocalDateTime start2 = LocalDateTime.of(2025, 1, 17, 14, 0);
-        LocalDateTime end2   = LocalDateTime.of(2025, 1, 17, 16, 0);
+        Instant start2 = toInstant(LocalDateTime.of(2025, 1, 17, 14, 0));
+        Instant end2   = toInstant(LocalDateTime.of(2025, 1, 17, 16, 0));
 
         List<CreateAvailableTimeCommand> commands = List.of(
                 createAvailableTimeCommand(start1, end1, 1000),
@@ -310,11 +312,11 @@ class LessonServiceTest {
         // given
         CreateLessonResult created = lessonService.createLesson(createCommand());
 
-        LocalDateTime start1 = LocalDateTime.of(2025, 1, 10, 14, 0);
-        LocalDateTime end1   = LocalDateTime.of(2025, 1, 10, 16, 0);
+        Instant start1 = toInstant(LocalDateTime.of(2025, 1, 10, 14, 0));
+        Instant end1   = toInstant(LocalDateTime.of(2025, 1, 10, 16, 0));
 
-        LocalDateTime start2 = LocalDateTime.of(2025, 1, 17, 14, 0);
-        LocalDateTime end2   = LocalDateTime.of(2025, 1, 17, 16, 0);
+        Instant start2 = toInstant(LocalDateTime.of(2025, 1, 17, 14, 0));
+        Instant end2   = toInstant(LocalDateTime.of(2025, 1, 17, 16, 0));
 
         List<CreateAvailableTimeCommand> commands = List.of(
                 createAvailableTimeCommand(start1, end1, 1000),
@@ -476,30 +478,28 @@ class LessonServiceTest {
                 "서울",
                 "mentor-1",
                 1L,
-                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusDays(1),
+                Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(7, ChronoUnit.DAYS),
                 List.of(createOptionCommand("option1", 30, 1000), createOptionCommand("option2", 60, 2000)),
                 List.of(createAvailableTimeCommand())
         );
     }
 
     private CreateAvailableTimeCommand createAvailableTimeCommand() {
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         return new CreateAvailableTimeCommand(
-                now.toLocalDate(),
-                now.toLocalTime(),
-                now.plusHours(2).toLocalTime(),
+                now,
+                now.plus(2, ChronoUnit.HOURS),
                 10000
         );
     }
 
     private CreateAvailableTimeCommand createAvailableTimeCommand(
-            LocalDateTime startTime,
-            LocalDateTime endTime,
+            Instant startTime,
+            Instant endTime,
             Integer price) {
         return new CreateAvailableTimeCommand(
-                startTime.toLocalDate(),
-                startTime.toLocalTime(),
-                endTime.toLocalTime(),
+                startTime,
+                endTime,
                 price
         );
     }
@@ -523,10 +523,14 @@ class LessonServiceTest {
                 location,
                 mentorId,
                 categoryId,
-                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusDays(1),
+                Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(1, ChronoUnit.DAYS),
                 optionList,
                 availableTimeList
         );
+    }
+
+    private Instant toInstant(LocalDateTime ldt) {
+        return ldt.atZone(ZoneId.of("Asia/Seoul")).toInstant();
     }
 
 

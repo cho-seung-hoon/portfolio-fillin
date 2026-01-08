@@ -1,12 +1,13 @@
 package com.kosa.fillinv.lesson.entity;
 
+import com.kosa.fillinv.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,7 @@ import java.util.List;
 @Getter
 @Table(name = "lessons")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Lesson {
+public class Lesson extends BaseEntity {
 
     @Id
     @Column(name = "lesson_id", nullable = false)
@@ -36,17 +37,8 @@ public class Lesson {
     @Column(name = "location")
     private String location;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
     @Column(name = "close_at")
-    private LocalDateTime closeAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Instant closeAt;
 
     @Column(name = "mentor_id", nullable = false)
     private String mentorId;
@@ -69,7 +61,7 @@ public class Lesson {
                   String location,
                   String mentorId,
                   Long categoryId,
-                  LocalDateTime closeAt) {
+                  Instant closeAt) {
         this.id = id;
         this.title = title;
         this.lessonType = lessonType;
@@ -78,10 +70,8 @@ public class Lesson {
         this.location = location;
         this.mentorId = mentorId;
         this.categoryId = categoryId;
-        this.createdAt = LocalDateTime.now();
         this.closeAt = closeAt;
-        this.updatedAt = null;
-        this.deletedAt = null;
+        this.createdAt = Instant.now();
         this.availableTimeList = new ArrayList<>();
         this.optionList = new ArrayList<>();
     }
@@ -96,7 +86,7 @@ public class Lesson {
         this.thumbnailImage = thumbnailImageUrl;
     }
 
-    public void updateCloseAt(LocalDateTime closeAt) {
+    public void updateCloseAt(Instant closeAt) {
         if (closeAt == null) return;
         this.closeAt = closeAt;
     }
@@ -116,8 +106,9 @@ public class Lesson {
         this.categoryId = categoryId;
     }
 
+    @Override
     public void delete() {
-        deletedAt = LocalDateTime.now();
+        deletedAt = Instant.now();
         availableTimeList.forEach(AvailableTime::delete);
         optionList.forEach(Option::delete);
     }

@@ -1,18 +1,17 @@
 package com.kosa.fillinv.lesson.entity;
 
+import com.kosa.fillinv.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "options")
 @NoArgsConstructor
 @Getter
-public class Option {
+public class Option extends BaseEntity {
 
     @Id
     @Column(name = "option_id", nullable = false)
@@ -26,15 +25,6 @@ public class Option {
 
     @Column(name = "price", nullable = false)
     private Integer price;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     @Setter
     @ManyToOne
@@ -52,12 +42,5 @@ public class Option {
         this.minute = minute;
         this.price = price;
         this.lesson = lesson;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = null;
-        this.deletedAt = null;
-    }
-
-    public void delete() {
-        deletedAt = LocalDateTime.now();
     }
 }

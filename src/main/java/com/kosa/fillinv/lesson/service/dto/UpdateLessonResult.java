@@ -3,7 +3,7 @@ package com.kosa.fillinv.lesson.service.dto;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.LessonType;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record UpdateLessonResult(
         String id,
@@ -14,10 +14,10 @@ public record UpdateLessonResult(
         String location,
         String mentorId,
         Long categoryId,
-        LocalDateTime createdAt,
-        LocalDateTime closeAt,
-        LocalDateTime updatedAt,
-        LocalDateTime deletedAt
+        Instant createdAt,
+        Instant closeAt,
+        Instant updatedAt,
+        Instant deletedAt
 ) {
 
     public static UpdateLessonResult of(Lesson lesson) {

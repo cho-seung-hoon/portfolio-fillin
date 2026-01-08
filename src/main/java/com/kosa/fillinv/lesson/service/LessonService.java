@@ -161,7 +161,6 @@ public class LessonService {
         return AvailableTime.builder()
                 .id(UUID.randomUUID().toString())
                 .lesson(lesson)
-                .date(command.date())
                 .startTime(command.startTime())
                 .endTime(command.endTime())
                 .price(command.price())

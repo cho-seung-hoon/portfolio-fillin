@@ -2,8 +2,7 @@ package com.kosa.fillinv.lesson.service.dto;
 
 import com.kosa.fillinv.lesson.entity.Option;
 
-import java.time.LocalDateTime;
-import java.util.function.Function;
+import java.time.Instant;
 
 public record OptionDTO(
         String id,
@@ -11,9 +10,9 @@ public record OptionDTO(
         Integer minute,
         Integer price,
         String lessonId,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        LocalDateTime deletedAt
+        Instant createdAt,
+        Instant updatedAt,
+        Instant deletedAt
 ) {
     public static OptionDTO of(Option option) {
         return new OptionDTO(

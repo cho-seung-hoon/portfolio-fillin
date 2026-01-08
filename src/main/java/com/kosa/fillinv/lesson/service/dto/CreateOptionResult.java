@@ -2,7 +2,7 @@ package com.kosa.fillinv.lesson.service.dto;
 
 import com.kosa.fillinv.lesson.entity.Option;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record CreateOptionResult(
         String id,
@@ -10,9 +10,9 @@ public record CreateOptionResult(
         Integer minute,
         Integer price,
         String lessonId,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        LocalDateTime deletedAt
+        Instant createdAt,
+        Instant updatedAt,
+        Instant deletedAt
 ) {
     public static CreateOptionResult of(Option option) {
         return new CreateOptionResult(
