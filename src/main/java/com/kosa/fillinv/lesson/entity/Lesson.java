@@ -47,7 +47,7 @@ public class Lesson extends BaseEntity {
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
-    @Column(name = "price", nullable = false)
+    @Column(name = "price")
     private Integer price;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
