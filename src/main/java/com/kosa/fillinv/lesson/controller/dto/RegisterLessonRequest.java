@@ -29,7 +29,7 @@ public record RegisterLessonRequest(
                 request.closeAt,
                 request.price,
                 request.optionList.stream().map(Option::toCommand).toList(),
-                request.availableTimeList.stream().map(at -> new RegisterLessonCommand.AvailableTime(at.startTime, at.endTime, at.price)).toList()
+                request.availableTimeList.stream().map(AvailableTime::toCommand).toList()
         );
     }
 

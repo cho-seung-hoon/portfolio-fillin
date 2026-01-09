@@ -24,7 +24,7 @@ public class LessonController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SuccessResponse<RegisterLessonResponse> registerLesson(
             @RequestPart("request") RegisterLessonRequest request,
-            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail
+            @RequestPart(value = "thumbnail") MultipartFile thumbnail
     ) {
         CreateLessonResult createLessonResult = lessonRegisterService.registerLesson(RegisterLessonRequest.toCommand(request), thumbnail);
 
