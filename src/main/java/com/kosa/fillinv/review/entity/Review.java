@@ -1,14 +1,13 @@
 package com.kosa.fillinv.review.entity;
 
+import com.kosa.fillinv.global.entity.BaseEntity;
 import com.kosa.fillinv.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.time.Instant;
-
 @Entity
 @Table(name = "reviews")
-public class Review {
+public class Review extends BaseEntity {
 
     @Id
     @Getter
@@ -38,16 +37,4 @@ public class Review {
     @Getter
     @Column(name = "schedule_id", nullable = false)
     private String scheduleId;
-
-    @Getter
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Getter
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
-    @Getter
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
 }
