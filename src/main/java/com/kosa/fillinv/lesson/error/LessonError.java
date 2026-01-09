@@ -12,4 +12,7 @@ public class LessonError {
     public static String LESSON_NOT_FOUND_MESSAGE_FORMAT(String lessonId) {
         return String.format("해당 레슨 ID( %s )는 존재하지 않습니다.", lessonId);
     }
+    public static String INVALID_LESSON_TYPE(String lessonType) {
+        return String.format("레슨 유형( %s )이 유효하지 않습니다.", lessonType);
+    }
 }

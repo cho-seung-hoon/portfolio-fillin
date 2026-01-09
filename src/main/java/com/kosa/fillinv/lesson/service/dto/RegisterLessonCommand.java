@@ -22,7 +22,7 @@ public record RegisterLessonCommand(
     public CreateLessonCommand toCreateLessonCommand(String thumbnailImage) {
         return new CreateLessonCommand(
                 this.title,
-                LessonType.valueOf(this.lessonType),
+                LessonType.from(this.lessonType),
                 thumbnailImage,
                 this.description,
                 this.location,
