@@ -30,8 +30,8 @@ public record RegisterLessonCommand(
                 this.categoryId,
                 this.closeAt,
                 this.price,
-                optionList.stream().map(op -> new CreateOptionCommand(op.name, op.minute, op.price())).toList(),
-                availableTimeList.stream().map(at -> new CreateAvailableTimeCommand(at.startTime, at.endTime, at.price)).toList()
+                optionList.stream().map(op -> new CreateOptionCommand(op.name(), op.minute(), op.price())).toList(),
+                availableTimeList.stream().map(at -> new CreateAvailableTimeCommand(at.startTime(), at.endTime(), at.price())).toList()
         );
     }
 
