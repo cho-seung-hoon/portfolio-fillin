@@ -39,11 +39,7 @@ public class LocalFileStorage implements FileStorage {
             }
 
             String extension = getExtension(originalFilename);
-            String fileKey = UUID.randomUUID().toString() + "." + extension;
-
-            if (!Files.exists(directoryPath)) {
-                Files.createDirectories(directoryPath);
-            }
+            String fileKey = UUID.randomUUID() + "." + extension;
 
             Path targetPath = directoryPath.resolve(fileKey);
             Files.write(targetPath, file.getBytes());
