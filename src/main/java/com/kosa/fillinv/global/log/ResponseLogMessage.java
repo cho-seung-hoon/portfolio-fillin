@@ -1,0 +1,23 @@
+package com.kosa.fillinv.global.log;
+
+
+import org.springframework.web.util.ContentCachingResponseWrapper;
+
+public record ResponseLogMessage(
+    int httpStatus,
+    String responseBody
+) {
+    public static ResponseLogMessage createInstance(
+            final ContentCachingResponseWrapper responseWrapper
+            ) {
+        return new ResponseLogMessage(
+                responseWrapper.getStatus(),
+                getResponseBody(responseWrapper)
+        );
+    }
+
+    private static String getResponseBody(final ContentCachingResponseWrapper response) {
+        return new String(response.getContentAsByteArray(),
+                java.nio.charset.StandardCharsets.UTF_8);
+    }
+}

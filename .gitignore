@@ -103,3 +103,4 @@ application-local.properties
 application-dev.yml
 application-dev.properties
 application.properties
+application-test.yml
