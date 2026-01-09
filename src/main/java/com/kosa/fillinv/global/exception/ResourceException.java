@@ -14,5 +14,7 @@ public class ResourceException extends CustomGlobalException{
         }
     }
 
-
+    public static class InvalidArgument extends ResourceException {
+        public InvalidArgument(String message) { super(ErrorCode.INVALID_ARGUMENT, message);}
+    }
 }

@@ -16,6 +16,7 @@ public enum ErrorCode {
     //Global Error
     RESOURCE_NOT_FOUND(NOT_FOUND, "G01", "요청한 자원을 찾을 수 없습니다"),
     NOT_SUPPORTED(BAD_REQUEST, "G02", "지원하지 않는 요청입니다"),
+    INVALID_ARGUMENT(BAD_REQUEST, "G03", "인자가 올바르지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;
