@@ -69,15 +69,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
-                // .requestMatchers("/api/v1/members/login", "/error", "/api/v1/members/signup",
-                // "/v3/api-docs/**",
-                // "/swagger-ui/**", "/swagger-ui.html")
-                // .permitAll()
-                // .anyRequest().authenticated()
+                        // .requestMatchers("/api/v1/members/login", "/error", "/api/v1/members/signup",
+                        // "/v3/api-docs/**",
+                        // "/swagger-ui/**", "/swagger-ui.html",
+                        // "/api/v1/lessons/*/reviews")
+                        // .permitAll()
+                        // .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), LoginFilter.class)
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }
