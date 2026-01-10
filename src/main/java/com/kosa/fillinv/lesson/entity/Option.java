@@ -2,10 +2,7 @@ package com.kosa.fillinv.lesson.entity;
 
 import com.kosa.fillinv.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "options")
