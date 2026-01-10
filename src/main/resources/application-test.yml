@@ -13,10 +13,14 @@ spring:
     database: mysql
     hibernate:
       ddl-auto: create-drop
+    defer-datasource-initialization: true
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+  sql:
+    init:
+      mode: always
 
 logging:
   level:
@@ -24,4 +28,4 @@ logging:
 
 jwt:
   secret: vmfhaltkwmdkswkdsigkdfhwldkadrhiqwudyqwiudqdw
-  expiration-time: 3600000 # 1 시간
+  expiration-time: 3600000 # 1H
