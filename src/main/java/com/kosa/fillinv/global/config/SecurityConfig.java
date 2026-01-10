@@ -29,7 +29,6 @@ public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
-    private final ObjectMapper objectMapper;
 
     @Value("${jwt.expiration-time}")
     private Long jwtExpirationTime;
@@ -44,6 +43,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+
+    @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -51,13 +55,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil,
-                jwtExpirationTime, objectMapper);
+                jwtExpirationTime, objectMapper());
         loginFilter.setFilterProcessesUrl("/api/v1/auth/login");
 
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000")); // 프론트엔드 주소 설정
+                    configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
                     configuration.setAllowedMethods(Collections.singletonList("*"));
                     configuration.setAllowCredentials(true);
                     configuration.setAllowedHeaders(Collections.singletonList("*"));
@@ -78,7 +82,7 @@ public class SecurityConfig {
                 // .permitAll()
                 // .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, objectMapper), LoginFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, objectMapper()), LoginFilter.class)
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
