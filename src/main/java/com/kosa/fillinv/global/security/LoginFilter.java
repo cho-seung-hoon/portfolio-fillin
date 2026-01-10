@@ -1,6 +1,8 @@
 package com.kosa.fillinv.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kosa.fillinv.global.response.ErrorCode;
+import com.kosa.fillinv.global.response.ErrorResponse;
 import com.kosa.fillinv.member.dto.LoginRequest;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,13 +24,13 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     private final Long jwtExpirationTime;
+    private final ObjectMapper objectMapper;
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             LoginRequest loginRequest = objectMapper.readValue(request.getInputStream(), LoginRequest.class);
 
             if (!validator.validate(loginRequest).isEmpty()) {
@@ -58,8 +60,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationException failed) {
+            AuthenticationException failed) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
 
+        ErrorResponse errorResponse = ErrorResponse.error(ErrorCode.LOGIN_FAILED);
+        objectMapper.writeValue(response.getWriter(), errorResponse);
     }
 }

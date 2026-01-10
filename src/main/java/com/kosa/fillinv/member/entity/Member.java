@@ -6,8 +6,6 @@ import org.hibernate.annotations.SQLRestriction;
 
 import com.kosa.fillinv.global.entity.BaseEntity;
 
-import java.util.Objects;
-
 import lombok.*;
 
 @Entity

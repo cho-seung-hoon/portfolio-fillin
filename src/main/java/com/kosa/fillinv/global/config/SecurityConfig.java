@@ -1,5 +1,6 @@
 package com.kosa.fillinv.global.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kosa.fillinv.global.security.JWTUtil;
 import com.kosa.fillinv.global.security.JwtAuthenticationFilter;
 import com.kosa.fillinv.global.security.LoginFilter;
@@ -28,6 +29,7 @@ public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
+    private final ObjectMapper objectMapper;
 
     @Value("${jwt.expiration-time}")
     private Long jwtExpirationTime;
@@ -49,7 +51,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil,
-                jwtExpirationTime);
+                jwtExpirationTime, objectMapper);
         loginFilter.setFilterProcessesUrl("/api/v1/auth/login");
 
         http
@@ -69,14 +71,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
-                        // .requestMatchers("/api/v1/members/login", "/error", "/api/v1/members/signup",
-                        // "/v3/api-docs/**",
-                        // "/swagger-ui/**", "/swagger-ui.html",
-                        // "/api/v1/lessons/*/reviews")
-                        // .permitAll()
-                        // .anyRequest().authenticated()
+                // .requestMatchers("/api/v1/members/login", "/error", "/api/v1/members/signup",
+                // "/v3/api-docs/**",
+                // "/swagger-ui/**", "/swagger-ui.html",
+                // "/api/v1/lessons/*/reviews")
+                // .permitAll()
+                // .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), LoginFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, objectMapper), LoginFilter.class)
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

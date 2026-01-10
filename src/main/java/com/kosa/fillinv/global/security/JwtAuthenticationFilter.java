@@ -1,5 +1,8 @@
 package com.kosa.fillinv.global.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kosa.fillinv.global.response.ErrorCode;
+import com.kosa.fillinv.global.response.ErrorResponse;
 import com.kosa.fillinv.member.entity.Member;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,6 +22,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -34,7 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (jwtUtil.isTokenExpired(token)) {
-                filterChain.doFilter(request, response);
+                sendErrorResponse(response);
                 return;
             }
 
@@ -51,10 +55,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
+            filterChain.doFilter(request, response);
+
         } catch (Exception e) {
             log.error("JWT Authentication Failed", e);
+            sendErrorResponse(response);
         }
+    }
 
-        filterChain.doFilter(request, response);
+    private void sendErrorResponse(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        ErrorResponse errorResponse = ErrorResponse.error(ErrorCode.INVALID_TOKEN);
+        objectMapper.writeValue(response.getWriter(), errorResponse);
     }
 }
