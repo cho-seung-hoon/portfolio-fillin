@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.relational.core.sql.In;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -46,6 +47,9 @@ public class Lesson extends BaseEntity {
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
+    @Column(name = "price")
+    private Integer price;
+
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<AvailableTime> availableTimeList;
 
@@ -61,7 +65,8 @@ public class Lesson extends BaseEntity {
                   String location,
                   String mentorId,
                   Long categoryId,
-                  Instant closeAt) {
+                  Instant closeAt,
+                  Integer price) {
         this.id = id;
         this.title = title;
         this.lessonType = lessonType;
@@ -71,6 +76,7 @@ public class Lesson extends BaseEntity {
         this.mentorId = mentorId;
         this.categoryId = categoryId;
         this.closeAt = closeAt;
+        this.price = price;
         this.availableTimeList = new ArrayList<>();
         this.optionList = new ArrayList<>();
     }

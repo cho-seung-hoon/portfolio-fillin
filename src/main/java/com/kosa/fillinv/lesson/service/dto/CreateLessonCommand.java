@@ -14,6 +14,7 @@ public record CreateLessonCommand(
         String mentorId,
         Long categoryId,
         Instant closeAt,
+        Integer price,
         List<CreateOptionCommand> optionCommandList,
         List<CreateAvailableTimeCommand> availableTimeCommandList
 ) {
