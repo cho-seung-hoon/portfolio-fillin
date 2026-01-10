@@ -31,6 +31,9 @@ public class Schedule {
     private String requestContent;
 
     /* ===== Lesson Snapshot ===== */
+    @Column(name = "lesson_title", nullable = false)
+    private String lessonTitle;
+
     @Column(name = "lesson_type", nullable = false)
     private String lessonType;
 
