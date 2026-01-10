@@ -1,6 +1,7 @@
 package com.kosa.fillinv.review.repository;
 
 import com.kosa.fillinv.review.dto.ReviewWithNicknameVO;
+import com.kosa.fillinv.review.dto.ReviewWithScheduleLessonNameVO;
 import com.kosa.fillinv.review.entity.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,4 +22,9 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
             "FROM Review r " +
             "WHERE r.lessonId = :lessonId")
     Page<ReviewWithNicknameVO> findReviewsWithNicknameByLessonId(@Param("lessonId") String lessonId, Pageable pageable);
+
+    @Query("SELECT new com.kosa.fillinv.review.dto.ReviewWithScheduleLessonNameVO(r, r.schedule.lessonCategoryName) " +
+            "FROM Review r " +
+            "WHERE r.writerId = :writerId")
+    Page<ReviewWithScheduleLessonNameVO> findByWriterId(@Param("writerId") String writerId, Pageable pageable);
 }
