@@ -9,6 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -23,5 +28,17 @@ public class ReviewService {
                 .map(LessonReviewResponseDTO::from);
 
         return LessonReviewListResponseDTO.of(averageScore, reviews.getTotalElements(), reviews);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Double> getAverageScoreByLessonIds(Set<String> lessonIds) {
+        List<Object[]> averageScoresByLessonIds = reviewRepository.findAverageScoreByLessonIds(lessonIds);
+
+        return averageScoresByLessonIds.stream().collect(
+                Collectors.toMap(
+                        o -> (String) o[0],
+                        o -> (Double) o[1]
+                )
+        );
     }
 }
