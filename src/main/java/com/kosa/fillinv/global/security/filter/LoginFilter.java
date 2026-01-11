@@ -41,7 +41,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             }
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    loginRequest.getEmail(), loginRequest.getPassword(), null);
+                    loginRequest.email(), loginRequest.password(), null);
 
             return authenticationManager.authenticate(authToken);
         } catch (IOException e) {
@@ -54,8 +54,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             Authentication authResult) {
         CustomMemberDetails customMemberDetails = (CustomMemberDetails) authResult.getPrincipal();
         String email = customMemberDetails.getUsername();
+        String memberId = customMemberDetails.getMemberId();
 
-        String token = jwtUtil.createJwt(email, jwtExpirationTime);
+        String token = jwtUtil.createJwt(email, memberId, jwtExpirationTime);
 
         response.addHeader("Authorization", "Bearer " + token);
     }

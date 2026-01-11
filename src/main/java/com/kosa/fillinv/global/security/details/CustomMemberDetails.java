@@ -13,6 +13,10 @@ public class CustomMemberDetails implements UserDetails {
 
     private final Member member;
 
+    public String getMemberId() {
+        return member.getId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();

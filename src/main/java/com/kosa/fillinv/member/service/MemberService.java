@@ -33,9 +33,9 @@ public class MemberService {
 
     @Transactional
     public void signUp(SignUpDto signUpDto) {
-        validateDuplicateEmail(signUpDto.getEmail());
-        validateDuplicateNickname(signUpDto.getNickname());
-        validateDuplicatePhoneNum(signUpDto.getPhoneNum());
+        validateDuplicateEmail(signUpDto.email());
+        validateDuplicateNickname(signUpDto.nickname());
+        validateDuplicatePhoneNum(signUpDto.phoneNum());
 
         Member member = createMember(signUpDto);
         member = memberRepository.save(member);
@@ -45,10 +45,10 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public ProfileResponseDto getProfile(String email) {
-        Member member = memberRepository.findByEmail(email)
+    public ProfileResponseDto getProfile(String memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(MemberException.MemberNotFound::new);
-        Profile profile = profileRepository.findById(member.getId())
+        Profile profile = profileRepository.findById(memberId)
                 .orElseThrow(MemberException.ProfileNotFound::new);
 
         Category category = categoryRepository.findById(profile.getCategoryId())
@@ -65,10 +65,11 @@ public class MemberService {
     }
 
     @Transactional
-    public void updateProfileImage(String email, String file) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(MemberException.MemberNotFound::new);
-        Profile profile = profileRepository.findById(member.getId())
+    public void updateProfileImage(String memberId, String file) {
+        if (!memberRepository.existsById(memberId)) {
+            throw new MemberException.MemberNotFound();
+        }
+        Profile profile = profileRepository.findById(memberId)
                 .orElseThrow(MemberException.ProfileNotFound::new);
 
         // TODO: 이미지 저장 로직 구현 예정
@@ -77,46 +78,44 @@ public class MemberService {
     }
 
     @Transactional
-    public void updateNickname(String email, String nickname) {
+    public void updateNickname(String memberId, String nickname) {
         if (memberRepository.existsByNickname(nickname)) {
             throw new MemberException(ErrorCode.NICKNAME_DUPLICATION);
         }
-        Member member = memberRepository.findByEmail(email)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(MemberException.MemberNotFound::new);
         member.updateNickname(nickname);
     }
 
     @Transactional
-    public void updateIntroduction(String email, IntroductionRequestDto requestDto) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(MemberException.MemberNotFound::new);
-        Profile profile = profileRepository.findById(member.getId())
+    public void updateIntroduction(String memberId, IntroductionRequestDto requestDto) {
+        if (!memberRepository.existsById(memberId)) {
+            throw new MemberException.MemberNotFound();
+        }
+        Profile profile = profileRepository.findById(memberId)
                 .orElseThrow(MemberException.ProfileNotFound::new);
 
-        if (!categoryRepository.existsById(requestDto.getCategoryId())) {
+        if (!categoryRepository.existsById(requestDto.categoryId())) {
             throw new CategoryException.NotFound();
         }
 
-        profile.updateIntroduceAndCategory(requestDto.getIntroduction(), requestDto.getCategoryId());
+        profile.updateIntroduceAndCategory(requestDto.introduction(), requestDto.categoryId());
     }
 
     private void validateDuplicateEmail(String email) {
         if (memberRepository.existsByEmail(email)) {
-            log.warn("중복된 이메일 입니다: {}", email);
             throw new MemberException(ErrorCode.EMAIL_DUPLICATION);
         }
     }
 
     private void validateDuplicateNickname(String nickname) {
         if (memberRepository.existsByNickname(nickname)) {
-            log.warn("중복된 닉네임 입니다: {}", nickname);
             throw new MemberException(ErrorCode.NICKNAME_DUPLICATION);
         }
     }
 
     private void validateDuplicatePhoneNum(String phoneNum) {
         if (memberRepository.existsByPhoneNum(phoneNum)) {
-            log.warn("중복된 전화번호 입니다: {}", phoneNum);
             throw new MemberException(ErrorCode.PHONE_NUM_DUPLICATION);
         }
     }
@@ -124,19 +123,19 @@ public class MemberService {
     private Member createMember(SignUpDto signUpDto) {
         return Member.builder()
                 .id(UUID.randomUUID().toString())
-                .email(signUpDto.getEmail())
-                .password(passwordEncoder.encode(signUpDto.getPassword()))
-                .nickname(signUpDto.getNickname())
-                .phoneNum(signUpDto.getPhoneNum())
+                .email(signUpDto.email())
+                .password(passwordEncoder.encode(signUpDto.password()))
+                .nickname(signUpDto.nickname())
+                .phoneNum(signUpDto.phoneNum())
                 .build();
     }
 
     @Transactional
-    public void deleteMember(String email) {
-        Member member = memberRepository.findByEmail(email)
+    public void deleteMember(String memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(MemberException.MemberNotFound::new);
 
-        Profile profile = profileRepository.findById(member.getId())
+        Profile profile = profileRepository.findById(memberId)
                 .orElseThrow(MemberException.ProfileNotFound::new);
 
         profileRepository.delete(profile);

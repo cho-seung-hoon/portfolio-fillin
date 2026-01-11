@@ -45,8 +45,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String email = jwtUtil.getEmail(token);
+            String memberId = jwtUtil.getMemberId(token);
 
             Member member = Member.builder()
+                    .id(memberId)
                     .email(email)
                     .password("N/A")
                     .build();

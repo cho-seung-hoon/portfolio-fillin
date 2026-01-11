@@ -4,23 +4,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class SignUpDto {
+public record SignUpDto(
+        @NotBlank @Email String email,
 
-    @NotBlank
-    @Email
-    private String email;
+        @NotBlank String password,
 
-    @NotBlank
-    private String password;
+        @NotBlank String nickname,
 
-    @NotBlank
-    private String nickname;
-
-    @NotBlank
-    private String phoneNum;
+        @NotBlank String phoneNum) {
 }

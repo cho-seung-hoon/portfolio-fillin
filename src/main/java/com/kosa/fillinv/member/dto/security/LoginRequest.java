@@ -2,21 +2,11 @@ package com.kosa.fillinv.member.dto.security;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@Getter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class LoginRequest {
+public record LoginRequest(
+        @NotBlank @Email String email,
 
-    @NotBlank
-    @Email
-    private String email;
-
-    @NotBlank
-    private String password;
+        @NotBlank String password) {
 }

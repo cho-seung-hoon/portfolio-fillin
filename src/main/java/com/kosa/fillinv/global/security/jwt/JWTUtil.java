@@ -38,9 +38,19 @@ public class JWTUtil {
                 .before(new Date());
     }
 
-    public String createJwt(String email, Long expiredMs) {
+    public String getMemberId(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("memberId", String.class);
+    }
+
+    public String createJwt(String email, String memberId, Long expiredMs) {
         return Jwts.builder()
                 .claim("email", email)
+                .claim("memberId", memberId)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)
