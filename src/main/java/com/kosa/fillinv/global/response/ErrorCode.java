@@ -16,7 +16,11 @@ public enum ErrorCode {
     //Global Error
     RESOURCE_NOT_FOUND(NOT_FOUND, "G01", "요청한 자원을 찾을 수 없습니다"),
     NOT_SUPPORTED(BAD_REQUEST, "G02", "지원하지 않는 요청입니다"),
+
+    // Schedule Error
+    LESSON_NOT_FOUND(NOT_FOUND, "SCH01", "해당 수업을 찾을 수 없습니다."),
     ;
+
 
     private final HttpStatus httpStatus;
     private final String code;

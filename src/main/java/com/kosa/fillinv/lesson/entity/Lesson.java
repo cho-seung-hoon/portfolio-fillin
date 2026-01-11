@@ -1,10 +1,12 @@
 package com.kosa.fillinv.lesson.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
 @Table(name = "lessons")
 public class Lesson {
 
@@ -37,7 +39,7 @@ public class Lesson {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "memtor_id", nullable = false)
+    @Column(name = "mentor_id", nullable = false)
     private String mentorId;
 
     @Column(name = "category_id", nullable = false)

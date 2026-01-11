@@ -1,13 +1,23 @@
 package com.kosa.fillinv.schedule.entity;
 
+import com.kosa.fillinv.lesson.entity.Lesson;
+import com.kosa.fillinv.schedule.dto.request.ScheduleCreateRequest;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
+@Getter
 @Table(name = "schedules")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Schedule {
 
     @Id
@@ -31,6 +41,7 @@ public class Schedule {
     private String requestContent;
 
     /* ===== Lesson Snapshot ===== */
+    // 레슨 하나 당 없거나 한 개 또는 여러 개의 스케쥴 존재
     @Column(name = "lesson_type", nullable = false)
     private String lessonType;
 
@@ -43,7 +54,11 @@ public class Schedule {
     @Column(name = "lesson_category_name", nullable = false)
     private String lessonCategoryName;
 
+    @Column(name = "lesson_mentor_id", nullable = false)
+    private String mentor;
+
     /* ===== Option Snapshot ===== */
+    // 옵션 하나 당 없거나 한 개 또는 여러 개의 스케쥴 존재
     @Column(name = "option_name", nullable = false)
     private String optionName;
 
@@ -70,4 +85,14 @@ public class Schedule {
 
     @Column(name = "option_id")
     private String optionId;
+
+    // 스케쥴 생성 메서드
+    public static Schedule create(Lesson lesson, ScheduleCreateRequest request, String memberId) {
+        return Schedule.builder() // 빌더 코드 숨김
+                .mentee(memberId)
+                .lessonId(lesson.getId())
+                .lessonLocation(lesson.getLocation())
+                .date(request.date())
+                .build();
+    }
 }

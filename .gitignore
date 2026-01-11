@@ -102,5 +102,7 @@ application-local.yml
 application-local.properties
 application-dev.yml
 application-dev.properties
-application.properties
-application-test.yml
+application-local-test.yml
+
+# db
+resources/db/
