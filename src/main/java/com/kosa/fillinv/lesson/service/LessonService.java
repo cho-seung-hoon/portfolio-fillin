@@ -4,8 +4,10 @@ import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.Option;
+import com.kosa.fillinv.lesson.repository.AvailableTimeRepository;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.repository.LessonSpecifications;
+import com.kosa.fillinv.lesson.repository.OptionRepository;
 import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,8 @@ import static com.kosa.fillinv.lesson.error.LessonError.*;
 @RequiredArgsConstructor
 public class LessonService {
     private final LessonRepository lessonRepository;
+    private final AvailableTimeRepository availableTimeRepository;
+    private final OptionRepository optionRepository;
 
     public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
         Sort sortBy = condition.sortType().toSort();
@@ -52,7 +56,13 @@ public class LessonService {
     }
 
     public Optional<LessonDTO> readLessonById(String id) {
-        return findActiveLesson(id).map(LessonDTO::of);
+        Lesson lesson = findActiveLesson(id).orElseThrow(() ->
+                new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(id)));
+
+        List<AvailableTime> availableTimes = findAllActiveAvailableTime(id);
+        List<Option> options = findAllActiveOption(id);
+
+        return Optional.of(LessonDTO.of(lesson, availableTimes, options));
     }
 
     public List<LessonDTO> readLessonAll() {
@@ -154,6 +164,14 @@ public class LessonService {
 
     private Optional<Lesson> findActiveLesson(String id) {
         return lessonRepository.findByIdAndDeletedAtIsNull(id);
+    }
+
+    private List<AvailableTime> findAllActiveAvailableTime(String id) {
+        return availableTimeRepository.findAllByLessonIdAndDeletedAtIsNull(id);
+    }
+
+    private List<Option> findAllActiveOption(String id) {
+        return optionRepository.findAllByLessonIdAndDeletedAtIsNull(id);
     }
 
     private Option createOption(Lesson lesson, CreateOptionCommand command) {

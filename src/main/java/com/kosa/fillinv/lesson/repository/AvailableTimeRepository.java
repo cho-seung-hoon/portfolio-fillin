@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface AvailableTimeRepository extends JpaRepository<AvailableTime, String> {
     List<AvailableTime> findAllByLessonId(String lessonId);
+
+    List<AvailableTime> findAllByLessonIdAndDeletedAtIsNull(String lessonId);
 }
