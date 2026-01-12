@@ -5,8 +5,13 @@ import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.Option;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
+import com.kosa.fillinv.lesson.repository.LessonSpecifications;
 import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +25,14 @@ import static com.kosa.fillinv.lesson.error.LessonError.*;
 @RequiredArgsConstructor
 public class LessonService {
     private final LessonRepository lessonRepository;
+
+    public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
+        Sort sortBy = condition.sortType().toSort();
+        PageRequest pageRequest = PageRequest.of(condition.page(), condition.size(), sortBy);
+        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId());
+
+        return lessonRepository.findAll(search, pageRequest).map(LessonDTO::of);
+    }
 
     @Transactional
     public CreateLessonResult createLesson(CreateLessonCommand command) {
@@ -82,7 +95,8 @@ public class LessonService {
         Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         List<AvailableTime> availableTimeList = commandList.stream().map(c -> createAvailableTimeEntity(lesson, c)).toList();
-        lesson.addAvailableTime(availableTimeList);;
+        lesson.addAvailableTime(availableTimeList);
+
         lessonRepository.save(lesson);
 
         return availableTimeList.stream().map(CreateAvailableTimeResult::of).toList();

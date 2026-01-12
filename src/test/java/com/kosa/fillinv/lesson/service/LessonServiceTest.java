@@ -15,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import com.kosa.fillinv.lesson.entity.LessonType;
@@ -453,6 +454,116 @@ class LessonServiceTest {
         assertEquals(created.optionResultList().size(), result.optionDTOList().size());
     }
 
+    @Test
+    @DisplayName("레슨 제목으로 검색이 가능하다.")
+    void searchKeyword() {
+        // given
+        String keyword = "Spring";
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(keyword, null, null, LessonSortType.CREATED_AT_DESC, 1, 30);
+
+        // when
+        Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
+
+        // then
+        List<Lesson> allByTitleContaining = lessonRepository.findAllByTitleContaining(keyword);
+        assertFalse(allByTitleContaining.isEmpty());
+        assertEquals(allByTitleContaining.size(), lessonDTOS.getTotalElements());
+        assertFalse(
+                lessonDTOS.stream().anyMatch(
+                        l -> !l.title().contains(keyword)
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("레슨 유형으로 검색이 가능하다.")
+    void searchLessonType() {
+        // given
+        LessonType lessonType = LessonType.ONEDAY;
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, lessonType, null, LessonSortType.CREATED_AT_DESC, 1, 30);
+
+        // when
+        Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
+
+        // then
+        List<Lesson> allByTitleContaining = lessonRepository.findAllByLessonType(lessonType);
+        assertFalse(allByTitleContaining.isEmpty());
+        assertEquals(allByTitleContaining.size(), lessonDTOS.getTotalElements());
+        assertFalse(
+                lessonDTOS.stream().anyMatch(
+                        l -> !l.lessonType().equals(lessonType)
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("카테고리id로 검색이 가능하다.")
+    void searchCategoryId() {
+        // given
+        Long categoryId = 1L;
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, categoryId, LessonSortType.CREATED_AT_DESC, 1, 30);
+
+        // when
+        Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
+
+        // then
+        List<Lesson> allByTitleContaining = lessonRepository.findAllByCategoryId(categoryId);
+        assertFalse(allByTitleContaining.isEmpty());
+        assertEquals(allByTitleContaining.size(), lessonDTOS.getTotalElements());
+        assertFalse(
+                lessonDTOS.stream().anyMatch(
+                        l -> !l.categoryId().equals(categoryId)
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("최신순 정렬이 가능하다")
+    void searchWithSortByCreatedAtDesc() {
+        // given
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, LessonSortType.CREATED_AT_DESC, 0, 5);
+
+        // when
+        Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
+
+        // then
+        List<Lesson> all = lessonRepository.findAllByOrderByCreatedAtDesc();
+        for (int i = 0; i < lessonDTOS.getContent().size(); i++) {
+            assertEquals(all.get(i).getCreatedAt(), lessonDTOS.getContent().get(i).createdAt());
+        }
+    }
+
+    @Test
+    @DisplayName("가격 비싼 순 정렬이 가능하다")
+    void searchWithSortByPriceDesc() {
+        // given
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, LessonSortType.PRICE_DESC, 0, 5);
+
+        // when
+        Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
+
+        // then
+        List<Lesson> all = lessonRepository.findAllByOrderByPriceDesc();
+        for (int i = 0; i < lessonDTOS.getContent().size(); i++) {
+            assertEquals(all.get(i).getId(), lessonDTOS.getContent().get(i).id());
+        }
+    }
+
+    @Test
+    @DisplayName("가격 저렴한 순 정렬이 가능하다")
+    void searchWithSortByPriceAsc() {
+        // given
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, LessonSortType.PRICE_ASC, 0, 5);
+
+        // when
+        Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
+
+        // then
+        List<Lesson> all = lessonRepository.findAllByOrderByPriceAsc();
+        for (int i = 0; i < lessonDTOS.getContent().size(); i++) {
+            assertEquals(all.get(i).getId(), lessonDTOS.getContent().get(i).id());
+        }
+    }
 
     private CreateOptionCommand createOptionCommand() {
         return new CreateOptionCommand(
