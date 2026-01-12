@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,17 +21,16 @@ public class ScheduleController {
 
     // 스케쥴 생성
     @PostMapping
-    public ResponseEntity<SuccessResponse> createSchedule(
+    public ResponseEntity<SuccessResponse<Void>> createSchedule(
             @AuthenticationPrincipal String memberId, // 로그인한 사용자 ID
-            @RequestParam String lessonId, // 어떤 수업의 스케줄인지
-            @RequestBody ScheduleCreateRequest request // 상세 내용 (날짜, 시간 등)
+            @RequestBody ScheduleCreateRequest request, String lessonId
     ) {
-        scheduleService.createSchedule(memberId, lessonId, request);
+        String scheduleId = scheduleService.createSchedule(memberId, request, lessonId);
 
         // 201 Created 상태 코드 반환
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(SuccessResponse.success(HttpStatus.CREATED));
+                .body(SuccessResponse.success(HttpStatus.valueOf(scheduleId)));
     }
 
     // 스케쥴 상세 조회

@@ -6,10 +6,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -24,14 +23,11 @@ public class Schedule {
     @Column(name = "schedule_id", nullable = false)
     private String id;
 
-    @Column(name = "date", nullable = false)
-    private LocalDate date;
-
     @Column(name = "start_time", nullable = false)
-    private LocalTime startTime;
+    private Instant startTime;
 
     @Column(name = "end_time", nullable = false)
-    private LocalTime endTime;
+    private Instant endTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -90,23 +86,33 @@ public class Schedule {
     private String optionId;
 
     // 스케쥴 생성 메서드
-    public static Schedule create(Lesson lesson, Option option, Instant startTime, String memberId) {
+    public static Schedule create(Lesson lesson, Option option, Instant startTime, String menteeId) {
 
         // 시작 시간 + 옵션 분(minutes) =  종료 시간
         Instant endTime = startTime.plus(option.getMinute(), ChronoUnit.MINUTES);
 
         return Schedule.builder() // 빌더 코드 숨김
-                .id("1")
-                .mentor(memberId) // 멘토 id 저장
+                .id(UUID.randomUUID().toString()) // UUID 적용
+
+                // 멘토 정보: Lesson 엔티티에 저장된 mentorId 사용
+                .mentor(lesson.getMentorId()) // 멘토 id 저장 (레슨 개설자)
+
+                // 컨트롤러에서 @AuthenticationPrincipal을 통해 전달받은 현재 로그인 사용자의 ID
+                .mentee(menteeId)// 멘티 - (레슨 수강신청자)
                 .lessonId(lesson.getId())
+                .lessonTitle(lesson.getTitle())
+                .lessonType(lesson.getLessonType().toString())
+                .lessonDescription(lesson.getDescription())
                 .lessonLocation(lesson.getLocation())
+
+                .optionId(option.getId())
                 .optionName(option.getName())
                 .optionMinute(option.getMinute())
+                .price(option.getPrice())
 
                 // 시간 정보 - 한국 표준시 적용
-                .date(startTime.atZone(java.time.ZoneId.of("Asia/Seoul")).toLocalDate())
-                .startTime(startTime.atZone(java.time.ZoneId.of("Asia/Seoul")).toLocalTime())
-                .endTime(endTime.atZone(java.time.ZoneId.of("Asia/Seoul")).toLocalTime())
+                .startTime(startTime)
+                .endTime(endTime)
 
                 .status(ScheduleStatus.PAYMENT_PENDING) // 초기 상태 설정 (결제 대기)
                 .build();

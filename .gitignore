@@ -105,4 +105,4 @@ application-dev.properties
 application-local-test.yml
 
 # db
-resources/db/
+/src/main/resources/test-db/

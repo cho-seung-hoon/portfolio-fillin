@@ -24,7 +24,7 @@ public class ScheduleService {
 
     // 스케쥴 생성
     @Transactional
-    public void createSchedule(String memberId, String lessonId, ScheduleCreateRequest request) {
+    public String createSchedule(String memberId, ScheduleCreateRequest request, String lessonId) {
         // 레슨 조회
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LESSON_NOT_FOUND));
@@ -36,7 +36,9 @@ public class ScheduleService {
         // Factory Method를 통한 스케쥴 생성
         Schedule schedule = Schedule.create(lesson, option, request.startTime(), memberId);
 
-        scheduleRepository.save(schedule);
+        Schedule savedSchedule = scheduleRepository.save(schedule);
+
+        return savedSchedule.getId();
     }
 
     // 스케쥴 상세 조회

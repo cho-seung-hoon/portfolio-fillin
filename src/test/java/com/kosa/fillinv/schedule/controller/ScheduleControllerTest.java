@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,7 +27,7 @@ class ScheduleControllerTest {
         Instant startTime = Instant.parse("2026-02-01T01:00:00Z");
 
         Lesson mockLesson = Lesson.builder()
-                .id("lesson01")
+                .id(java.util.UUID.randomUUID().toString())
                 .mentorId(memberId)
 
                 .title("예비 백엔드 개발자를 위한 커피챗")
@@ -48,6 +48,7 @@ class ScheduleControllerTest {
                 .build();
 
         ScheduleCreateRequest request = new ScheduleCreateRequest(
+                "lesson01",
                 "option01",
                 startTime
         );
@@ -61,11 +62,9 @@ class ScheduleControllerTest {
         // 멘토 아이디가 일치하는지 확인
         assertEquals(memberId, schedule.getMentor());
 
-        // 시작 시간과 종료 시간이 옵션의 분(minute) 만큼 차이나는지 확인
-        assertEquals(
-                startTime.atZone(ZoneId.of("Asia/Seoul")).toLocalDate(),
-                schedule.getDate()
-        );
+        // 예상 종료 시간과 생성된 endTime 비교
+        Instant expectedEndTime = startTime.plus(80, ChronoUnit.MINUTES);
+        assertEquals(expectedEndTime, schedule.getEndTime());
 
         // 시작 시간 확인 (10:00)
         assertEquals(LocalTime.of(10, 0), schedule.getStartTime());

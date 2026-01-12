@@ -20,7 +20,7 @@ public enum ErrorCode {
 
     // Schedule Error
     LESSON_NOT_FOUND(NOT_FOUND, "SCH01", "해당 레슨을 찾을 수 없습니다."),
-    OPTION_NOT_FOUND(NOT_FOUND, "SCH01", "해당 옵션을 찾을 수 없습니다."),
+    OPTION_NOT_FOUND(NOT_FOUND, "SCH02", "해당 옵션을 찾을 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
