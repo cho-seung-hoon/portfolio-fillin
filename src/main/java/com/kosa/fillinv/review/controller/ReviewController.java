@@ -1,6 +1,7 @@
 package com.kosa.fillinv.review.controller;
 
 import com.kosa.fillinv.global.response.SuccessResponse;
+import com.kosa.fillinv.global.security.details.CustomMemberDetails;
 import com.kosa.fillinv.review.dto.LessonReviewListResponseDTO;
 import com.kosa.fillinv.review.dto.MyReviewResponseDTO;
 import com.kosa.fillinv.review.service.ReviewService;
@@ -40,11 +41,11 @@ public class ReviewController {
     @GetMapping("/reviews/me")
     public SuccessResponse<Page<MyReviewResponseDTO>> getMyReviews(
             @PageableDefault(size = 20) Pageable pageable,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomMemberDetails userDetails) {
         if (pageable.getPageSize() > MAX_PAGE_SIZE) {
             pageable = PageRequest.of(pageable.getPageNumber(), MAX_PAGE_SIZE, pageable.getSort());
         }
-        String memberId = userDetails.getUsername();
+        String memberId = userDetails.memberId();
         return SuccessResponse.success(HttpStatus.OK, reviewService.getMyReviews(memberId, pageable));
     }
 }
