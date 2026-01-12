@@ -66,11 +66,14 @@ class ScheduleControllerTest {
         Instant expectedEndTime = startTime.plus(80, ChronoUnit.MINUTES);
         assertEquals(expectedEndTime, schedule.getEndTime());
 
-        // 시작 시간 확인 (10:00)
-        assertEquals(LocalTime.of(10, 0), schedule.getStartTime());
+        // Instant -> Zoned -> LocalTime 변환 (Asia/Seoul)
+        Instant actualInstant = schedule.getStartTime();
 
-        // 시작 시간(오전 10시) + Option minutes(80분) = 종료 시간 (11:20)
-        assertEquals(LocalTime.of(11, 20), schedule.getEndTime());
+        LocalTime actualTimeKst = actualInstant
+                .atZone(java.time.ZoneId.of("Asia/Seoul")) // 한국 시간대로 변환 (KST 10:00)
+                .toLocalTime(); // 시간만 추출
+
+        assertEquals(LocalTime.of(10, 0), actualTimeKst);
 
         System.out.println(schedule);
     }
