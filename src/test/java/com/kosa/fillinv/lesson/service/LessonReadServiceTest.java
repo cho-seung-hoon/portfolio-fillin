@@ -57,8 +57,8 @@ class LessonReadServiceTest {
         // profile mock: mentorId → MentorSummaryDTO
         when(profileClient.getMentors(any(Set.class)))
                 .thenReturn(Map.of(
-                        "mentor-001", new MentorSummaryDTO("mentor-001", "홍길동"),
-                        "mentor-002", new MentorSummaryDTO("mentor-002", "임꺽정")
+                        "mentor-001", new MentorSummaryDTO("mentor-001", "홍길동", null, null),
+                        "mentor-002", new MentorSummaryDTO("mentor-002", "임꺽정", null, null)
                 ));
 
         // review mock: lessonId → averageRating

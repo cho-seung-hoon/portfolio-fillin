@@ -6,10 +6,7 @@ import com.kosa.fillinv.lesson.controller.dto.RegisterLessonRequest;
 import com.kosa.fillinv.lesson.controller.dto.RegisterLessonResponse;
 import com.kosa.fillinv.lesson.service.LessonReadService;
 import com.kosa.fillinv.lesson.service.LessonRegisterService;
-import com.kosa.fillinv.lesson.service.dto.CreateLessonResult;
-import com.kosa.fillinv.lesson.service.dto.LessonSearchCondition;
-import com.kosa.fillinv.lesson.service.dto.LessonThumbnail;
-import com.kosa.fillinv.lesson.service.dto.RegisterLessonCommand;
+import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -51,4 +48,12 @@ public class LessonController {
         return SuccessResponse.success(HttpStatus.OK, PageResponse.from(result));
     }
 
+    @GetMapping("/{lessonId}")
+    public SuccessResponse<LessonDetailResult> detail(
+            @PathVariable String lessonId
+    ) {
+        LessonDetailResult detail = lessonReadService.detail(new LessonDetailCommand(lessonId));
+
+        return SuccessResponse.success(HttpStatus.OK, detail);
+    }
 }

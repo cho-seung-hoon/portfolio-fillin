@@ -1,7 +1,9 @@
 package com.kosa.fillinv.lesson.service.dto;
 
+import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.LessonType;
+import com.kosa.fillinv.lesson.entity.Option;
 
 import java.time.Instant;
 import java.util.List;
@@ -40,6 +42,26 @@ public record LessonDTO(
                 lesson.getDeletedAt(),
                 lesson.getAvailableTimeList().stream().map(AvailableTimeDTO::of).toList(),
                 lesson.getOptionList().stream().map(OptionDTO::of).toList()
+        );
+    }
+
+    public static LessonDTO of(Lesson lesson, List<AvailableTime> availableTimes, List<Option> options) {
+        return new LessonDTO(
+                lesson.getId(),
+                lesson.getTitle(),
+                lesson.getLessonType(),
+                lesson.getThumbnailImage(),
+                lesson.getDescription(),
+                lesson.getLocation(),
+                lesson.getMentorId(),
+                lesson.getCategoryId(),
+                lesson.getCreatedAt(),
+                lesson.getCloseAt(),
+                lesson.getPrice(),
+                lesson.getUpdatedAt(),
+                lesson.getDeletedAt(),
+                availableTimes.stream().map(AvailableTimeDTO::of).toList(),
+                options.stream().map(OptionDTO::of).toList()
         );
     }
 }

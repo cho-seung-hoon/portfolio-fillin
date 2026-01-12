@@ -1,11 +1,10 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.lesson.service.client.MentorSummaryDTO;
 import com.kosa.fillinv.lesson.service.client.ProfileClient;
 import com.kosa.fillinv.lesson.service.client.ReviewClient;
-import com.kosa.fillinv.lesson.service.dto.LessonDTO;
-import com.kosa.fillinv.lesson.service.dto.LessonSearchCondition;
-import com.kosa.fillinv.lesson.service.dto.LessonThumbnail;
+import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
@@ -13,6 +12,8 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.kosa.fillinv.lesson.error.LessonError.*;
 
 @Component
 @RequiredArgsConstructor
@@ -48,5 +49,15 @@ public class LessonReadService {
             Float rating = averageRating.get(lesson.id());
             return LessonThumbnail.of(lesson, mentor, rating);
         });
+    }
+
+    public LessonDetailResult detail(LessonDetailCommand request) {
+
+        LessonDTO lessonDTO = lessonService.readLessonById(request.lessonId())
+                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(request.lessonId())));
+
+        MentorSummaryDTO mentorSummaryDTO = profileClient.readMentorById(lessonDTO.mentorId());
+
+        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO);
     }
 }
