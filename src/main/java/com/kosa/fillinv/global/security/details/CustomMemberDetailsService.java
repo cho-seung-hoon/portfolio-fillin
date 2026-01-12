@@ -15,10 +15,14 @@ public class CustomMemberDetailsService implements UserDetailsService {
     private final MemberRepository memberRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Member member = memberRepository.findByEmail(username)
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저를 찾을 수 없습니다."));
 
-        return new CustomMemberDetails(member);
+        return new CustomMemberDetails(
+                member.getId(),
+                member.getEmail(),
+                member.getPassword(),
+                java.util.Collections.emptyList());
     }
 }

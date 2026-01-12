@@ -21,33 +21,33 @@ public class ProfileController {
 
     @GetMapping("/me")
     public SuccessResponse<ProfileResponseDto> getMyProfile(@AuthenticationPrincipal CustomMemberDetails userDetails) {
-        return SuccessResponse.success(HttpStatus.OK, memberService.getProfile(userDetails.memberId()));
+        return SuccessResponse.success(HttpStatus.OK, memberService.getProfile(userDetails.getUsername()));
     }
 
     @PatchMapping("/me/image")
     public SuccessResponse<Void> updateProfileImage(@AuthenticationPrincipal CustomMemberDetails userDetails,
             @RequestPart("image") MultipartFile image) {
-        memberService.updateProfileImage(userDetails.memberId(), image);
+        memberService.updateProfileImage(userDetails.getUsername(), image);
         return SuccessResponse.success(HttpStatus.OK);
     }
 
     @DeleteMapping("/me/image")
     public SuccessResponse<Void> deleteProfileImage(@AuthenticationPrincipal CustomMemberDetails userDetails) {
-        memberService.deleteProfileImage(userDetails.memberId());
+        memberService.deleteProfileImage(userDetails.getUsername());
         return SuccessResponse.success(HttpStatus.OK);
     }
 
     @PatchMapping("/me/nickname")
     public SuccessResponse<Void> updateNickname(@AuthenticationPrincipal CustomMemberDetails userDetails,
             @RequestBody NicknameRequestDto requestDto) {
-        memberService.updateNickname(userDetails.memberId(), requestDto.nickname());
+        memberService.updateNickname(userDetails.getUsername(), requestDto.nickname());
         return SuccessResponse.success(HttpStatus.OK);
     }
 
     @PatchMapping("/me/introduction")
     public SuccessResponse<Void> updateIntroduction(@AuthenticationPrincipal CustomMemberDetails userDetails,
             @RequestBody IntroductionRequestDto requestDto) {
-        memberService.updateIntroduction(userDetails.memberId(), requestDto);
+        memberService.updateIntroduction(userDetails.getUsername(), requestDto);
         return SuccessResponse.success(HttpStatus.OK);
     }
 }

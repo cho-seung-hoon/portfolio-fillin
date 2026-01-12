@@ -51,10 +51,10 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
-                                            Authentication authResult) throws IOException {
+            Authentication authResult) throws IOException {
         CustomMemberDetails customMemberDetails = (CustomMemberDetails) authResult.getPrincipal();
-        String email = customMemberDetails.getUsername();
-        String memberId = customMemberDetails.memberId();
+        String email = customMemberDetails.email();
+        String memberId = customMemberDetails.getUsername();
 
         String token = jwtUtil.createJwt(email, memberId, jwtExpirationTime);
 
@@ -70,7 +70,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                              AuthenticationException failed) throws IOException {
+            AuthenticationException failed) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

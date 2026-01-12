@@ -25,7 +25,7 @@ public class MemberController {
 
     @DeleteMapping("/withdraw")
     public SuccessResponse<Void> withdraw(@AuthenticationPrincipal CustomMemberDetails userDetails) {
-        memberService.deleteMember(userDetails.memberId());
+        memberService.deleteMember(userDetails.getUsername());
         return SuccessResponse.success(HttpStatus.OK);
     }
 }
