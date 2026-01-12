@@ -14,7 +14,12 @@ public class ProfileClientStub implements ProfileClient {
         return mentorIds.stream()
                 .collect(Collectors.toMap(
                         id -> id,
-                        id -> new MentorSummaryDTO(id, "Mentor-" + id)
+                        id -> new MentorSummaryDTO(id, "Mentor-" + id, null, null)
                 ));
+    }
+
+    @Override
+    public MentorSummaryDTO readMentorById(String mentorId) {
+        return new MentorSummaryDTO(mentorId, "Mentor-" + mentorId, "/test/resources/files/dummy.png", "Introduction of " + mentorId);
     }
 }
