@@ -152,6 +152,7 @@ class ScheduleServiceTest {
 
         // when
         String scheduleId = scheduleService.createSchedule("mentee-2", request);
+        entityManager.flush(); entityManager.clear();
 
         // then
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow();
