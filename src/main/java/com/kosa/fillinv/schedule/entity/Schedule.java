@@ -4,7 +4,6 @@ import com.kosa.fillinv.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -46,7 +45,7 @@ public class Schedule extends BaseEntity {
     private String mentorNickname;
 
     /* ===== Option Snapshot ===== */
-    // 옵션 하나 당 없거나 한 개 또는 여러 개의 스케쥴 존재
+    /* 옵션은 MENTORING 레슨만 사용 */
     @Column(name = "option_name")
     private String optionName;
 
@@ -66,12 +65,15 @@ public class Schedule extends BaseEntity {
     @Column(name = "lesson_mentor_id", nullable = false)
     private String mentorId;
 
+    // MENTORING 레슨에서 사용
     @Column(name = "option_id")
     private String optionId;
 
+    // ONEDAY 레슨에서 사용
     @Column(name = "available_time_id")
     private String availableTimeId;
 
+    // STUDY 레슨은 여러 scheduleTime을 가질 수 있기 때문에 List 사용
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
     private List<ScheduleTime> scheduleTimeList;
 
