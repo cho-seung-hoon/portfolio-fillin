@@ -84,13 +84,11 @@ public class Schedule extends BaseEntity {
 
     // 스케쥴 생성 메서드
     public static Schedule create(Lesson lesson, Option option, AvailableTime availableTime, Instant startTime, String menteeId) {
-        Schedule schedule = new Schedule();
-
         // 시작 시간 + 옵션 분(minutes) =  종료 시간
         Instant endTime = startTime.plus(option.getMinute(), ChronoUnit.MINUTES);
 
         // 장소가 null인 경우 "장소 미정"으로 설정
-        schedule.lessonLocation = (lesson.getLocation() != null) ? lesson.getLocation() : "장소 미정";
+        String location = (lesson.getLocation() != null) ? lesson.getLocation() : "장소 미정";
 
         return Schedule.builder() // 빌더 코드 숨김
                 .id(UUID.randomUUID().toString()) // UUID 적용
@@ -104,7 +102,8 @@ public class Schedule extends BaseEntity {
                 .lessonTitle(lesson.getTitle())
                 .lessonType(lesson.getLessonType().toString())
                 .lessonDescription(lesson.getDescription())
-                .lessonLocation(lesson.getLocation())
+                .lessonLocation(location)
+                .lessonCategoryName(String.valueOf(lesson.getCategoryId()))
 
                 .optionId(option.getId())
                 .optionName(option.getName())
