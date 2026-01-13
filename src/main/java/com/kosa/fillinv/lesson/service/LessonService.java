@@ -3,6 +3,7 @@ package com.kosa.fillinv.lesson.service;
 import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
+import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.entity.Option;
 import com.kosa.fillinv.lesson.repository.AvailableTimeRepository;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
@@ -226,7 +227,7 @@ public class LessonService {
             throw new ResourceException.InvalidArgument(CATEGORY_ID_REQUIRED);
         }
 
-        return Lesson.builder()
+        Lesson.LessonBuilder lessonBuilder = Lesson.builder()
                 .id(UUID.randomUUID().toString())
                 .title(command.title())
                 .lessonType(command.lessonType())
@@ -235,7 +236,12 @@ public class LessonService {
                 .location(command.location())
                 .mentorId(command.mentorId())
                 .categoryId(command.categoryId())
-                .closeAt(command.closeAt())
-                .build();
+                .closeAt(command.closeAt());
+
+        if (command.lessonType() == LessonType.STUDY) {
+            lessonBuilder.price(command.price());
+        }
+
+        return lessonBuilder.build();
     }
 }
