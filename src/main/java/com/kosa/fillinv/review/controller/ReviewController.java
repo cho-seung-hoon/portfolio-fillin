@@ -1,11 +1,14 @@
 package com.kosa.fillinv.review.controller;
 
+import com.kosa.fillinv.review.dto.ReviewCreateResponseDTO;
+import com.kosa.fillinv.review.dto.ReviewRequestDTO;
 import com.kosa.fillinv.global.response.SuccessResponse;
 import com.kosa.fillinv.global.security.details.CustomMemberDetails;
 import com.kosa.fillinv.review.dto.LessonReviewListResponseDTO;
 import com.kosa.fillinv.review.dto.MyReviewResponseDTO;
 import com.kosa.fillinv.review.dto.UnwrittenReviewResponseDTO;
 import com.kosa.fillinv.review.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,10 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -58,5 +58,13 @@ public class ReviewController {
         }
         String memberId = userDetails.memberId();
         return SuccessResponse.success(HttpStatus.OK, reviewService.getUnwrittenReviews(memberId, pageable));
+    }
+
+    @PostMapping("/reviews")
+    public SuccessResponse<ReviewCreateResponseDTO> createReview(
+            @RequestBody @Valid ReviewRequestDTO requestDTO,
+            @AuthenticationPrincipal CustomMemberDetails userDetails) {
+        String memberId = userDetails.memberId();
+        return SuccessResponse.success(HttpStatus.CREATED, reviewService.createReview(memberId, requestDTO));
     }
 }
