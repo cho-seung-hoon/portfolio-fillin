@@ -34,8 +34,7 @@ public class LessonService {
     public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
         Sort sortBy = condition.sortType().toSort();
         PageRequest pageRequest = PageRequest.of(condition.page(), condition.size(), sortBy);
-        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(),
-                condition.categoryId());
+        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId());
 
         return lessonRepository.findAll(search, pageRequest).map(LessonDTO::of);
     }
@@ -70,10 +69,10 @@ public class LessonService {
         return lessonRepository.findAllByDeletedAtIsNull().stream().map(LessonDTO::of).toList();
     }
 
+
     @Transactional
     public UpdateLessonResult updateLesson(String lessonId, UpdateLessonCommand command) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         lesson.updateTitle(command.title());
         lesson.updateThumbnailImage(command.thumbnailImage());
@@ -92,8 +91,7 @@ public class LessonService {
 
     @Transactional
     public CreateAvailableTimeResult addAvailableTime(String lessonId, CreateAvailableTimeCommand command) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         AvailableTime availableTime = createAvailableTimeEntity(lesson, command);
         lesson.addAvailableTime(availableTime);
@@ -103,13 +101,10 @@ public class LessonService {
     }
 
     @Transactional
-    public List<CreateAvailableTimeResult> addAvailableTime(String lessonId,
-            List<CreateAvailableTimeCommand> commandList) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+    public List<CreateAvailableTimeResult> addAvailableTime(String lessonId, List<CreateAvailableTimeCommand> commandList) {
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
-        List<AvailableTime> availableTimeList = commandList.stream().map(c -> createAvailableTimeEntity(lesson, c))
-                .toList();
+        List<AvailableTime> availableTimeList = commandList.stream().map(c -> createAvailableTimeEntity(lesson, c)).toList();
         lesson.addAvailableTime(availableTimeList);
 
         lessonRepository.save(lesson);
@@ -119,24 +114,21 @@ public class LessonService {
 
     @Transactional
     public void deleteAvailableTime(String lessonId, String availableTimeId) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         lesson.removeAvailableTime(availableTimeId);
     }
 
     @Transactional
     public void deleteAvailableTime(String lessonId, List<String> availableTimeIdList) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         lesson.removeAvailableTime(availableTimeIdList);
     }
 
     @Transactional
     public CreateOptionResult addOption(String lessonId, CreateOptionCommand command) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         Option option = createOption(lesson, command);
         lesson.addOption(option);
@@ -147,8 +139,7 @@ public class LessonService {
 
     @Transactional
     public List<CreateOptionResult> addOption(String lessonId, List<CreateOptionCommand> commandList) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         List<Option> optionList = commandList.stream().map(c -> createOption(lesson, c)).toList();
         lesson.addOption(optionList);
@@ -159,16 +150,14 @@ public class LessonService {
 
     @Transactional
     public void deleteOption(String lessonId, String optionId) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         lesson.removeOption(optionId);
     }
 
     @Transactional
     public void deleteOption(String lessonId, List<String> optionIdList) {
-        Lesson lesson = findActiveLesson(lessonId)
-                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+        Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
 
         lesson.removeOption(optionIdList);
     }
