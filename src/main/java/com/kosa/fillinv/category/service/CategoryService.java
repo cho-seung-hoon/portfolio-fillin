@@ -20,7 +20,10 @@ public class CategoryService {
     public List<CategoryResponseDto> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()
-                .map(category -> new CategoryResponseDto(category.getId(), category.getName()))
+                .map(category -> new CategoryResponseDto(
+                        category.getId(),
+                        category.getName(),
+                        category.getParentCategory() != null ? category.getParentCategory().getId() : null))
                 .collect(Collectors.toList());
     }
 }
