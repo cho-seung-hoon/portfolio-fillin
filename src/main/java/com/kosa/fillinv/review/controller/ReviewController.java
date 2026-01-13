@@ -56,7 +56,7 @@ public class ReviewController {
         if (pageable.getPageSize() > MAX_PAGE_SIZE) {
             pageable = PageRequest.of(pageable.getPageNumber(), MAX_PAGE_SIZE, pageable.getSort());
         }
-        String memberId = userDetails.getUsername();
+        String memberId = userDetails.memberId();
         return SuccessResponse.success(HttpStatus.OK, reviewService.getUnwrittenReviews(memberId, pageable));
     }
 }
