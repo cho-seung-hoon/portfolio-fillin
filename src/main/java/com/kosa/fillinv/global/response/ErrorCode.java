@@ -38,8 +38,10 @@ public enum ErrorCode {
     LESSON_NOT_FOUND(NOT_FOUND, "SCH01", "해당 레슨을 찾을 수 없습니다."),
     OPTION_NOT_FOUND(NOT_FOUND, "SCH02", "해당 옵션을 찾을 수 없습니다."),
     AVAILABLE_TIME_NOT_FOUND(NOT_FOUND, "SCH03", "선택한 시간대 정보를 찾을 수 없습니다"),
-    SCHEDULE_NOT_FOUND(NOT_FOUND, "SCH04", "해당 스케쥴을 찾을 수 없습니다.");
-    
+    INVALID_LESSON_TYPE(NOT_FOUND, "SCH04", "레슨 유형이 올바르지 않습니다."),
+    MENTOR_NOT_FOUND(NOT_FOUND, "SCH05", "해당 멘토를 찾을 수 없습니다."),
+    SCHEDULE_NOT_FOUND(NOT_FOUND, "SCH06", "해당 스케쥴을 찾을 수 없습니다.");
+
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;

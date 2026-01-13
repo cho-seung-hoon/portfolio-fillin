@@ -28,4 +28,4 @@ logging:
 
 jwt:
   secret: vmfhaltkwmdkswkdsigkdfhwldkadrhiqwudyqwiudqdw
-  expiration-time: 3600000 # 1H
+  expiration-time: 360000000 # 100H

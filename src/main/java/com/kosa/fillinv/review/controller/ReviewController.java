@@ -4,6 +4,7 @@ import com.kosa.fillinv.global.response.SuccessResponse;
 import com.kosa.fillinv.global.security.details.CustomMemberDetails;
 import com.kosa.fillinv.review.dto.LessonReviewListResponseDTO;
 import com.kosa.fillinv.review.dto.MyReviewResponseDTO;
+import com.kosa.fillinv.review.dto.UnwrittenReviewResponseDTO;
 import com.kosa.fillinv.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -46,5 +47,16 @@ public class ReviewController {
         }
         String memberId = userDetails.memberId();
         return SuccessResponse.success(HttpStatus.OK, reviewService.getMyReviews(memberId, pageable));
+    }
+
+    @GetMapping("/reviews/unwritten")
+    public SuccessResponse<Page<UnwrittenReviewResponseDTO>> getUnwrittenReviews(
+            @PageableDefault(size = 20) Pageable pageable,
+            @AuthenticationPrincipal CustomMemberDetails userDetails) {
+        if (pageable.getPageSize() > MAX_PAGE_SIZE) {
+            pageable = PageRequest.of(pageable.getPageNumber(), MAX_PAGE_SIZE, pageable.getSort());
+        }
+        String memberId = userDetails.memberId();
+        return SuccessResponse.success(HttpStatus.OK, reviewService.getUnwrittenReviews(memberId, pageable));
     }
 }

@@ -1,6 +1,7 @@
 package com.kosa.fillinv.schedule.controller;
 
 import com.kosa.fillinv.global.response.SuccessResponse;
+import com.kosa.fillinv.global.security.details.CustomMemberDetails;
 import com.kosa.fillinv.schedule.dto.request.ScheduleCreateRequest;
 import com.kosa.fillinv.schedule.dto.response.ScheduleDetailResponse;
 import com.kosa.fillinv.schedule.service.ScheduleService;
@@ -21,13 +22,10 @@ public class ScheduleController {
     // 스케쥴 생성
     @PostMapping
     public ResponseEntity<SuccessResponse<Void>> createSchedule(
-            @AuthenticationPrincipal String memberId, // 로그인한 사용자 ID
+            @AuthenticationPrincipal CustomMemberDetails customMemberDetails, // 로그인한 사용자 ID
             @RequestBody ScheduleCreateRequest request
     ) {
-        // 테스트용 memberId - DB의 member 테이블에 실제로 존재하는 ID를 넣으세요
-        if (memberId == null) {
-            memberId = "1";
-        }
+        String memberId = customMemberDetails.memberId();
 
         String scheduleId = scheduleService.createSchedule(memberId, request);
 
@@ -39,10 +37,9 @@ public class ScheduleController {
                 .buildAndExpand(scheduleId) // {id} 자리에 scheduleId 넣기
                 .toUri(); // URI로 변환
 
-        // Created 응답 시 Body 대신 Location 헤더에 리소스 URI 반환
         return ResponseEntity
-                .created(location) // 생성된 스케쥴 조회할 수 있는 uri을 알려줌
-                .body(SuccessResponse.success(HttpStatus.OK)); // 보내줄 데이터가 없기에 null - 데이터는 헤더에 존재 (데이터가 주소이기 때문에 헤더에 위치)
+                .created(location) // Created 응답 시 Body 대신 Location 헤더에 리소스 URI 반환
+                .body(SuccessResponse.success(HttpStatus.CREATED));
     }
 
     // 스케쥴 상세 조회

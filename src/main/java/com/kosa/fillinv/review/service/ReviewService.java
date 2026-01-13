@@ -1,10 +1,8 @@
 package com.kosa.fillinv.review.service;
 
-import com.kosa.fillinv.review.dto.LessonAvgScore;
-import com.kosa.fillinv.review.dto.LessonReviewListResponseDTO;
-import com.kosa.fillinv.review.dto.LessonReviewResponseDTO;
-import com.kosa.fillinv.review.dto.MyReviewResponseDTO;
+import com.kosa.fillinv.review.dto.*;
 import com.kosa.fillinv.review.repository.ReviewRepository;
+import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +19,7 @@ import java.util.stream.Collectors;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Transactional(readOnly = true)
     public LessonReviewListResponseDTO getReviewListByLesson(String lessonId, Pageable pageable) {
@@ -36,6 +35,12 @@ public class ReviewService {
     public Page<MyReviewResponseDTO> getMyReviews(String memberId, Pageable pageable) {
         return reviewRepository.findByWriterId(memberId, pageable)
                 .map(MyReviewResponseDTO::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UnwrittenReviewResponseDTO> getUnwrittenReviews(String memberId, Pageable pageable) {
+        return scheduleRepository.findUnwrittenReviews(memberId, pageable)
+                .map(UnwrittenReviewResponseDTO::from);
     }
 
     @Transactional(readOnly = true)

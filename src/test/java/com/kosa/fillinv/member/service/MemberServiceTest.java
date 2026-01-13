@@ -106,6 +106,38 @@ class MemberServiceTest {
                 assertThat(response.email()).isEqualTo(EMAIL);
                 assertThat(response.nickname()).isEqualTo(NICKNAME);
                 assertThat(response.phoneNum()).isEqualTo(PHONE_NUM);
+                assertThat(response.imageUrl()).isEqualTo("/resources/files/default.png");
+                assertThat(response.category().parentId()).isNull();
+        }
+
+        @Test
+        @DisplayName("부모 카테고리가 있는 프로필 정보를 조회")
+        void getProfile_WithParentCategory() {
+                // given
+                // 1. 부모 카테고리 생성 (999)
+                entityManager.createNativeQuery(
+                                "INSERT INTO categories (category_id, name, parent_category_id) VALUES (999, 'Parent', NULL)")
+                                .executeUpdate();
+                // 2. 자식 카테고리 생성 (1001, 부모는 999)
+                entityManager.createNativeQuery(
+                                "INSERT INTO categories (category_id, name, parent_category_id) VALUES (1001, 'Child', 999)")
+                                .executeUpdate();
+
+                // 3. 사용자의 카테고리를 1001로 변경
+                profileRepository.findById(savedMember.getId()).ifPresent(p -> {
+                        p.updateIntroduceAndCategory(p.getIntroduce(), 1001L);
+                        profileRepository.save(p);
+                });
+
+                entityManager.flush();
+                entityManager.clear();
+
+                // when
+                ProfileResponseDto response = memberService.getProfile(savedMember.getId());
+
+                // then
+                assertThat(response.category().categoryId()).isEqualTo(1001L);
+                assertThat(response.category().parentId()).isEqualTo(999L);
         }
 
         @Test
@@ -123,6 +155,18 @@ class MemberServiceTest {
                 Profile updatedProfile = profileRepository.findById(savedMember.getId()).orElseThrow();
                 assertThat(updatedProfile.getImage()).isNotNull();
                 assertThat(updatedProfile.getImage()).endsWith(".png");
+
+                // Get Profile로 조회 시 경로 확인
+                ProfileResponseDto response = memberService.getProfile(savedMember.getId());
+                assertThat(response.imageUrl()).startsWith("/resources/files/");
+                assertThat(response.imageUrl()).endsWith(".png");
+
+                // 파일 저장 확인
+                File savedFile = new File("src/test/resources/files/" + updatedProfile.getImage());
+                assertThat(savedFile.exists()).isTrue();
+
+                // updatedAt 갱신 확인
+                assertThat(updatedProfile.getUpdatedAt()).isAfter(savedMember.getCreatedAt());
         }
 
         @Test

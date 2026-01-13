@@ -1,17 +1,15 @@
 package com.kosa.fillinv.global.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kosa.fillinv.global.security.jwt.JWTUtil;
 import com.kosa.fillinv.global.security.filter.JwtAuthenticationFilter;
 import com.kosa.fillinv.global.security.filter.LoginFilter;
-
+import com.kosa.fillinv.global.security.jwt.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -75,13 +73,14 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                // .requestMatchers("/api/v1/members/login", "/error", "/api/v1/members/signup",
-                // "/v3/api-docs/**",
-                // "/swagger-ui/**", "/swagger-ui.html",
-                // "/api/v1/lessons/*/reviews", "/api/v1/lessons/**")
-                // .permitAll()
-                // .anyRequest().authenticated()
+                                .anyRequest().permitAll()
+//                        .requestMatchers("/resources/image/profile/**").permitAll()
+                        // .requestMatchers("/api/v1/members/login", "/error", "/api/v1/members/signup",
+                        // "/v3/api-docs/**",
+                        // "/swagger-ui/**", "/swagger-ui.html",
+                        // "/api/v1/lessons/*/reviews", "/api/v1/lessons/**")
+                        // .permitAll()
+                        // .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, objectMapper()),
                         UsernamePasswordAuthenticationFilter.class)

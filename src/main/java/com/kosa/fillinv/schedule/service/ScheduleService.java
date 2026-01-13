@@ -1,5 +1,7 @@
 package com.kosa.fillinv.schedule.service;
 
+import com.kosa.fillinv.category.entity.Category;
+import com.kosa.fillinv.category.repository.CategoryRepository;
 import com.kosa.fillinv.global.exception.BusinessException;
 import com.kosa.fillinv.global.response.ErrorCode;
 import com.kosa.fillinv.lesson.entity.AvailableTime;
@@ -13,10 +15,18 @@ import com.kosa.fillinv.member.repository.MemberRepository;
 import com.kosa.fillinv.schedule.dto.request.ScheduleCreateRequest;
 import com.kosa.fillinv.schedule.dto.response.ScheduleDetailResponse;
 import com.kosa.fillinv.schedule.entity.Schedule;
+import com.kosa.fillinv.schedule.entity.ScheduleStatus;
+import com.kosa.fillinv.schedule.entity.ScheduleTime;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true) // 기본적으로 모든 메서드는 읽기 전용 트랜잭션으로 동작
@@ -27,29 +37,135 @@ public class ScheduleService {
     private final LessonRepository lessonRepository;
     private final OptionRepository optionRepository;
     private final AvailableTimeRepository availableTimeRepository;
+    private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
 
-    // 스케쥴 생성
     @Transactional
     public String createSchedule(String memberId, ScheduleCreateRequest request) {
-        // 레슨 조회
-        Lesson lesson = lessonRepository.findById(request.lessonId())
+        Lesson lesson = getLesson(request.lessonId());
+
+        Schedule schedule = switch (lesson.getLessonType()) {
+            case MENTORING -> createMentoringSchedule(lesson, memberId, request);
+            case ONEDAY -> createOnedaySchedule(lesson, memberId, request);
+            case STUDY -> createStudySchedule(lesson, memberId);
+            default -> throw new BusinessException(ErrorCode.INVALID_LESSON_TYPE);
+        };
+
+        scheduleRepository.save(schedule);
+        return schedule.getId();
+    }
+
+    private Schedule createMentoringSchedule(
+            Lesson lesson,
+            String memberId,
+            ScheduleCreateRequest request
+    ) {
+        Option option = getOption(request.optionId());
+
+        Schedule schedule = buildBaseSchedule(lesson, memberId, option, null, option.getPrice());
+
+        Instant startTime = request.startTime();
+        Instant endTime = startTime.plus(option.getMinute(), ChronoUnit.MINUTES);
+
+        schedule.addScheduleTime(
+                ScheduleTime.of(startTime, endTime, schedule)
+        );
+
+        return schedule;
+    }
+
+    private Schedule createOnedaySchedule(
+            Lesson lesson,
+            String memberId,
+            ScheduleCreateRequest request
+    ) {
+        AvailableTime availableTime = getAvailableTime(request.availableTimeId());
+
+        Schedule schedule = buildBaseSchedule(lesson, memberId, null, availableTime, availableTime.getPrice());
+
+        schedule.addScheduleTime(
+                ScheduleTime.of(
+                        availableTime.getStartTime(),
+                        availableTime.getEndTime(),
+                        schedule
+                )
+        );
+
+        return schedule;
+    }
+
+    private Schedule createStudySchedule(
+            Lesson lesson,
+            String memberId
+    ) {
+        Schedule schedule = buildBaseSchedule(lesson, memberId, null, null, lesson.getPrice());
+
+        List<ScheduleTime> times = availableTimeRepository
+                .findAllByLessonId(lesson.getId())
+                .stream()
+                .map(at -> ScheduleTime.of(at.getStartTime(), at.getEndTime(), schedule))
+                .toList();
+
+        schedule.addScheduleTime(times);
+        return schedule;
+    }
+
+    private Schedule buildBaseSchedule(
+            Lesson lesson,
+            String memberId,
+            Option option,
+            AvailableTime availableTime,
+            Integer price
+    ) {
+        Category category = getCategory(lesson.getCategoryId());
+        Member mentor = getMentor(lesson.getMentorId());
+
+        return Schedule.builder()
+                .id(UUID.randomUUID().toString())
+                .mentorId(lesson.getMentorId())
+                .menteeId(memberId)
+                .mentorNickname(mentor.getNickname())
+                .lessonId(lesson.getId())
+                .lessonTitle(lesson.getTitle())
+                .lessonType(lesson.getLessonType().name())
+                .lessonDescription(lesson.getDescription())
+                .lessonLocation(
+                        lesson.getLocation() != null ? lesson.getLocation() : "장소 미정"
+                )
+                .lessonCategoryName(category.getName())
+                .price(price)
+                .optionId(option != null ? option.getId() : null)
+                .optionName(option != null ? option.getName() : null)
+                .optionMinute(option != null ? option.getMinute() : null)
+                .availableTimeId(availableTime != null ? availableTime.getId() : null)
+                .status(ScheduleStatus.PAYMENT_PENDING)
+                .scheduleTimeList(new ArrayList<>())
+                .build();
+    }
+
+    private Member getMentor(String mentorId) {
+        return memberRepository.findById(mentorId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENTOR_NOT_FOUND));
+    }
+
+    private Lesson getLesson(String lessonId) {
+        return lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LESSON_NOT_FOUND));
+    }
 
-        // 옵션 조회
-        Option option = optionRepository.findById(request.optionId())
+    private Option getOption(String optionId) {
+        return optionRepository.findById(optionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.OPTION_NOT_FOUND));
+    }
 
-        // 가능한 시간대 조회
-        AvailableTime availableTime = availableTimeRepository.findById(request.availableTimeId())
+    private AvailableTime getAvailableTime(String id) {
+        return availableTimeRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.AVAILABLE_TIME_NOT_FOUND));
+    }
 
-        // Factory Method를 통한 스케쥴 생성
-        Schedule schedule = Schedule.create(lesson, option, availableTime, request.startTime(), memberId);
-
-        Schedule savedSchedule = scheduleRepository.save(schedule);
-
-        return savedSchedule.getId();
+    private Category getCategory(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
     // 스케쥴 상세 조회

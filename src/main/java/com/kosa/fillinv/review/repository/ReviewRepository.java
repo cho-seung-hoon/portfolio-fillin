@@ -31,7 +31,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     Page<ReviewWithNicknameVO> findReviewsWithNicknameByLessonId(@Param("lessonId") String lessonId, Pageable pageable);
 
     @Query("SELECT new com.kosa.fillinv.review.dto.MyReviewVO(" +
-            "r, s.lessonCategoryName, s.optionName, s.startTime, m.nickname) " +
+            "r, s.lessonCategoryName, s.optionName, s.createdAt, m.nickname) " +
             "FROM Review r " +
             "JOIN r.schedule s " +
             "JOIN Lesson l ON s.lessonId = l.id " +

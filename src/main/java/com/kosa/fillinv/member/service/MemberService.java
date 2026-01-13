@@ -59,12 +59,16 @@ public class MemberService {
                 .orElseThrow(CategoryException.NotFound::new);
 
         return ProfileResponseDto.builder()
-                .imageUrl(profile.getImage())
+                .imageUrl(profile.getImage() != null ? "/resources/files/" + profile.getImage()
+                        : null)
                 .nickname(member.getNickname())
                 .email(member.getEmail())
                 .phoneNum(member.getPhoneNum())
                 .introduction(profile.getIntroduce())
-                .category(new CategoryResponseDto(category.getId(), category.getName()))
+                .category(new CategoryResponseDto(
+                        category.getId(),
+                        category.getName(),
+                        category.getParentCategory() != null ? category.getParentCategory().getId() : null))
                 .build();
     }
 
