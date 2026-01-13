@@ -60,7 +60,7 @@ public class MemberService {
 
         return ProfileResponseDto.builder()
                 .imageUrl(profile.getImage() != null ? "/resources/files/" + profile.getImage()
-                        : "/resources/files/default.png")
+                        : null)
                 .nickname(member.getNickname())
                 .email(member.getEmail())
                 .phoneNum(member.getPhoneNum())
