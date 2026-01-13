@@ -4,6 +4,7 @@ import com.kosa.fillinv.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -76,7 +77,7 @@ public class Schedule extends BaseEntity {
 
     // STUDY 레슨은 여러 scheduleTime을 가질 수 있기 때문에 List 사용
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
-    private List<ScheduleTime> scheduleTimeList;
+    private List<ScheduleTime> scheduleTimeList = new ArrayList<>();
 
     public void addScheduleTime(ScheduleTime scheduleTime) {
         scheduleTime.setSchedule(this);
