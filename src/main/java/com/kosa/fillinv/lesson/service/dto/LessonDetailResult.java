@@ -42,7 +42,8 @@ public record LessonDetailResult(
             String lessonType,
             String title,
             String thumbnailImage,
-            Integer price
+            Integer price,
+            Long categoryId
     ) {
         public static Lesson of(LessonDTO lessonDTO) {
             return new Lesson(
@@ -51,7 +52,8 @@ public record LessonDetailResult(
                     lessonDTO.lessonType().name(),
                     lessonDTO.title(),
                     lessonDTO.thumbnailImage(),
-                    lessonDTO.price()
+                    lessonDTO.price(),
+                    lessonDTO.categoryId()
             );
         }
     }
