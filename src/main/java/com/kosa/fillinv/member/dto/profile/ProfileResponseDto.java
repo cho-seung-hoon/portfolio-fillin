@@ -5,6 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record ProfileResponseDto(
+        String memberId,
         String imageUrl,
         String nickname,
         String email,
