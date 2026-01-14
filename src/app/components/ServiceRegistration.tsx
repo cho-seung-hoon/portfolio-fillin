@@ -13,6 +13,8 @@ import { Label } from "./ui/label";
 import {
   ArrowLeft,
   Save,
+  MapPin,
+  Calendar as CalendarIcon
 } from "lucide-react";
 
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
@@ -28,58 +30,136 @@ interface ServiceRegistrationProps {
 export function ServiceRegistration({
   onBack,
 }: ServiceRegistrationProps) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [serviceType, setServiceType] = useState("");
+  // Store usage
+  const {
+    title, setTitle,
+    lessonType, setLessonType, // ServiceType
+    description, setDescription, // Content
+    location, setLocation,
+    categoryId, setCategoryId,
+    closeAt, setCloseAt,
+    // Global Price/Seats (for Study)
+    price, seats,
+    availableTimeList, // For Study (and others if migrated)
+    // Actions/Setters needed? Most work directly.
+    setOptionList, // If we were to sync Mentoring
+    setAvailableTimeList // If we were to sync others
+  } = useServiceRegistrationStore();
 
-  // State for Mentoring
+  // Local state for Mentoring/OneDay until fully migrated 
+  // (We use local state to capture output from children, then merge on submit)
   const [mentoringData, setMentoringData] = useState<MentoringData>({
     options: [],
     schedules: {}
   });
 
-  // State for OneDay Class 
   const [oneDayClassData, setOneDayClassData] = useState<OneDayClassData>({ sessions: [] });
 
-  // Store for Study
-  const { studyPrice, studySeats, studySessions } = useServiceRegistrationStore();
+  // Wrapper for ServiceType to sync with store
+  const handleServiceTypeChange = (value: string) => {
+    setLessonType(value);
+  };
+
+  // Helper to convert Local Date+Time string to ISO 8601 (UTC)
+  const toLocalISOString = (dateStr: string, timeStr: string) => {
+    // Create date object treating input as Local Time
+    const localDate = new Date(`${dateStr}T${timeStr}`);
+    return localDate.toISOString();
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (serviceType === "1-1-mentoring") {
-      console.log({ title, content, serviceType, ...mentoringData });
-    } else if (serviceType === "1-n-oneday") {
-      console.log({ title, content, serviceType, ...oneDayClassData });
-    } else if (serviceType === "1-n-study") {
-      console.log({
-        title,
-        content,
-        serviceType,
-        price: studyPrice,
-        seats: studySeats,
-        sessions: studySessions
+
+    // Prepare DTO structure
+    const requestDTO = {
+      title,
+      lessonType,
+      description,
+      location,
+      categoryId: 1, // Defaulting for now as UI might be simple input or hidden
+      closeAt: closeAt || null,
+      price: 0,
+      seats: 0,
+      optionList: [] as any[],
+      availableTimeList: [] as any[]
+    };
+
+    if (lessonType === "1-1-mentoring") {
+      // Map Mentoring Data to DTO
+      // Mentoring Options -> optionList
+      requestDTO.optionList = mentoringData.options.map(opt => ({
+        name: opt.name,
+        // Mentoring options have multiple price options (minute/price). 
+        // flexible structure? DTO Option has (name, minute, price).
+        // If UI allows multiple prices per option, we might need to flatten or pick one?
+        // Assuming flattened: "Basic Consult" -> 30min/10000, 60min/20000.
+        // DTO Option seems to be the combination. 
+        // We'll flatten here: For each UI Option, for each PriceOption -> DTO Option
+      }));
+      // Actually, let's look at the DTO. Option(name, minute, price). 
+      // Our UI MentoringOption has name, and LIST of priceOptions. 
+      // We probably need to flatten: OptionName="Basic - 30min", minute=30, price=...
+      const flattenedOptions: any[] = [];
+      mentoringData.options.forEach(opt => {
+        opt.priceOptions.forEach(po => {
+          flattenedOptions.push({
+            name: `${opt.name} (${po.duration}분)`,
+            minute: Number(po.duration),
+            price: Number(po.price)
+          });
+        });
       });
+      requestDTO.optionList = flattenedOptions;
+
+      // Mentoring Schedules -> availableTimeList
+      // Mentoring uses "slots".
+      const flatTimes: any[] = [];
+      Object.entries(mentoringData.schedules).forEach(([dateKey, slots]) => {
+        slots.forEach(slot => {
+          flatTimes.push({
+            startTime: toLocalISOString(dateKey, `${slot.startTime}:00`),
+            endTime: toLocalISOString(dateKey, `${slot.endTime}:00`),
+            price: 0, // Mentoring price is in Option
+            seats: 1  // Usually 1 for 1:1
+          });
+        });
+      });
+      requestDTO.availableTimeList = flatTimes;
+
+    } else if (lessonType === "1-n-oneday") {
+      // Map OneDay Data
+      // OneDay has sessions with individual price/seats
+      const flatTimes: any[] = [];
+      oneDayClassData.sessions.forEach(session => {
+        flatTimes.push({
+          startTime: toLocalISOString(session.date, `${session.startTime}:00`),
+          endTime: toLocalISOString(session.date, `${session.endTime}:00`),
+          price: session.price,
+          seats: session.seats
+        });
+      });
+      requestDTO.availableTimeList = flatTimes;
+
+    } else if (lessonType === "1-n-study") {
+      // Study Data (Already in Store)
+      requestDTO.price = price;
+      requestDTO.seats = seats;
+      requestDTO.availableTimeList = availableTimeList; // Already formatted in StudySessionSection or close to it
     }
-    alert("서비스가 등록되었습니다!");
-    onBack();
+
+    console.log("RegisterLessonRequest:", requestDTO);
+    alert("서비스 등록 요청 (콘솔 확인)");
   };
 
   const isFormValid = () => {
-    if (!title || !content || !serviceType) return false;
+    if (!title || !description || !lessonType) return false;
 
-    if (serviceType === "1-1-mentoring") {
-      return mentoringData.options.every(
-        (opt) =>
-          opt.name &&
-          opt.priceOptions.length > 0 &&
-          opt.priceOptions.every(
-            (po) => po.duration && po.price,
-          ),
-      );
-    } else if (serviceType === "1-n-oneday") {
+    if (lessonType === "1-1-mentoring") {
+      return mentoringData.options.length > 0; // Simplified
+    } else if (lessonType === "1-n-oneday") {
       return oneDayClassData.sessions.length > 0;
-    } else if (serviceType === "1-n-study") {
-      return studyPrice > 0 && studySeats > 0 && studySessions.length > 0;
+    } else if (lessonType === "1-n-study") {
+      return price > 0 && seats > 0 && availableTimeList.length > 0;
     }
     return false;
   };
@@ -123,10 +203,6 @@ export function ServiceRegistration({
                     placeholder="예: React 완벽 가이드 1:1 멘토링"
                     required
                   />
-                  <p className="text-sm text-gray-500">
-                    멘티들이 쉽게 이해할 수 있는 명확한 제목을
-                    작성해주세요
-                  </p>
                 </div>
 
                 {/* 서비스 내용 */}
@@ -134,34 +210,69 @@ export function ServiceRegistration({
                   <Label htmlFor="content">서비스 내용</Label>
                   <Textarea
                     id="content"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="서비스에 대한 상세 설명을 작성해주세요&#10;&#10;- 어떤 내용을 다루나요?&#10;- 누구에게 추천하나요?&#10;- 어떤 결과를 얻을 수 있나요?"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="서비스 상세 설명..."
                     className="min-h-[200px]"
                     required
                   />
                 </div>
+
+                {/* 위치 (Location) */}
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="flex items-center gap-2">
+                    <MapPin className="size-4" />
+                    진행 장소
+                  </Label>
+                  <Input
+                    id="location"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="예: 강남역 인근 카페 / 온라인 (Zoom)"
+                  />
+                </div>
+
+                {/* 마감일 (Deadline) */}
+                <div className="space-y-2">
+                  <Label htmlFor="closeAt" className="flex items-center gap-2">
+                    <CalendarIcon className="size-4" />
+                    모집 마감일
+                  </Label>
+                  <Input
+                    id="closeAt"
+                    type="date"
+                    value={closeAt ? new Date(closeAt).toLocaleDateString('en-CA') : ''} // Display as YYYY-MM-DD
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setCloseAt(toLocalISOString(e.target.value, "23:59:59"));
+                      } else {
+                        setCloseAt(null);
+                      }
+                    }}
+                  />
+                </div>
+
               </CardContent>
             </Card>
 
             {/* 서비스 종류 선택 */}
             <ServiceTypeSelectionSection
-              serviceType={serviceType}
-              setServiceType={setServiceType}
+              serviceType={lessonType}
+              setServiceType={handleServiceTypeChange}
             />
 
-            {/* 1:1 멘토링 (옵션 + 스케줄) */}
-            {serviceType === "1-1-mentoring" && (
+            {/* 1:1 멘토링 */}
+            {lessonType === "1-1-mentoring" && (
               <MentoringSection onChange={setMentoringData} />
             )}
 
-            {/* 원데이 클래스 일정 설정 - 1:N 원데이일 때만 표시 (세션별 가격/인원) */}
-            {serviceType === "1-n-oneday" && (
+            {/* 1:N 원데이 */}
+            {lessonType === "1-n-oneday" && (
               <OneDayClassSection onChange={setOneDayClassData} />
             )}
 
-            {/* 스터디 일정 설정 - 1:N 스터디일 때만 표시 (전체 가격/인원) */}
-            {serviceType === "1-n-study" && (
+            {/* 1:N 스터디 (상태는 Store에서 관리) */}
+            {lessonType === "1-n-study" && (
               <StudySessionSection />
             )}
 

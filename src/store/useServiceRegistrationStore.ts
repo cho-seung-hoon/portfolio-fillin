@@ -1,40 +1,99 @@
 
 import { create } from 'zustand';
 
-export interface StudySession {
-    id: string;
-    date: string;
-    startTime: string;
-    endTime: string;
+export interface Option {
+    name: string;
+    minute: number;
+    price: number;
+}
+
+export interface AvailableTime {
+    startTime: string; // ISO String or similar
+    endTime: string;   // ISO String or similar
+    price: number;
+    seats: number;
 }
 
 interface ServiceRegistrationState {
-    // Study Session State
-    studyPrice: number;
-    studySeats: number;
-    studySessions: StudySession[];
+    // Basic Info
+    title: string;
+    lessonType: string;
+    description: string;
+    location: string;
+    categoryId: number;
+    closeAt: string | null;
+
+    // Top-level Price/Seats (Used by Study, maybe OneDay)
+    price: number;
+    seats: number;
+
+    // Options (Used by Mentoring)
+    optionList: Option[];
+
+    // Available Times (Used by Mentoring, OneDay, Study)
+    availableTimeList: AvailableTime[];
 
     // Actions
-    setStudyPrice: (price: number) => void;
-    setStudySeats: (seats: number) => void;
-    addStudySession: (session: StudySession) => void;
-    removeStudySession: (id: string) => void;
-    resetStudySessions: () => void;
+    setTitle: (title: string) => void;
+    setLessonType: (type: string) => void;
+    setDescription: (description: string) => void;
+    setLocation: (location: string) => void;
+    setCategoryId: (id: number) => void;
+    setCloseAt: (date: string | null) => void;
+
+    setPrice: (price: number) => void;
+    setSeats: (seats: number) => void;
+
+    setOptionList: (options: Option[]) => void;
+    setAvailableTimeList: (times: AvailableTime[]) => void;
+    addAvailableTime: (time: AvailableTime) => void;
+    removeAvailableTime: (index: number) => void;
+
+    reset: () => void;
 }
 
 export const useServiceRegistrationStore = create<ServiceRegistrationState>((set) => ({
-    studyPrice: 0,
-    studySeats: 0,
-    studySessions: [],
+    title: "",
+    lessonType: "",
+    description: "",
+    location: "",
+    categoryId: 0,
+    closeAt: null,
+    price: 0,
+    seats: 0,
+    optionList: [],
+    availableTimeList: [],
 
-    setStudyPrice: (price) => set({ studyPrice: price }),
-    setStudySeats: (seats) => set({ studySeats: seats }),
-    addStudySession: (session) =>
-        set((state) => ({ studySessions: [...state.studySessions, session] })),
-    removeStudySession: (id) =>
+    setTitle: (title) => set({ title }),
+    setLessonType: (lessonType) => set({ lessonType }),
+    setDescription: (description) => set({ description }),
+    setLocation: (location) => set({ location }),
+    setCategoryId: (categoryId) => set({ categoryId }),
+    setCloseAt: (closeAt) => set({ closeAt }),
+
+    setPrice: (price) => set({ price }),
+    setSeats: (seats) => set({ seats }),
+
+    setOptionList: (optionList) => set({ optionList }),
+    setAvailableTimeList: (availableTimeList) => set({ availableTimeList }),
+    addAvailableTime: (time) =>
+        set((state) => ({ availableTimeList: [...state.availableTimeList, time] })),
+    removeAvailableTime: (index) =>
         set((state) => ({
-            studySessions: state.studySessions.filter((s) => s.id !== id),
+            availableTimeList: state.availableTimeList.filter((_, i) => i !== index),
         })),
-    resetStudySessions: () =>
-        set({ studyPrice: 0, studySeats: 0, studySessions: [] }),
+
+    reset: () =>
+        set({
+            title: "",
+            lessonType: "",
+            description: "",
+            location: "",
+            categoryId: 0,
+            closeAt: null,
+            price: 0,
+            seats: 0,
+            optionList: [],
+            availableTimeList: [],
+        }),
 }));

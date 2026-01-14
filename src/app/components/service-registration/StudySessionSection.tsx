@@ -8,17 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useServiceRegistrationStore, StudySession } from "../../../store/useServiceRegistrationStore";
+import { useServiceRegistrationStore, AvailableTime } from "../../../store/useServiceRegistrationStore";
 
 export function StudySessionSection() {
     const {
-        studyPrice,
-        studySeats,
-        studySessions,
-        setStudyPrice,
-        setStudySeats,
-        addStudySession,
-        removeStudySession
+        price,
+        seats,
+        availableTimeList,
+        setPrice,
+        setSeats,
+        addAvailableTime,
+        removeAvailableTime
     } = useServiceRegistrationStore();
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -31,28 +31,52 @@ export function StudySessionSection() {
             return;
         }
 
-        const newSession: StudySession = {
-            id: Date.now().toString(),
-            date: format(selectedDate, "yyyy-MM-dd"),
-            startTime: newSessionStartTime,
-            endTime: newSessionEndTime,
+        // ISO 8601 formatting for Instant compatibility logic handled on submit or here?
+        // User requested "align data", DTO expects Instant. 
+        // The Store defines AvailableTime as { startTime: string; endTime: string; ... }
+        // We will store simpler strings here and parent can format, OR we format here.
+        // Let's store "YYYY-MM-DDTHH:mm:00" format which is close to Instant.
+
+        const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+        // Convert Local Date+Time to ISO 8601 (UTC)
+        const startDateTime = new Date(`${dateStr}T${newSessionStartTime}:00`).toISOString();
+        const endDateTime = new Date(`${dateStr}T${newSessionEndTime}:00`).toISOString();
+
+        const newSession: AvailableTime = {
+            startTime: startDateTime,
+            endTime: endDateTime,
+            price: 0,
+            seats: 0,
         };
 
-        addStudySession(newSession);
+        addAvailableTime(newSession);
         setNewSessionStartTime("");
         setNewSessionEndTime("");
     };
 
-    const getSessionsForDate = (dateKey: string) => {
-        return studySessions.filter((s) => s.date === dateKey);
+    // Helper to extract date from ISO string (Local)
+    const getDateFromISO = (isoString: string) => {
+        return format(new Date(isoString), "yyyy-MM-dd");
     };
 
-    const getSessionNumber = (id: string) => {
-        const sorted = [...studySessions].sort((a, b) => {
-            if (a.date !== b.date) return a.date.localeCompare(b.date);
-            return a.startTime.localeCompare(b.startTime);
-        });
-        return sorted.findIndex(s => s.id === id) + 1;
+    const getSessionsForDate = (dateKey: string) => {
+        return availableTimeList.filter((s) => getDateFromISO(s.startTime) === dateKey);
+    };
+
+    const getSessionTimeRange = (session: AvailableTime) => {
+        // Display time in simpler format (HH:mm)
+        const start = format(new Date(session.startTime), "HH:mm");
+        const end = format(new Date(session.endTime), "HH:mm");
+        return `${start} - ${end}`;
+    };
+
+    // Logic to find index for removal
+    const handleRemoveSession = (targetSession: AvailableTime) => {
+        const index = availableTimeList.indexOf(targetSession);
+        if (index !== -1) {
+            removeAvailableTime(index);
+        }
     };
 
     return (
@@ -74,8 +98,8 @@ export function StudySessionSection() {
                             </Label>
                             <Input
                                 type="number"
-                                value={studyPrice || ''}
-                                onChange={(e) => setStudyPrice(Number(e.target.value))}
+                                value={price || ''}
+                                onChange={(e) => setPrice(Number(e.target.value))}
                                 placeholder="50000"
                                 min="0"
                                 className="bg-white"
@@ -88,8 +112,8 @@ export function StudySessionSection() {
                             </Label>
                             <Input
                                 type="number"
-                                value={studySeats || ''}
-                                onChange={(e) => setStudySeats(Number(e.target.value))}
+                                value={seats || ''}
+                                onChange={(e) => setSeats(Number(e.target.value))}
                                 placeholder="10"
                                 min="1"
                                 className="bg-white"
@@ -110,12 +134,12 @@ export function StudySessionSection() {
                             if (dateSessions.length === 0) return null;
                             return (
                                 <div className="space-y-1">
-                                    {dateSessions.slice(0, 2).map((session) => (
+                                    {dateSessions.slice(0, 2).map((session, idx) => (
                                         <div
-                                            key={session.id}
+                                            key={idx}
                                             className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
                                         >
-                                            {session.startTime}-{session.endTime}
+                                            {getSessionTimeRange(session)}
                                         </div>
                                     ))}
                                     {dateSessions.length > 2 && (
@@ -174,24 +198,21 @@ export function StudySessionSection() {
                                         </span>
                                     </div>
                                     <div className="space-y-2">
-                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session) => (
+                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session, idx) => (
                                             <div
-                                                key={session.id}
+                                                key={idx}
                                                 className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-sm font-medium text-gray-500">
-                                                        {getSessionNumber(session.id)}회차
-                                                    </span>
                                                     <span className="text-sm font-medium">
-                                                        {session.startTime} - {session.endTime}
+                                                        {getSessionTimeRange(session)}
                                                     </span>
                                                 </div>
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removeStudySession(session.id)}
+                                                    onClick={() => handleRemoveSession(session)}
                                                     className="text-gray-400 hover:text-gray-600"
                                                 >
                                                     <Trash2 className="size-4" />
@@ -204,20 +225,21 @@ export function StudySessionSection() {
                         </div>
                     )}
 
-                    {studySessions.length > 0 && (
+                    {availableTimeList.length > 0 && (
                         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                             <h5 className="font-medium text-blue-900 mb-2">전체 회차 요약</h5>
                             <p className="text-sm text-blue-700 mb-3">
-                                총 {studySessions.length}개의 회차가 등록되었습니다
+                                총 {availableTimeList.length}개의 회차가 등록되었습니다
                             </p>
                             <div className="space-y-3">
                                 {(() => {
-                                    const groupedByDate: { [date: string]: typeof studySessions } = {};
-                                    studySessions.forEach(session => {
-                                        if (!groupedByDate[session.date]) {
-                                            groupedByDate[session.date] = [];
+                                    const groupedByDate: { [date: string]: typeof availableTimeList } = {};
+                                    availableTimeList.forEach(session => {
+                                        const date = getDateFromISO(session.startTime);
+                                        if (!groupedByDate[date]) {
+                                            groupedByDate[date] = [];
                                         }
-                                        groupedByDate[session.date].push(session);
+                                        groupedByDate[date].push(session);
                                     });
 
                                     const sortedDates = Object.keys(groupedByDate).sort();
@@ -233,14 +255,13 @@ export function StudySessionSection() {
                                                     {format(dateObj, "M월 d일 (EEE)", { locale: ko })}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {dateSessions.map((session) => (
+                                                    {dateSessions.map((session, idx) => (
                                                         <div
-                                                            key={session.id}
+                                                            key={idx}
                                                             className="text-xs bg-blue-50 px-3 py-1.5 rounded border border-blue-100"
                                                         >
-                                                            <span className="font-medium text-blue-900">{getSessionNumber(session.id)}회차: </span>
                                                             <span className="text-gray-600">
-                                                                {session.startTime} - {session.endTime}
+                                                                {getSessionTimeRange(session)}
                                                             </span>
                                                         </div>
                                                     ))}
