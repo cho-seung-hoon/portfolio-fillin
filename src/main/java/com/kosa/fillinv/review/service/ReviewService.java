@@ -69,7 +69,7 @@ public class ReviewService {
             throw new ReviewException(ErrorCode.REVIEW_NOT_ALLOWED);
         }
 
-        if (!schedule.getMentee().equals(memberId)) {
+        if (!schedule.getMenteeId().equals(memberId)) {
             throw new ReviewException(ErrorCode.ACCESS_DENIED);
         }
 
