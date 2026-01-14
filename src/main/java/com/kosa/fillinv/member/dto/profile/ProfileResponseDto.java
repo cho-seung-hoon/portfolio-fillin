@@ -23,7 +23,7 @@ public record ProfileResponseDto(
                 member.getEmail(),
                 member.getPhoneNum(),
                 profile != null ? profile.getIntroduce() : null,
-                CategoryResponseDto.of(category)
+                category != null ? CategoryResponseDto.of(category) : null
         );
     }
 }
