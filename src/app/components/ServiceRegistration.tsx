@@ -13,38 +13,14 @@ import {
   ArrowLeft,
   Save,
 } from "lucide-react";
-import { format } from "date-fns";
 
-import { MentoringScheduleSection } from "./service-registration/MentoringScheduleSection";
-import { MentoringOptionSection } from "./service-registration/MentoringOptionSection";
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
 import { OneDayClassSection, OneDayClassData } from "./service-registration/OneDayClassSection";
 import { StudySessionSection, StudySessionData } from "./service-registration/StudySessionSection";
+import { MentoringSection, MentoringData } from "./service-registration/MentoringSection";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
-}
-
-export interface PriceOption {
-  id: string;
-  duration: string;
-  price: string;
-}
-
-export interface ServiceOption {
-  id: string;
-  name: string;
-  priceOptions: PriceOption[];
-}
-
-export interface AvailableTime {
-  id: string;
-  startTime: string;
-  endTime: string;
-}
-
-export interface DaySchedule {
-  [dateKey: string]: AvailableTime[];
 }
 
 export function ServiceRegistration({
@@ -53,12 +29,12 @@ export function ServiceRegistration({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [serviceType, setServiceType] = useState("");
-  const [options, setOptions] = useState<ServiceOption[]>([
-    { id: "1", name: "", priceOptions: [] },
-  ]);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [daySchedules, setDaySchedules] = useState<DaySchedule>({});
-  const [selectingStartHour, setSelectingStartHour] = useState<number | null>(null);
+
+  // State for Mentoring
+  const [mentoringData, setMentoringData] = useState<MentoringData>({
+    options: [],
+    schedules: {}
+  });
 
   // State for OneDay Class 
   const [oneDayClassData, setOneDayClassData] = useState<OneDayClassData>({ sessions: [] });
@@ -68,7 +44,7 @@ export function ServiceRegistration({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (serviceType === "1-1-mentoring") {
-      console.log({ title, content, serviceType, options, daySchedules });
+      console.log({ title, content, serviceType, ...mentoringData });
     } else if (serviceType === "1-n-oneday") {
       console.log({ title, content, serviceType, ...oneDayClassData });
     } else if (serviceType === "1-n-study") {
@@ -78,160 +54,11 @@ export function ServiceRegistration({
     onBack();
   };
 
-  const addOption = () => {
-    setOptions([
-      ...options,
-      { id: Date.now().toString(), name: "", priceOptions: [] },
-    ]);
-  };
-
-  const removeOption = (id: string) => {
-    if (options.length > 1) {
-      setOptions(options.filter((option) => option.id !== id));
-    }
-  };
-
-  const updateOptionName = (id: string, name: string) => {
-    setOptions(
-      options.map((option) =>
-        option.id === id ? { ...option, name } : option,
-      ),
-    );
-  };
-
-  const addPriceOption = (optionId: string) => {
-    setOptions(
-      options.map((option) =>
-        option.id === optionId
-          ? {
-            ...option,
-            priceOptions: [
-              ...option.priceOptions,
-              {
-                id: Date.now().toString(),
-                duration: "",
-                price: "",
-              },
-            ],
-          }
-          : option,
-      ),
-    );
-  };
-
-  const removePriceOption = (
-    optionId: string,
-    priceOptionId: string,
-  ) => {
-    setOptions(
-      options.map((option) =>
-        option.id === optionId
-          ? {
-            ...option,
-            priceOptions: option.priceOptions.filter(
-              (po) => po.id !== priceOptionId,
-            ),
-          }
-          : option,
-      ),
-    );
-  };
-
-  const updatePriceOption = (
-    optionId: string,
-    priceOptionId: string,
-    field: keyof PriceOption,
-    value: string,
-  ) => {
-    setOptions(
-      options.map((option) =>
-        option.id === optionId
-          ? {
-            ...option,
-            priceOptions: option.priceOptions.map((po) =>
-              po.id === priceOptionId
-                ? { ...po, [field]: value }
-                : po,
-            ),
-          }
-          : option,
-      ),
-    );
-  };
-
-  // 캘린더 관련 함수 (1:1 멘토링용)
-  const getDateKey = (date: Date) => {
-    return format(date, "yyyy-MM-dd");
-  };
-
-  const handleTimeBarClick = (hour: number) => {
-    if (!selectedDate) return;
-
-    if (selectingStartHour === null) {
-      // 첫 번째 클릭: 시작 시간 선택
-      setSelectingStartHour(hour);
-    } else {
-      // 두 번째 클릭: 종료 시간 선택
-      const startHour = Math.min(selectingStartHour, hour);
-      const endHour = Math.max(selectingStartHour, hour) + 1;
-
-      const dateKey = getDateKey(selectedDate);
-      const newTimeSlot: AvailableTime = {
-        id: Date.now().toString(),
-        startTime: `${String(startHour).padStart(2, '0')}:00`,
-        endTime: `${String(endHour).padStart(2, '0')}:00`,
-      };
-
-      setDaySchedules({
-        ...daySchedules,
-        [dateKey]: [...(daySchedules[dateKey] || []), newTimeSlot],
-      });
-
-      // 선택 초기화
-      setSelectingStartHour(null);
-    }
-  };
-
-  const removeTimeSlot = (timeId: string) => {
-    if (!selectedDate) return;
-
-    const dateKey = getDateKey(selectedDate);
-    setDaySchedules({
-      ...daySchedules,
-      [dateKey]: daySchedules[dateKey].filter((t) => t.id !== timeId),
-    });
-  };
-
-  const getSelectedDateSchedule = () => {
-    if (!selectedDate) return [];
-    return daySchedules[getDateKey(selectedDate)] || [];
-  };
-
-  const isHourInSchedule = (hour: number) => {
-    const schedule = getSelectedDateSchedule();
-
-    return schedule.some(slot => {
-      const slotStart = parseInt(slot.startTime.split(':')[0]);
-      const slotEnd = parseInt(slot.endTime.split(':')[0]);
-
-      return hour >= slotStart && hour < slotEnd;
-    });
-  };
-
-  const isHourInSelectingRange = (hour: number) => {
-    if (selectingStartHour === null) return false;
-
-    const min = Math.min(selectingStartHour, hour);
-    const max = Math.max(selectingStartHour, hour);
-
-    return hour >= min && hour <= max;
-  };
-
   const isFormValid = () => {
     if (!title || !content || !serviceType) return false;
 
     if (serviceType === "1-1-mentoring") {
-      return options.every(
+      return mentoringData.options.every(
         (opt) =>
           opt.name &&
           opt.priceOptions.length > 0 &&
@@ -313,31 +140,9 @@ export function ServiceRegistration({
               setServiceType={setServiceType}
             />
 
-            {/* 1:1 멘토링 옵션 */}
+            {/* 1:1 멘토링 (옵션 + 스케줄) */}
             {serviceType === "1-1-mentoring" && (
-              <MentoringOptionSection
-                options={options}
-                addOption={addOption}
-                removeOption={removeOption}
-                updateOptionName={updateOptionName}
-                addPriceOption={addPriceOption}
-                removePriceOption={removePriceOption}
-                updatePriceOption={updatePriceOption}
-              />
-            )}
-
-            {/* 가능한 시간 설정 (캘린더) - 1:1 멘토링일 때만 표시 */}
-            {serviceType === "1-1-mentoring" && (
-              <MentoringScheduleSection
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                daySchedules={daySchedules}
-                selectingStartHour={selectingStartHour}
-                onTimeBarClick={handleTimeBarClick}
-                isHourInSchedule={isHourInSchedule}
-                isHourInSelectingRange={isHourInSelectingRange}
-                onRemoveTimeSlot={removeTimeSlot}
-              />
+              <MentoringSection onChange={setMentoringData} />
             )}
 
             {/* 원데이 클래스 일정 설정 - 1:N 원데이일 때만 표시 (세션별 가격/인원) */}
