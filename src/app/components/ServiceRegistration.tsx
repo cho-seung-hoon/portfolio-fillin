@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -14,8 +13,16 @@ import {
   ArrowLeft,
   Save,
   MapPin,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Tag
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
 import { OneDayClassSection } from "./service-registration/OneDayClassSection";
@@ -27,6 +34,10 @@ import { useStudyRegistrationStore } from "../../store/useStudyRegistrationStore
 import { useMentoringRegistrationStore } from "../../store/useMentoringRegistrationStore";
 import { useOneDayRegistrationStore } from "../../store/useOneDayRegistrationStore";
 import { useLessonFormStore } from "../../store/useLessonFormStore";
+
+// API
+import { categoryService } from "../../api/category";
+import { CategoryResponseDto } from "../../api/types";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -43,13 +54,31 @@ export function ServiceRegistration({
     location, setLocation,
     closeAt, setCloseAt,
     lessonType, setLessonType,
-    categoryId
+    categoryId, setCategoryId
   } = useLessonFormStore();
 
   // --- Specific Stores ---
   const mentoringStore = useMentoringRegistrationStore();
   const oneDayStore = useOneDayRegistrationStore();
   const studyStore = useStudyRegistrationStore();
+
+  const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
+
+  // Fetch Categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        setCategories(data);
+        if (data.length > 0 && categoryId === 1) {
+          // Optional: Auto-select first if currently default(1) [Or keep 1 if it's "General"]
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    fetchCategories();
+  }, [categoryId]);
 
   // Helper to convert Local Date+Time string to ISO 8601 (UTC)
   const toLocalISOString = (dateStr: string, timeStr: string) => {
@@ -110,7 +139,7 @@ export function ServiceRegistration({
   };
 
   const isFormValid = () => {
-    if (!title || !description || !lessonType) return false;
+    if (!title || !description || !lessonType || !categoryId) return false;
 
     if (lessonType === "1-1-mentoring") {
       const { mentoringOptions } = mentoringStore;
@@ -191,6 +220,29 @@ export function ServiceRegistration({
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="예: 강남역 인근 카페 / 온라인 (Zoom)"
                   />
+                </div>
+
+                {/* 카테고리 (Category) */}
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="flex items-center gap-2">
+                    <Tag className="size-4" />
+                    카테고리
+                  </Label>
+                  <Select
+                    value={categoryId.toString()}
+                    onValueChange={(val) => setCategoryId(Number(val))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="카테고리 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* 마감일 (Deadline) */}
