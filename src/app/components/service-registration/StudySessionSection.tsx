@@ -9,33 +9,32 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 
-export interface OneDaySession {
+export interface StudySession {
     id: string;
     date: string;
     startTime: string;
     endTime: string;
 }
 
-export interface OneDaySessionData {
+export interface StudySessionData {
     price: number;
     seats: number;
-    sessions: OneDaySession[];
+    sessions: StudySession[];
 }
 
-interface OneDaySessionSectionProps {
-    onChange: (data: OneDaySessionData) => void;
+interface StudySessionSectionProps {
+    onChange: (data: StudySessionData) => void;
 }
 
-export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
+export function StudySessionSection({ onChange }: StudySessionSectionProps) {
     const [price, setPrice] = useState("");
     const [seats, setSeats] = useState("");
-    const [sessions, setSessions] = useState<OneDaySession[]>([]);
+    const [sessions, setSessions] = useState<StudySession[]>([]);
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [newSessionStartTime, setNewSessionStartTime] = useState("");
     const [newSessionEndTime, setNewSessionEndTime] = useState("");
 
-    // Update parent whenever state changes
     useEffect(() => {
         const numericPrice = Number(price) || 0;
         const numericSeats = Number(seats) || 0;
@@ -53,7 +52,7 @@ export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
             return;
         }
 
-        const newSession: OneDaySession = {
+        const newSession: StudySession = {
             id: Date.now().toString(),
             date: format(selectedDate, "yyyy-MM-dd"),
             startTime: newSessionStartTime,
@@ -74,7 +73,6 @@ export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
     };
 
     const getSessionNumber = (id: string) => {
-        // Sort globally by date then start time
         const sorted = [...sessions].sort((a, b) => {
             if (a.date !== b.date) return a.date.localeCompare(b.date);
             return a.startTime.localeCompare(b.startTime);
@@ -87,7 +85,7 @@ export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Calendar className="size-5" />
-                    상세 설정
+                    상세 설정 (스터디)
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -155,7 +153,6 @@ export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
                         }}
                     />
 
-                    {/* 선택된 날짜에 회차 추가 */}
                     {selectedDate && (
                         <div className="space-y-4">
                             <div className="bg-gray-50 p-4 rounded-md">
@@ -193,7 +190,6 @@ export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
                                 </div>
                             </div>
 
-                            {/* 선택된 날짜의 회차 목록 */}
                             {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).length > 0 && (
                                 <div className="bg-gray-50 p-4 rounded-md">
                                     <div className="flex items-center justify-between mb-3">
@@ -233,17 +229,15 @@ export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
                         </div>
                     )}
 
-                    {/* 전체 회차 요약 */}
                     {sessions.length > 0 && (
                         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                             <h5 className="font-medium text-blue-900 mb-2">전체 회차 요약</h5>
                             <p className="text-sm text-blue-700 mb-3">
                                 총 {sessions.length}개의 회차가 등록되었습니다
                             </p>
-
                             <div className="space-y-3">
                                 {(() => {
-                                    const groupedByDate: { [date: string]: OneDaySession[] } = {};
+                                    const groupedByDate: { [date: string]: StudySession[] } = {};
                                     sessions.forEach(session => {
                                         if (!groupedByDate[session.date]) {
                                             groupedByDate[session.date] = [];

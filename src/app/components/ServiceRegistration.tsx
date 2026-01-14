@@ -16,9 +16,10 @@ import {
 import { format } from "date-fns";
 
 import { MentoringScheduleSection } from "./service-registration/MentoringScheduleSection";
-import { OneDaySessionSection, OneDaySessionData } from "./service-registration/OneDaySessionSection";
 import { MentoringOptionSection } from "./service-registration/MentoringOptionSection";
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
+import { OneDayClassSection, OneDayClassData } from "./service-registration/OneDayClassSection";
+import { StudySessionSection, StudySessionData } from "./service-registration/StudySessionSection";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -59,25 +60,19 @@ export function ServiceRegistration({
   const [daySchedules, setDaySchedules] = useState<DaySchedule>({});
   const [selectingStartHour, setSelectingStartHour] = useState<number | null>(null);
 
-  // Data from OneDaySessionSection (for 1:N OneDay & Study)
-  const [oneDayData, setOneDayData] = useState<OneDaySessionData>({
-    price: 0,
-    seats: 0,
-    sessions: []
-  });
+  // State for OneDay Class 
+  const [oneDayClassData, setOneDayClassData] = useState<OneDayClassData>({ sessions: [] });
+  // State for Study
+  const [studySessionData, setStudySessionData] = useState<StudySessionData>({ price: 0, seats: 0, sessions: [] });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: API 호출하여 서비스 등록
     if (serviceType === "1-1-mentoring") {
       console.log({ title, content, serviceType, options, daySchedules });
-    } else {
-      console.log({
-        title,
-        content,
-        serviceType,
-        ...oneDayData
-      });
+    } else if (serviceType === "1-n-oneday") {
+      console.log({ title, content, serviceType, ...oneDayClassData });
+    } else if (serviceType === "1-n-study") {
+      console.log({ title, content, serviceType, ...studySessionData });
     }
     alert("서비스가 등록되었습니다!");
     onBack();
@@ -244,10 +239,12 @@ export function ServiceRegistration({
             (po) => po.duration && po.price,
           ),
       );
-    } else {
-      // 1:N Type validation
-      return oneDayData.price > 0 && oneDayData.sessions.length > 0;
+    } else if (serviceType === "1-n-oneday") {
+      return oneDayClassData.sessions.length > 0;
+    } else if (serviceType === "1-n-study") {
+      return studySessionData.price > 0 && studySessionData.sessions.length > 0;
     }
+    return false;
   };
 
   return (
@@ -343,14 +340,14 @@ export function ServiceRegistration({
               />
             )}
 
-            {/* 원데이 일정 설정 - 1:N 원데이일 때만 표시 */}
+            {/* 원데이 클래스 일정 설정 - 1:N 원데이일 때만 표시 (세션별 가격/인원) */}
             {serviceType === "1-n-oneday" && (
-              <OneDaySessionSection onChange={setOneDayData} />
+              <OneDayClassSection onChange={setOneDayClassData} />
             )}
 
-            {/* 스터디 일정 설정 - 1:N 스터디일 때만 표시 */}
+            {/* 스터디 일정 설정 - 1:N 스터디일 때만 표시 (전체 가격/인원) */}
             {serviceType === "1-n-study" && (
-              <OneDaySessionSection onChange={setOneDayData} />
+              <StudySessionSection onChange={setStudySessionData} />
             )}
 
             {/* 제출 버튼 */}
