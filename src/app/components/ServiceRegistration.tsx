@@ -12,14 +12,11 @@ import { Label } from "./ui/label";
 import {
   ArrowLeft,
   Save,
-  Plus,
-  Trash2,
-  Clock,
 } from "lucide-react";
 import { format } from "date-fns";
-import "react-day-picker/dist/style.css";
+
 import { MentoringScheduleSection } from "./service-registration/MentoringScheduleSection";
-import { OneDaySessionSection } from "./service-registration/OneDaySessionSection";
+import { OneDaySessionSection, OneDaySessionData } from "./service-registration/OneDaySessionSection";
 import { MentoringOptionSection } from "./service-registration/MentoringOptionSection";
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
 
@@ -49,45 +46,37 @@ export interface DaySchedule {
   [dateKey: string]: AvailableTime[];
 }
 
-export interface OneDaySession {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  price: string;
-}
-
 export function ServiceRegistration({
   onBack,
 }: ServiceRegistrationProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [serviceType, setServiceType] = useState("");
-  const [price, setPrice] = useState("");
-  const [duration, setDuration] = useState("");
   const [options, setOptions] = useState<ServiceOption[]>([
     { id: "1", name: "", priceOptions: [] },
   ]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [daySchedules, setDaySchedules] = useState<DaySchedule>({});
   const [selectingStartHour, setSelectingStartHour] = useState<number | null>(null);
-  const [oneDaySessions, setOneDaySessions] = useState<OneDaySession[]>([]);
-  const [newSessionStartTime, setNewSessionStartTime] = useState("");
-  const [newSessionEndTime, setNewSessionEndTime] = useState("");
-  const [newSessionPrice, setNewSessionPrice] = useState("");
+
+  // Data from OneDaySessionSection (for 1:N OneDay & Study)
+  const [oneDayData, setOneDayData] = useState<OneDaySessionData>({
+    price: 0,
+    seats: 0,
+    sessions: []
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: API 호출하여 서비스 등록
     if (serviceType === "1-1-mentoring") {
-      console.log({ title, content, serviceType, options });
+      console.log({ title, content, serviceType, options, daySchedules });
     } else {
       console.log({
         title,
         content,
         serviceType,
-        price,
-        duration,
+        ...oneDayData
       });
     }
     alert("서비스가 등록되었습니다!");
@@ -175,7 +164,7 @@ export function ServiceRegistration({
     );
   };
 
-  // 캘린더 관련 함수
+  // 캘린더 관련 함수 (1:1 멘토링용)
   const getDateKey = (date: Date) => {
     return format(date, "yyyy-MM-dd");
   };
@@ -223,12 +212,6 @@ export function ServiceRegistration({
     return daySchedules[getDateKey(selectedDate)] || [];
   };
 
-  const getDatesWithSchedule = () => {
-    return Object.keys(daySchedules).filter(
-      (dateKey) => daySchedules[dateKey].length > 0
-    );
-  };
-
   const isHourInSchedule = (hour: number) => {
     const schedule = getSelectedDateSchedule();
 
@@ -249,55 +232,6 @@ export function ServiceRegistration({
     return hour >= min && hour <= max;
   };
 
-  // 1:N 원데이 관련 함수
-  const addOneDaySession = () => {
-    if (!selectedDate || !newSessionStartTime || !newSessionEndTime) {
-      alert("날짜와 시작/종료 시간을 모두 입력해주세요.");
-      return;
-    }
-
-    // 원데이 클래스일 때만 가격 검증
-    if (serviceType === "1-n-oneday") {
-      if (!newSessionPrice || isNaN(Number(newSessionPrice)) || Number(newSessionPrice) < 0) {
-        alert("올바른 가격을 입력해주세요.");
-        return;
-      }
-    }
-
-    const newSession: OneDaySession = {
-      id: Date.now().toString(),
-      date: format(selectedDate, "yyyy-MM-dd"),
-      startTime: newSessionStartTime,
-      endTime: newSessionEndTime,
-      price: serviceType === "1-n-oneday" ? newSessionPrice : "0",
-    };
-
-    setOneDaySessions([...oneDaySessions, newSession]);
-    setNewSessionStartTime("");
-    setNewSessionEndTime("");
-    setNewSessionPrice("");
-  };
-
-  const removeOneDaySession = (sessionId: string) => {
-    setOneDaySessions(oneDaySessions.filter(s => s.id !== sessionId));
-  };
-
-  const getSessionsForDate = (dateStr: string) => {
-    return oneDaySessions.filter(s => s.date === dateStr);
-  };
-
-  // 전체 일정 기준으로 회차 번호 계산 (스터디용)
-  const getSessionNumber = (sessionId: string) => {
-    const sortedSessions = [...oneDaySessions].sort((a, b) => {
-      if (a.date !== b.date) {
-        return a.date.localeCompare(b.date);
-      }
-      return a.startTime.localeCompare(b.startTime);
-    });
-
-    return sortedSessions.findIndex(s => s.id === sessionId) + 1;
-  };
-
   const isFormValid = () => {
     if (!title || !content || !serviceType) return false;
 
@@ -311,11 +245,10 @@ export function ServiceRegistration({
           ),
       );
     } else {
-      return price && duration;
+      // 1:N Type validation
+      return oneDayData.price > 0 && oneDayData.sessions.length > 0;
     }
   };
-
-
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -339,7 +272,7 @@ export function ServiceRegistration({
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form className="space-y-6">
             {/* 기본 정보 */}
             <Card>
               <CardHeader>
@@ -412,40 +345,12 @@ export function ServiceRegistration({
 
             {/* 원데이 일정 설정 - 1:N 원데이일 때만 표시 */}
             {serviceType === "1-n-oneday" && (
-              <OneDaySessionSection
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                getSessionsForDate={getSessionsForDate}
-                oneDaySessions={oneDaySessions}
-                newSessionStartTime={newSessionStartTime}
-                setNewSessionStartTime={setNewSessionStartTime}
-                newSessionEndTime={newSessionEndTime}
-                setNewSessionEndTime={setNewSessionEndTime}
-                newSessionPrice={newSessionPrice}
-                setNewSessionPrice={setNewSessionPrice}
-                addSession={addOneDaySession}
-                removeSession={removeOneDaySession}
-                getSessionNumber={getSessionNumber}
-              />
+              <OneDaySessionSection onChange={setOneDayData} />
             )}
 
             {/* 스터디 일정 설정 - 1:N 스터디일 때만 표시 */}
             {serviceType === "1-n-study" && (
-              <OneDaySessionSection
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                getSessionsForDate={getSessionsForDate}
-                oneDaySessions={oneDaySessions}
-                newSessionStartTime={newSessionStartTime}
-                setNewSessionStartTime={setNewSessionStartTime}
-                newSessionEndTime={newSessionEndTime}
-                setNewSessionEndTime={setNewSessionEndTime}
-                newSessionPrice={newSessionPrice}
-                setNewSessionPrice={setNewSessionPrice}
-                addSession={addOneDaySession}
-                removeSession={removeOneDaySession}
-                getSessionNumber={getSessionNumber}
-              />
+              <OneDaySessionSection onChange={setOneDayData} />
             )}
 
             {/* 제출 버튼 */}
@@ -458,9 +363,10 @@ export function ServiceRegistration({
                 취소
               </Button>
               <Button
-                type="submit"
+                type="button"
                 className="bg-[#00C471] hover:bg-[#00B366] gap-2"
                 disabled={!isFormValid()}
+                onClick={handleSubmit}
               >
                 <Save className="size-4" />
                 서비스 등록

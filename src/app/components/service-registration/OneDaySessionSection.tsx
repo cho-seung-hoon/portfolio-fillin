@@ -1,7 +1,8 @@
 
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Plus, Trash2, Calendar } from "lucide-react";
+import { Plus, Trash2, Calendar, DollarSign, Users } from "lucide-react";
 import { CalendarModule } from "./CalendarModule";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -13,60 +14,130 @@ export interface OneDaySession {
     date: string;
     startTime: string;
     endTime: string;
-    price: string;
+}
+
+export interface OneDaySessionData {
+    price: number;
+    seats: number;
+    sessions: OneDaySession[];
 }
 
 interface OneDaySessionSectionProps {
-    selectedDate: Date | undefined;
-    onDateSelect: (date: Date) => void;
-    getSessionsForDate: (dateKey: string) => OneDaySession[];
-    oneDaySessions: OneDaySession[];
-    newSessionStartTime: string;
-    setNewSessionStartTime: (value: string) => void;
-    newSessionEndTime: string;
-    setNewSessionEndTime: (value: string) => void;
-    newSessionPrice: string;
-    setNewSessionPrice: (value: string) => void;
-    addSession: () => void;
-    removeSession: (id: string) => void;
-    getSessionNumber: (id: string) => number;
+    onChange: (data: OneDaySessionData) => void;
 }
 
-export function OneDaySessionSection({
-    selectedDate,
-    onDateSelect,
-    getSessionsForDate,
-    oneDaySessions,
-    newSessionStartTime,
-    setNewSessionStartTime,
-    newSessionEndTime,
-    setNewSessionEndTime,
-    newSessionPrice,
-    setNewSessionPrice,
-    addSession,
-    removeSession,
-    getSessionNumber,
-}: OneDaySessionSectionProps) {
+export function OneDaySessionSection({ onChange }: OneDaySessionSectionProps) {
+    const [price, setPrice] = useState("");
+    const [seats, setSeats] = useState("");
+    const [sessions, setSessions] = useState<OneDaySession[]>([]);
+
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+    const [newSessionStartTime, setNewSessionStartTime] = useState("");
+    const [newSessionEndTime, setNewSessionEndTime] = useState("");
+
+    // Update parent whenever state changes
+    useEffect(() => {
+        const numericPrice = Number(price) || 0;
+        const numericSeats = Number(seats) || 0;
+
+        onChange({
+            price: numericPrice,
+            seats: numericSeats,
+            sessions
+        });
+    }, [price, seats, sessions, onChange]);
+
+    const addSession = () => {
+        if (!selectedDate || !newSessionStartTime || !newSessionEndTime) {
+            alert("날짜와 시작/종료 시간을 모두 입력해주세요.");
+            return;
+        }
+
+        const newSession: OneDaySession = {
+            id: Date.now().toString(),
+            date: format(selectedDate, "yyyy-MM-dd"),
+            startTime: newSessionStartTime,
+            endTime: newSessionEndTime,
+        };
+
+        setSessions((prev) => [...prev, newSession]);
+        setNewSessionStartTime("");
+        setNewSessionEndTime("");
+    };
+
+    const removeSession = (id: string) => {
+        setSessions((prev) => prev.filter((s) => s.id !== id));
+    };
+
+    const getSessionsForDate = (dateKey: string) => {
+        return sessions.filter((s) => s.date === dateKey);
+    };
+
+    const getSessionNumber = (id: string) => {
+        // Sort globally by date then start time
+        const sorted = [...sessions].sort((a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            return a.startTime.localeCompare(b.startTime);
+        });
+        return sorted.findIndex(s => s.id === id) + 1;
+    };
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Calendar className="size-5" />
-                    일정 설정
+                    상세 설정
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
+                    {/* 가격 및 모집 인원 (Top-Level) */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                                <DollarSign className="size-4" />
+                                참가비 (원)
+                            </Label>
+                            <Input
+                                type="number"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                placeholder="50000"
+                                min="0"
+                                className="bg-white"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                                <Users className="size-4" />
+                                모집 인원 (명)
+                            </Label>
+                            <Input
+                                type="number"
+                                value={seats}
+                                onChange={(e) => setSeats(e.target.value)}
+                                placeholder="10"
+                                min="1"
+                                className="bg-white"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="border-t my-4" />
+
+                    <h4 className="font-medium">일정 선택</h4>
+
                     <CalendarModule
                         selectedDate={selectedDate}
-                        onDateSelect={onDateSelect}
+                        onDateSelect={setSelectedDate}
                         renderDateContent={(date) => {
                             const dateKey = format(date, "yyyy-MM-dd");
-                            const sessions = getSessionsForDate(dateKey);
-                            if (sessions.length === 0) return null;
+                            const dateSessions = getSessionsForDate(dateKey);
+                            if (dateSessions.length === 0) return null;
                             return (
                                 <div className="space-y-1">
-                                    {sessions.slice(0, 2).map((session) => (
+                                    {dateSessions.slice(0, 2).map((session) => (
                                         <div
                                             key={session.id}
                                             className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
@@ -74,9 +145,9 @@ export function OneDaySessionSection({
                                             {session.startTime}-{session.endTime}
                                         </div>
                                     ))}
-                                    {sessions.length > 2 && (
+                                    {dateSessions.length > 2 && (
                                         <div className="text-xs text-gray-500 px-2">
-                                            +{sessions.length - 2}회
+                                            +{dateSessions.length - 2}회
                                         </div>
                                     )}
                                 </div>
@@ -92,7 +163,7 @@ export function OneDaySessionSection({
                                     {format(selectedDate, "yyyy년 M월 d일 (EEE)", { locale: ko })} 회차 추가
                                 </h4>
 
-                                <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+                                <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
                                     <div className="space-y-2">
                                         <Label className="text-sm">시작 시간</Label>
                                         <Input
@@ -109,17 +180,6 @@ export function OneDaySessionSection({
                                             value={newSessionEndTime}
                                             onChange={(e) => setNewSessionEndTime(e.target.value)}
                                             className="bg-white"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm">가격 (원)</Label>
-                                        <Input
-                                            type="number"
-                                            value={newSessionPrice}
-                                            onChange={(e) => setNewSessionPrice(e.target.value)}
-                                            placeholder="50000"
-                                            className="bg-white"
-                                            min="0"
                                         />
                                     </div>
                                     <Button
@@ -173,32 +233,28 @@ export function OneDaySessionSection({
                         </div>
                     )}
 
-                    {/* 전체 회차 요약 - 스터디에만 표시 -> But kept here as it was in the block */}
-                    {oneDaySessions.length > 0 && (
+                    {/* 전체 회차 요약 */}
+                    {sessions.length > 0 && (
                         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                             <h5 className="font-medium text-blue-900 mb-2">전체 회차 요약</h5>
                             <p className="text-sm text-blue-700 mb-3">
-                                총 {oneDaySessions.length}개의 회차가 등록되었습니다
+                                총 {sessions.length}개의 회차가 등록되었습니다
                             </p>
 
-                            {/* 날짜별로 그룹화된 회차 표시 */}
                             <div className="space-y-3">
                                 {(() => {
-                                    // 날짜별로 그룹화
                                     const groupedByDate: { [date: string]: OneDaySession[] } = {};
-                                    oneDaySessions.forEach(session => {
+                                    sessions.forEach(session => {
                                         if (!groupedByDate[session.date]) {
                                             groupedByDate[session.date] = [];
                                         }
                                         groupedByDate[session.date].push(session);
                                     });
 
-                                    // 날짜순으로 정렬
                                     const sortedDates = Object.keys(groupedByDate).sort();
 
                                     return sortedDates.map(dateKey => {
-                                        const sessions = groupedByDate[dateKey];
-                                        // Parse date safely by splitting the string
+                                        const dateSessions = groupedByDate[dateKey];
                                         const [year, month, day] = dateKey.split('-').map(Number);
                                         const dateObj = new Date(year, month - 1, day);
 
@@ -208,7 +264,7 @@ export function OneDaySessionSection({
                                                     {format(dateObj, "M월 d일 (EEE)", { locale: ko })}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {sessions.map((session) => (
+                                                    {dateSessions.map((session) => (
                                                         <div
                                                             key={session.id}
                                                             className="text-xs bg-blue-50 px-3 py-1.5 rounded border border-blue-100"
