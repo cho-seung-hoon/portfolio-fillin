@@ -26,10 +26,10 @@ import {
   Trash2,
   Clock,
 } from "lucide-react";
-import { DayPicker } from "react-day-picker";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import "react-day-picker/dist/style.css";
+import { CalendarModule } from "./service-registration/CalendarModule";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -128,16 +128,16 @@ export function ServiceRegistration({
       options.map((option) =>
         option.id === optionId
           ? {
-              ...option,
-              priceOptions: [
-                ...option.priceOptions,
-                {
-                  id: Date.now().toString(),
-                  duration: "",
-                  price: "",
-                },
-              ],
-            }
+            ...option,
+            priceOptions: [
+              ...option.priceOptions,
+              {
+                id: Date.now().toString(),
+                duration: "",
+                price: "",
+              },
+            ],
+          }
           : option,
       ),
     );
@@ -151,11 +151,11 @@ export function ServiceRegistration({
       options.map((option) =>
         option.id === optionId
           ? {
-              ...option,
-              priceOptions: option.priceOptions.filter(
-                (po) => po.id !== priceOptionId,
-              ),
-            }
+            ...option,
+            priceOptions: option.priceOptions.filter(
+              (po) => po.id !== priceOptionId,
+            ),
+          }
           : option,
       ),
     );
@@ -171,13 +171,13 @@ export function ServiceRegistration({
       options.map((option) =>
         option.id === optionId
           ? {
-              ...option,
-              priceOptions: option.priceOptions.map((po) =>
-                po.id === priceOptionId
-                  ? { ...po, [field]: value }
-                  : po,
-              ),
-            }
+            ...option,
+            priceOptions: option.priceOptions.map((po) =>
+              po.id === priceOptionId
+                ? { ...po, [field]: value }
+                : po,
+            ),
+          }
           : option,
       ),
     );
@@ -218,7 +218,7 @@ export function ServiceRegistration({
 
   const removeTimeSlot = (timeId: string) => {
     if (!selectedDate) return;
-    
+
     const dateKey = getDateKey(selectedDate);
     setDaySchedules({
       ...daySchedules,
@@ -239,21 +239,21 @@ export function ServiceRegistration({
 
   const isHourInSchedule = (hour: number) => {
     const schedule = getSelectedDateSchedule();
-    
+
     return schedule.some(slot => {
       const slotStart = parseInt(slot.startTime.split(':')[0]);
       const slotEnd = parseInt(slot.endTime.split(':')[0]);
-      
+
       return hour >= slotStart && hour < slotEnd;
     });
   };
 
   const isHourInSelectingRange = (hour: number) => {
     if (selectingStartHour === null) return false;
-    
+
     const min = Math.min(selectingStartHour, hour);
     const max = Math.max(selectingStartHour, hour);
-    
+
     return hour >= min && hour <= max;
   };
 
@@ -302,7 +302,7 @@ export function ServiceRegistration({
       }
       return a.startTime.localeCompare(b.startTime);
     });
-    
+
     return sortedSessions.findIndex(s => s.id === sessionId) + 1;
   };
 
@@ -422,26 +422,23 @@ export function ServiceRegistration({
                         }
                         className={`
                           p-4 rounded-md border-2 transition-all text-left
-                          ${
-                            serviceType === type.value
-                              ? "border-[#00C471] bg-[#E6F9F2]"
-                              : "border-gray-200 hover:border-gray-300"
+                          ${serviceType === type.value
+                            ? "border-[#00C471] bg-[#E6F9F2]"
+                            : "border-gray-200 hover:border-gray-300"
                           }
                         `}
                       >
                         <Icon
-                          className={`size-6 mb-2 ${
-                            serviceType === type.value
-                              ? "text-[#00C471]"
-                              : "text-gray-400"
-                          }`}
+                          className={`size-6 mb-2 ${serviceType === type.value
+                            ? "text-[#00C471]"
+                            : "text-gray-400"
+                            }`}
                         />
                         <h3
-                          className={`font-medium mb-1 ${
-                            serviceType === type.value
-                              ? "text-[#00C471]"
-                              : "text-gray-900"
-                          }`}
+                          className={`font-medium mb-1 ${serviceType === type.value
+                            ? "text-[#00C471]"
+                            : "text-gray-900"
+                            }`}
                         >
                           {type.label}
                         </h3>
@@ -642,125 +639,32 @@ export function ServiceRegistration({
                 <CardContent>
                   {/* 캘린더 (전체 너비) */}
                   <div className="space-y-6">
-                    {/* 월 선택 */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium">
-                        {selectedDate ? format(selectedDate, "yyyy년 M월", { locale: ko }) : format(new Date(), "yyyy년 M월", { locale: ko })}
-                      </h3>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const currentMonth = selectedDate || new Date();
-                            const prevMonth = new Date(currentMonth);
-                            prevMonth.setMonth(prevMonth.getMonth() - 1);
-                            setSelectedDate(prevMonth);
-                          }}
-                        >
-                          이전
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const currentMonth = selectedDate || new Date();
-                            const nextMonth = new Date(currentMonth);
-                            nextMonth.setMonth(nextMonth.getMonth() + 1);
-                            setSelectedDate(nextMonth);
-                          }}
-                        >
-                          다음
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* 캘린더 그리드 */}
-                    <div className="border rounded-lg overflow-hidden">
-                      {/* 요일 헤더 */}
-                      <div className="grid grid-cols-7 bg-gray-50 border-b">
-                        {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
-                          <div
-                            key={day}
-                            className={`py-3 text-center text-sm font-medium ${
-                              idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'
-                            }`}
-                          >
-                            {day}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* 날짜 그리드 */}
-                      <div className="grid grid-cols-7">
-                        {(() => {
-                          const currentMonth = selectedDate || new Date();
-                          const year = currentMonth.getFullYear();
-                          const month = currentMonth.getMonth();
-                          
-                          const firstDay = new Date(year, month, 1);
-                          const lastDay = new Date(year, month + 1, 0);
-                          const startDate = new Date(firstDay);
-                          startDate.setDate(startDate.getDate() - firstDay.getDay());
-                          
-                          const days = [];
-                          const current = new Date(startDate);
-                          
-                          for (let i = 0; i < 42; i++) {
-                            days.push(new Date(current));
-                            current.setDate(current.getDate() + 1);
-                          }
-                          
-                          return days.map((date, idx) => {
-                            const isCurrentMonth = date.getMonth() === month;
-                            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
-                            const dateKey = format(date, "yyyy-MM-dd");
-                            const schedules = daySchedules[dateKey] || [];
-                            const isSelected = selectedDate && format(selectedDate, "yyyy-MM-dd") === dateKey;
-                            
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => !isPast && setSelectedDate(date)}
-                                disabled={isPast}
-                                className={`
-                                  min-h-[100px] p-2 border-r border-b text-left transition-colors
-                                  ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'}
-                                  ${isPast ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50'}
-                                  ${isSelected ? 'ring-2 ring-[#00C471] ring-inset' : ''}
-                                `}
+                    <CalendarModule
+                      selectedDate={selectedDate}
+                      onDateSelect={setSelectedDate}
+                      renderDateContent={(date) => {
+                        const dateKey = format(date, "yyyy-MM-dd");
+                        const schedules = daySchedules[dateKey] || [];
+                        if (schedules.length === 0) return null;
+                        return (
+                          <div className="space-y-1">
+                            {schedules.slice(0, 2).map((schedule) => (
+                              <div
+                                key={schedule.id}
+                                className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
                               >
-                                <div className="font-medium text-sm mb-1">
-                                  {date.getDate()}
-                                </div>
-                                
-                                {/* 해당 날짜의 시간대 표시 */}
-                                {schedules.length > 0 && (
-                                  <div className="space-y-1">
-                                    {schedules.slice(0, 2).map((schedule) => (
-                                      <div
-                                        key={schedule.id}
-                                        className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
-                                      >
-                                        {schedule.startTime}-{schedule.endTime}
-                                      </div>
-                                    ))}
-                                    {schedules.length > 2 && (
-                                      <div className="text-xs text-gray-500 px-2">
-                                        +{schedules.length - 2}개
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
+                                {schedule.startTime}-{schedule.endTime}
+                              </div>
+                            ))}
+                            {schedules.length > 2 && (
+                              <div className="text-xs text-gray-500 px-2">
+                                +{schedules.length - 2}개
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }}
+                    />
 
                     {/* 선택된 날짜 정보 */}
                     {selectedDate && (
@@ -773,7 +677,7 @@ export function ServiceRegistration({
                             총 {getSelectedDateSchedule().length}개의 시간대
                           </span>
                         </div>
-                        
+
                         {getSelectedDateSchedule().length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {getSelectedDateSchedule().map((timeSlot) => (
@@ -804,11 +708,11 @@ export function ServiceRegistration({
                     <div className="mt-6 pt-6 border-t">
                       <h4 className="font-medium mb-3">시간대 선택</h4>
                       <p className="text-sm text-gray-500 mb-4">
-                        {selectingStartHour === null 
-                          ? "시작 시간을 클릭하세요" 
+                        {selectingStartHour === null
+                          ? "시작 시간을 클릭하세요"
                           : "종료 시간을 클릭하세요"}
                       </p>
-                      
+
                       {/* 24시간 타임라인 바 */}
                       <div className="relative">
                         {/* 시간 레이블 */}
@@ -834,7 +738,7 @@ export function ServiceRegistration({
                             const isScheduled = isHourInSchedule(hour);
                             const isSelecting = isHourInSelectingRange(hour);
                             const isStartHour = selectingStartHour === hour;
-                            
+
                             return (
                               <button
                                 key={hour}
@@ -843,14 +747,13 @@ export function ServiceRegistration({
                                 disabled={isScheduled}
                                 className={`
                                   flex-1 h-16 border-r border-gray-200 last:border-r-0 transition-all relative
-                                  ${
-                                    isScheduled
-                                      ? "bg-[#00C471] cursor-not-allowed"
-                                      : isSelecting
+                                  ${isScheduled
+                                    ? "bg-[#00C471] cursor-not-allowed"
+                                    : isSelecting
                                       ? "bg-[#B8E9D6]"
                                       : isStartHour
-                                      ? "bg-[#E6F9F2] ring-2 ring-[#00C471] ring-inset"
-                                      : "bg-white hover:bg-gray-50"
+                                        ? "bg-[#E6F9F2] ring-2 ring-[#00C471] ring-inset"
+                                        : "bg-white hover:bg-gray-50"
                                   }
                                 `}
                                 title={`${String(hour).padStart(2, '0')}:00`}
@@ -897,125 +800,32 @@ export function ServiceRegistration({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {/* 월 선택 */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium">
-                        {selectedDate ? format(selectedDate, "yyyy년 M월", { locale: ko }) : format(new Date(), "yyyy년 M월", { locale: ko })}
-                      </h3>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const currentMonth = selectedDate || new Date();
-                            const prevMonth = new Date(currentMonth);
-                            prevMonth.setMonth(prevMonth.getMonth() - 1);
-                            setSelectedDate(prevMonth);
-                          }}
-                        >
-                          이전
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const currentMonth = selectedDate || new Date();
-                            const nextMonth = new Date(currentMonth);
-                            nextMonth.setMonth(nextMonth.getMonth() + 1);
-                            setSelectedDate(nextMonth);
-                          }}
-                        >
-                          다음
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* 캘린더 그리드 */}
-                    <div className="border rounded-lg overflow-hidden">
-                      {/* 요일 헤더 */}
-                      <div className="grid grid-cols-7 bg-gray-50 border-b">
-                        {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
-                          <div
-                            key={day}
-                            className={`py-3 text-center text-sm font-medium ${
-                              idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'
-                            }`}
-                          >
-                            {day}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* 날짜 그리드 */}
-                      <div className="grid grid-cols-7">
-                        {(() => {
-                          const currentMonth = selectedDate || new Date();
-                          const year = currentMonth.getFullYear();
-                          const month = currentMonth.getMonth();
-                          
-                          const firstDay = new Date(year, month, 1);
-                          const lastDay = new Date(year, month + 1, 0);
-                          const startDate = new Date(firstDay);
-                          startDate.setDate(startDate.getDate() - firstDay.getDay());
-                          
-                          const days = [];
-                          const current = new Date(startDate);
-                          
-                          for (let i = 0; i < 42; i++) {
-                            days.push(new Date(current));
-                            current.setDate(current.getDate() + 1);
-                          }
-                          
-                          return days.map((date, idx) => {
-                            const isCurrentMonth = date.getMonth() === month;
-                            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
-                            const dateKey = format(date, "yyyy-MM-dd");
-                            const sessions = getSessionsForDate(dateKey);
-                            const isSelected = selectedDate && format(selectedDate, "yyyy-MM-dd") === dateKey;
-                            
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => !isPast && setSelectedDate(date)}
-                                disabled={isPast}
-                                className={`
-                                  min-h-[100px] p-2 border-r border-b text-left transition-colors
-                                  ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'}
-                                  ${isPast ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50'}
-                                  ${isSelected ? 'ring-2 ring-[#00C471] ring-inset' : ''}
-                                `}
+                    <CalendarModule
+                      selectedDate={selectedDate}
+                      onDateSelect={setSelectedDate}
+                      renderDateContent={(date) => {
+                        const dateKey = format(date, "yyyy-MM-dd");
+                        const sessions = getSessionsForDate(dateKey);
+                        if (sessions.length === 0) return null;
+                        return (
+                          <div className="space-y-1">
+                            {sessions.slice(0, 2).map((session) => (
+                              <div
+                                key={session.id}
+                                className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
                               >
-                                <div className="font-medium text-sm mb-1">
-                                  {date.getDate()}
-                                </div>
-                                
-                                {/* 해당 날짜의 회차 표시 */}
-                                {sessions.length > 0 && (
-                                  <div className="space-y-1">
-                                    {sessions.slice(0, 2).map((session) => (
-                                      <div
-                                        key={session.id}
-                                        className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
-                                      >
-                                        {session.startTime}-{session.endTime}
-                                      </div>
-                                    ))}
-                                    {sessions.length > 2 && (
-                                      <div className="text-xs text-gray-500 px-2">
-                                        +{sessions.length - 2}회
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
+                                {session.startTime}-{session.endTime}
+                              </div>
+                            ))}
+                            {sessions.length > 2 && (
+                              <div className="text-xs text-gray-500 px-2">
+                                +{sessions.length - 2}회
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }}
+                    />
 
                     {/* 선택된 날짜에 회차 추가 */}
                     {selectedDate && (
@@ -1024,7 +834,7 @@ export function ServiceRegistration({
                           <h4 className="font-medium mb-3">
                             {format(selectedDate, "yyyy년 M월 d일 (EEE)", { locale: ko })} 회차 추가
                           </h4>
-                          
+
                           <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
                             <div className="space-y-2">
                               <Label className="text-sm">시작 시간</Label>
@@ -1125,125 +935,32 @@ export function ServiceRegistration({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {/* 월 선택 */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium">
-                        {selectedDate ? format(selectedDate, "yyyy년 M월", { locale: ko }) : format(new Date(), "yyyy년 M월", { locale: ko })}
-                      </h3>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const currentMonth = selectedDate || new Date();
-                            const prevMonth = new Date(currentMonth);
-                            prevMonth.setMonth(prevMonth.getMonth() - 1);
-                            setSelectedDate(prevMonth);
-                          }}
-                        >
-                          이전
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const currentMonth = selectedDate || new Date();
-                            const nextMonth = new Date(currentMonth);
-                            nextMonth.setMonth(nextMonth.getMonth() + 1);
-                            setSelectedDate(nextMonth);
-                          }}
-                        >
-                          다음
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* 캘린더 그리드 */}
-                    <div className="border rounded-lg overflow-hidden">
-                      {/* 요일 헤더 */}
-                      <div className="grid grid-cols-7 bg-gray-50 border-b">
-                        {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
-                          <div
-                            key={day}
-                            className={`py-3 text-center text-sm font-medium ${
-                              idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'
-                            }`}
-                          >
-                            {day}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* 날짜 그리드 */}
-                      <div className="grid grid-cols-7">
-                        {(() => {
-                          const currentMonth = selectedDate || new Date();
-                          const year = currentMonth.getFullYear();
-                          const month = currentMonth.getMonth();
-                          
-                          const firstDay = new Date(year, month, 1);
-                          const lastDay = new Date(year, month + 1, 0);
-                          const startDate = new Date(firstDay);
-                          startDate.setDate(startDate.getDate() - firstDay.getDay());
-                          
-                          const days = [];
-                          const current = new Date(startDate);
-                          
-                          for (let i = 0; i < 42; i++) {
-                            days.push(new Date(current));
-                            current.setDate(current.getDate() + 1);
-                          }
-                          
-                          return days.map((date, idx) => {
-                            const isCurrentMonth = date.getMonth() === month;
-                            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
-                            const dateKey = format(date, "yyyy-MM-dd");
-                            const sessions = getSessionsForDate(dateKey);
-                            const isSelected = selectedDate && format(selectedDate, "yyyy-MM-dd") === dateKey;
-                            
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => !isPast && setSelectedDate(date)}
-                                disabled={isPast}
-                                className={`
-                                  min-h-[100px] p-2 border-r border-b text-left transition-colors
-                                  ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'}
-                                  ${isPast ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50'}
-                                  ${isSelected ? 'ring-2 ring-[#00C471] ring-inset' : ''}
-                                `}
+                    <CalendarModule
+                      selectedDate={selectedDate}
+                      onDateSelect={setSelectedDate}
+                      renderDateContent={(date) => {
+                        const dateKey = format(date, "yyyy-MM-dd");
+                        const sessions = getSessionsForDate(dateKey);
+                        if (sessions.length === 0) return null;
+                        return (
+                          <div className="space-y-1">
+                            {sessions.slice(0, 2).map((session) => (
+                              <div
+                                key={session.id}
+                                className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
                               >
-                                <div className="font-medium text-sm mb-1">
-                                  {date.getDate()}
-                                </div>
-                                
-                                {/* 해당 날짜의 회차 표시 */}
-                                {sessions.length > 0 && (
-                                  <div className="space-y-1">
-                                    {sessions.slice(0, 2).map((session) => (
-                                      <div
-                                        key={session.id}
-                                        className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
-                                      >
-                                        {session.startTime}-{session.endTime}
-                                      </div>
-                                    ))}
-                                    {sessions.length > 2 && (
-                                      <div className="text-xs text-gray-500 px-2">
-                                        +{sessions.length - 2}회
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
+                                {session.startTime}-{session.endTime}
+                              </div>
+                            ))}
+                            {sessions.length > 2 && (
+                              <div className="text-xs text-gray-500 px-2">
+                                +{sessions.length - 2}회
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }}
+                    />
 
                     {/* 선택된 날짜에 회차 추가 */}
                     {selectedDate && (
@@ -1252,7 +969,7 @@ export function ServiceRegistration({
                           <h4 className="font-medium mb-3">
                             {format(selectedDate, "yyyy년 M월 d일 (EEE)", { locale: ko })} 회차 추가
                           </h4>
-                          
+
                           <div className="flex gap-3 items-end">
                             <div className="flex-1 space-y-2">
                               <Label className="text-sm">시작 시간</Label>
@@ -1330,7 +1047,7 @@ export function ServiceRegistration({
                         <p className="text-sm text-blue-700 mb-3">
                           총 {oneDaySessions.length}개의 회차가 등록되었습니다
                         </p>
-                        
+
                         {/* 날짜별로 그룹화된 회차 표시 */}
                         <div className="space-y-3">
                           {(() => {
@@ -1342,16 +1059,16 @@ export function ServiceRegistration({
                               }
                               groupedByDate[session.date].push(session);
                             });
-                            
+
                             // 날짜순으로 정렬
                             const sortedDates = Object.keys(groupedByDate).sort();
-                            
+
                             return sortedDates.map(dateKey => {
                               const sessions = groupedByDate[dateKey];
                               // Parse date safely by splitting the string
                               const [year, month, day] = dateKey.split('-').map(Number);
                               const dateObj = new Date(year, month - 1, day);
-                              
+
                               return (
                                 <div key={dateKey} className="bg-white p-3 rounded border border-blue-100">
                                   <div className="font-medium text-blue-900 mb-2">
