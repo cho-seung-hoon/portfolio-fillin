@@ -72,10 +72,10 @@ export function CalendarModule({
                         <div
                             key={day}
                             className={`py-3 text-center text-sm font-medium ${idx === 0
-                                    ? "text-red-500"
-                                    : idx === 6
-                                        ? "text-blue-500"
-                                        : "text-gray-700"
+                                ? "text-red-500"
+                                : idx === 6
+                                    ? "text-blue-500"
+                                    : "text-gray-700"
                                 }`}
                         >
                             {day}
