@@ -20,8 +20,12 @@ import {
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
 import { OneDayClassSection, OneDayClassData } from "./service-registration/OneDayClassSection";
 import { StudySessionSection } from "./service-registration/StudySessionSection";
-import { MentoringSection, MentoringData } from "./service-registration/MentoringSection";
+import { MentoringSection } from "./service-registration/MentoringSection";
+
+// Stores
 import { useStudyRegistrationStore } from "../../store/useStudyRegistrationStore";
+import { useMentoringRegistrationStore } from "../../store/useMentoringRegistrationStore";
+// import { useOneDayRegistrationStore } from "../../store/useOneDayRegistrationStore";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -30,39 +34,24 @@ interface ServiceRegistrationProps {
 export function ServiceRegistration({
   onBack,
 }: ServiceRegistrationProps) {
-  // Store usage
-  const {
-    title, setTitle,
-    lessonType, setLessonType, // ServiceType
-    description, setDescription, // Content
-    location, setLocation,
-    categoryId, setCategoryId,
-    closeAt, setCloseAt,
-    // Global Price/Seats (for Study)
-    price, seats,
-    availableTimeList, // For Study (and others if migrated)
-    // Actions/Setters needed? Most work directly.
-    setOptionList, // If we were to sync Mentoring
-    setAvailableTimeList // If we were to sync others
-  } = useStudyRegistrationStore();
+  // --- Global State Management ---
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [closeAt, setCloseAt] = useState<string | null>(null);
+  const [lessonType, setLessonType] = useState<string>("");
 
-  // Local state for Mentoring/OneDay until fully migrated 
-  // (We use local state to capture output from children, then merge on submit)
-  const [mentoringData, setMentoringData] = useState<MentoringData>({
-    options: [],
-    schedules: {}
-  });
+  // --- Stores ---
+  // Study Store
+  const studyStore = useStudyRegistrationStore();
+  // Mentoring Store
+  const mentoringStore = useMentoringRegistrationStore();
 
+  // Local state for OneDay (Legacy until refactored)
   const [oneDayClassData, setOneDayClassData] = useState<OneDayClassData>({ sessions: [] });
-
-  // Wrapper for ServiceType to sync with store
-  const handleServiceTypeChange = (value: string) => {
-    setLessonType(value);
-  };
 
   // Helper to convert Local Date+Time string to ISO 8601 (UTC)
   const toLocalISOString = (dateStr: string, timeStr: string) => {
-    // Create date object treating input as Local Time
     const localDate = new Date(`${dateStr}T${timeStr}`);
     return localDate.toISOString();
   };
@@ -70,13 +59,13 @@ export function ServiceRegistration({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prepare DTO structure
+    // Base DTO
     const requestDTO = {
       title,
       lessonType,
       description,
       location,
-      categoryId: 1, // Defaulting for now as UI might be simple input or hidden
+      categoryId: 1,
       closeAt: closeAt || null,
       price: 0,
       seats: 0,
@@ -85,22 +74,11 @@ export function ServiceRegistration({
     };
 
     if (lessonType === "1-1-mentoring") {
-      // Map Mentoring Data to DTO
-      // Mentoring Options -> optionList
-      requestDTO.optionList = mentoringData.options.map(opt => ({
-        name: opt.name,
-        // Mentoring options have multiple price options (minute/price). 
-        // flexible structure? DTO Option has (name, minute, price).
-        // If UI allows multiple prices per option, we might need to flatten or pick one?
-        // Assuming flattened: "Basic Consult" -> 30min/10000, 60min/20000.
-        // DTO Option seems to be the combination. 
-        // We'll flatten here: For each UI Option, for each PriceOption -> DTO Option
-      }));
-      // Actually, let's look at the DTO. Option(name, minute, price). 
-      // Our UI MentoringOption has name, and LIST of priceOptions. 
-      // We probably need to flatten: OptionName="Basic - 30min", minute=30, price=...
+      const { mentoringOptions, availableTimeList } = mentoringStore;
+
+      // Flatten Options
       const flattenedOptions: any[] = [];
-      mentoringData.options.forEach(opt => {
+      mentoringOptions.forEach(opt => {
         opt.priceOptions.forEach(po => {
           flattenedOptions.push({
             name: `${opt.name} (${po.duration}분)`,
@@ -111,24 +89,11 @@ export function ServiceRegistration({
       });
       requestDTO.optionList = flattenedOptions;
 
-      // Mentoring Schedules -> availableTimeList
-      // Mentoring uses "slots".
-      const flatTimes: any[] = [];
-      Object.entries(mentoringData.schedules).forEach(([dateKey, slots]) => {
-        slots.forEach(slot => {
-          flatTimes.push({
-            startTime: toLocalISOString(dateKey, `${slot.startTime}:00`),
-            endTime: toLocalISOString(dateKey, `${slot.endTime}:00`),
-            price: 0, // Mentoring price is in Option
-            seats: 1  // Usually 1 for 1:1
-          });
-        });
-      });
-      requestDTO.availableTimeList = flatTimes;
+      // Schedules (Already ISO in store, just assign)
+      requestDTO.availableTimeList = availableTimeList;
 
     } else if (lessonType === "1-n-oneday") {
-      // Map OneDay Data
-      // OneDay has sessions with individual price/seats
+      // Legacy OneDay (Local State)
       const flatTimes: any[] = [];
       oneDayClassData.sessions.forEach(session => {
         flatTimes.push({
@@ -141,10 +106,10 @@ export function ServiceRegistration({
       requestDTO.availableTimeList = flatTimes;
 
     } else if (lessonType === "1-n-study") {
-      // Study Data (Already in Store)
+      const { price, seats, availableTimeList } = studyStore;
       requestDTO.price = price;
       requestDTO.seats = seats;
-      requestDTO.availableTimeList = availableTimeList; // Already formatted in StudySessionSection or close to it
+      requestDTO.availableTimeList = availableTimeList;
     }
 
     console.log("RegisterLessonRequest:", requestDTO);
@@ -155,10 +120,12 @@ export function ServiceRegistration({
     if (!title || !description || !lessonType) return false;
 
     if (lessonType === "1-1-mentoring") {
-      return mentoringData.options.length > 0; // Simplified
+      const { mentoringOptions } = mentoringStore;
+      return mentoringOptions.length > 0 && mentoringOptions.some(o => o.priceOptions.length > 0);
     } else if (lessonType === "1-n-oneday") {
       return oneDayClassData.sessions.length > 0;
     } else if (lessonType === "1-n-study") {
+      const { price, seats, availableTimeList } = studyStore;
       return price > 0 && seats > 0 && availableTimeList.length > 0;
     }
     return false;
@@ -241,7 +208,7 @@ export function ServiceRegistration({
                   <Input
                     id="closeAt"
                     type="date"
-                    value={closeAt ? new Date(closeAt).toLocaleDateString('en-CA') : ''} // Display as YYYY-MM-DD
+                    value={closeAt ? new Date(closeAt).toLocaleDateString('en-CA') : ''}
                     onChange={(e) => {
                       if (e.target.value) {
                         setCloseAt(toLocalISOString(e.target.value, "23:59:59"));
@@ -258,12 +225,12 @@ export function ServiceRegistration({
             {/* 서비스 종류 선택 */}
             <ServiceTypeSelectionSection
               serviceType={lessonType}
-              setServiceType={handleServiceTypeChange}
+              setServiceType={setLessonType}
             />
 
-            {/* 1:1 멘토링 */}
+            {/* 1:1 멘토링 (Store 사용, Props 없음) */}
             {lessonType === "1-1-mentoring" && (
-              <MentoringSection onChange={setMentoringData} />
+              <MentoringSection />
             )}
 
             {/* 1:N 원데이 */}
