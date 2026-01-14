@@ -21,7 +21,7 @@ import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeS
 import { OneDayClassSection, OneDayClassData } from "./service-registration/OneDayClassSection";
 import { StudySessionSection } from "./service-registration/StudySessionSection";
 import { MentoringSection, MentoringData } from "./service-registration/MentoringSection";
-import { useServiceRegistrationStore } from "../../store/useServiceRegistrationStore";
+import { useStudyRegistrationStore } from "../../store/useStudyRegistrationStore";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -44,7 +44,7 @@ export function ServiceRegistration({
     // Actions/Setters needed? Most work directly.
     setOptionList, // If we were to sync Mentoring
     setAvailableTimeList // If we were to sync others
-  } = useServiceRegistrationStore();
+  } = useStudyRegistrationStore();
 
   // Local state for Mentoring/OneDay until fully migrated 
   // (We use local state to capture output from children, then merge on submit)

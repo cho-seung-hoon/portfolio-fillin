@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useServiceRegistrationStore, AvailableTime } from "../../../store/useServiceRegistrationStore";
+import { useStudyRegistrationStore, AvailableTime } from "../../../store/useStudyRegistrationStore";
 
 export function StudySessionSection() {
     const {
@@ -19,7 +19,7 @@ export function StudySessionSection() {
         setSeats,
         addAvailableTime,
         removeAvailableTime
-    } = useServiceRegistrationStore();
+    } = useStudyRegistrationStore();
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [newSessionStartTime, setNewSessionStartTime] = useState("");
@@ -61,7 +61,7 @@ export function StudySessionSection() {
     };
 
     const getSessionsForDate = (dateKey: string) => {
-        return availableTimeList.filter((s) => getDateFromISO(s.startTime) === dateKey);
+        return availableTimeList.filter((s: AvailableTime) => getDateFromISO(s.startTime) === dateKey);
     };
 
     const getSessionTimeRange = (session: AvailableTime) => {
@@ -134,7 +134,7 @@ export function StudySessionSection() {
                             if (dateSessions.length === 0) return null;
                             return (
                                 <div className="space-y-1">
-                                    {dateSessions.slice(0, 2).map((session, idx) => (
+                                    {dateSessions.slice(0, 2).map((session: AvailableTime, idx: number) => (
                                         <div
                                             key={idx}
                                             className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
@@ -198,7 +198,7 @@ export function StudySessionSection() {
                                         </span>
                                     </div>
                                     <div className="space-y-2">
-                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session, idx) => (
+                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session: AvailableTime, idx: number) => (
                                             <div
                                                 key={idx}
                                                 className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
@@ -233,8 +233,8 @@ export function StudySessionSection() {
                             </p>
                             <div className="space-y-3">
                                 {(() => {
-                                    const groupedByDate: { [date: string]: typeof availableTimeList } = {};
-                                    availableTimeList.forEach(session => {
+                                    const groupedByDate: { [date: string]: AvailableTime[] } = {};
+                                    availableTimeList.forEach((session: AvailableTime) => {
                                         const date = getDateFromISO(session.startTime);
                                         if (!groupedByDate[date]) {
                                             groupedByDate[date] = [];
@@ -255,7 +255,7 @@ export function StudySessionSection() {
                                                     {format(dateObj, "M월 d일 (EEE)", { locale: ko })}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {dateSessions.map((session, idx) => (
+                                                    {dateSessions.map((session: AvailableTime, idx: number) => (
                                                         <div
                                                             key={idx}
                                                             className="text-xs bg-blue-50 px-3 py-1.5 rounded border border-blue-100"

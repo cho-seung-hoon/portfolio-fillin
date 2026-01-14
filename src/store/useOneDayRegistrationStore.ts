@@ -8,14 +8,18 @@ export interface Option {
 }
 
 export interface AvailableTime {
-    startTime: string; // ISO String or similar
-    endTime: string;   // ISO String or similar
+    startTime: string; // ISO String (UTC)
+    endTime: string;   // ISO String (UTC)
     price: number;
     seats: number;
 }
 
 interface ServiceRegistrationState {
-    // Basic Info
+    // Basic Info (Shared or specific to OneDay?)
+    // Usually Basic Info like Title/Desc is managed by the parent or a general store, 
+    // but the user wants a separate store for OneDay. 
+    // If this store is ONLY for the OneDay-specific part (sessions), then we might not need title/desc here.
+    // However, adhering to the pattern requested (copy of Study store, separate), I will include them.
     title: string;
     lessonType: string;
     description: string;
@@ -23,14 +27,14 @@ interface ServiceRegistrationState {
     categoryId: number;
     closeAt: string | null;
 
-    // Top-level Price/Seats (Used by Study, maybe OneDay)
+    // Top-level Price/Seats (Not typically used for OneDay if per-session, but kept for DTO compatibility)
     price: number;
     seats: number;
 
     // Options (Used by Mentoring)
     optionList: Option[];
 
-    // Available Times (Used by Mentoring, OneDay, Study)
+    // Available Times (Used by OneDay - Critical part)
     availableTimeList: AvailableTime[];
 
     // Actions
@@ -52,7 +56,7 @@ interface ServiceRegistrationState {
     reset: () => void;
 }
 
-export const useServiceRegistrationStore = create<ServiceRegistrationState>((set) => ({
+export const useOneDayRegistrationStore = create<ServiceRegistrationState>((set) => ({
     title: "",
     lessonType: "",
     description: "",
