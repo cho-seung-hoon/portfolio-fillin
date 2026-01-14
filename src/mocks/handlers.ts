@@ -159,41 +159,37 @@ export const handlers = [
         }
     }),
 
-
-
-    }),
-
-// 1-3. Update Introduction
-http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return new HttpResponse(null, { status: 401 });
-    }
-
-    const token = authHeader.split(" ")[1];
-    try {
-        const payload = token.split(".")[1];
-        const claims = JSON.parse(window.atob(payload));
-
-        const member = Array.from(membersMap.values()).find(
-            m => m.email === claims.email || String(m.member_id) === claims.memberId
-        );
-
-        if (!member) {
-            return new HttpResponse(null, { status: 404 });
+    // 1-3. Update Introduction
+    http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return new HttpResponse(null, { status: 401 });
         }
 
-        const body = await request.json() as { introduction: string };
-        member.introduction = body.introduction; // Update Mock Data
+        const token = authHeader.split(" ")[1];
+        try {
+            const payload = token.split(".")[1];
+            const claims = JSON.parse(window.atob(payload));
 
-        return HttpResponse.json({
-            status: 200,
-            message: "OK"
-        });
-    } catch (e) {
-        return new HttpResponse(null, { status: 401 });
-    }
-}),
+            const member = Array.from(membersMap.values()).find(
+                m => m.email === claims.email || String(m.member_id) === claims.memberId
+            );
+
+            if (!member) {
+                return new HttpResponse(null, { status: 404 });
+            }
+
+            const body = await request.json() as { introduction: string };
+            member.introduction = body.introduction; // Update Mock Data
+
+            return HttpResponse.json({
+                status: 200,
+                message: "OK"
+            });
+        } catch (e) {
+            return new HttpResponse(null, { status: 401 });
+        }
+    }),
 
     // 2. Lesson Search Handler (New Schema)
     http.get("/api/v1/lessons/search", ({ request }) => {
