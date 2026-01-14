@@ -18,14 +18,14 @@ import {
 } from "lucide-react";
 
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
-import { OneDayClassSection, OneDayClassData } from "./service-registration/OneDayClassSection";
+import { OneDayClassSection } from "./service-registration/OneDayClassSection";
 import { StudySessionSection } from "./service-registration/StudySessionSection";
 import { MentoringSection } from "./service-registration/MentoringSection";
 
 // Stores
 import { useStudyRegistrationStore } from "../../store/useStudyRegistrationStore";
 import { useMentoringRegistrationStore } from "../../store/useMentoringRegistrationStore";
-// import { useOneDayRegistrationStore } from "../../store/useOneDayRegistrationStore";
+import { useOneDayRegistrationStore } from "../../store/useOneDayRegistrationStore";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -42,13 +42,9 @@ export function ServiceRegistration({
   const [lessonType, setLessonType] = useState<string>("");
 
   // --- Stores ---
-  // Study Store
-  const studyStore = useStudyRegistrationStore();
-  // Mentoring Store
   const mentoringStore = useMentoringRegistrationStore();
-
-  // Local state for OneDay (Legacy until refactored)
-  const [oneDayClassData, setOneDayClassData] = useState<OneDayClassData>({ sessions: [] });
+  const oneDayStore = useOneDayRegistrationStore();
+  const studyStore = useStudyRegistrationStore();
 
   // Helper to convert Local Date+Time string to ISO 8601 (UTC)
   const toLocalISOString = (dateStr: string, timeStr: string) => {
@@ -89,21 +85,14 @@ export function ServiceRegistration({
       });
       requestDTO.optionList = flattenedOptions;
 
-      // Schedules (Already ISO in store, just assign)
+      // Schedules
       requestDTO.availableTimeList = availableTimeList;
 
     } else if (lessonType === "1-n-oneday") {
-      // Legacy OneDay (Local State)
-      const flatTimes: any[] = [];
-      oneDayClassData.sessions.forEach(session => {
-        flatTimes.push({
-          startTime: toLocalISOString(session.date, `${session.startTime}:00`),
-          endTime: toLocalISOString(session.date, `${session.endTime}:00`),
-          price: session.price,
-          seats: session.seats
-        });
-      });
-      requestDTO.availableTimeList = flatTimes;
+      const { availableTimeList } = oneDayStore;
+      // OneDay: store already has ISO times, price, seats.
+      // It does not use Top-Level optionList usually.
+      requestDTO.availableTimeList = availableTimeList;
 
     } else if (lessonType === "1-n-study") {
       const { price, seats, availableTimeList } = studyStore;
@@ -123,7 +112,8 @@ export function ServiceRegistration({
       const { mentoringOptions } = mentoringStore;
       return mentoringOptions.length > 0 && mentoringOptions.some(o => o.priceOptions.length > 0);
     } else if (lessonType === "1-n-oneday") {
-      return oneDayClassData.sessions.length > 0;
+      const { availableTimeList } = oneDayStore;
+      return availableTimeList.length > 0;
     } else if (lessonType === "1-n-study") {
       const { price, seats, availableTimeList } = studyStore;
       return price > 0 && seats > 0 && availableTimeList.length > 0;
@@ -208,7 +198,7 @@ export function ServiceRegistration({
                   <Input
                     id="closeAt"
                     type="date"
-                    value={closeAt ? new Date(closeAt).toLocaleDateString('en-CA') : ''}
+                    value={closeAt ? new Date(closeAt).toLocaleDateString('en-CA') : ''} // Display as YYYY-MM-DD
                     onChange={(e) => {
                       if (e.target.value) {
                         setCloseAt(toLocalISOString(e.target.value, "23:59:59"));
@@ -228,14 +218,14 @@ export function ServiceRegistration({
               setServiceType={setLessonType}
             />
 
-            {/* 1:1 멘토링 (Store 사용, Props 없음) */}
+            {/* 1:1 멘토링 */}
             {lessonType === "1-1-mentoring" && (
               <MentoringSection />
             )}
 
             {/* 1:N 원데이 */}
             {lessonType === "1-n-oneday" && (
-              <OneDayClassSection onChange={setOneDayClassData} />
+              <OneDayClassSection />
             )}
 
             {/* 1:N 스터디 (상태는 Store에서 관리) */}
