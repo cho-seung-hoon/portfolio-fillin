@@ -11,6 +11,8 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { reviewService } from "../../api/review";
+import { useEffect } from "react";
 
 interface MyPageHomeProps {
   userName: string;
@@ -173,6 +175,19 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
   const [approvalTab, setApprovalTab] = useState<"received" | "sent">("received");
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleDetail | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [unwrittenReviewCount, setUnwrittenReviewCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnwrittenReviewCount = async () => {
+      try {
+        const response = await reviewService.getUnwrittenReviews(0, 1);
+        setUnwrittenReviewCount(response.totalElements);
+      } catch (error) {
+        console.error("Failed to fetch unwritten review count:", error);
+      }
+    };
+    fetchUnwrittenReviewCount();
+  }, []);
 
   const handleScheduleClick = (scheduleId: number) => {
     const detail = mockDetailedSchedules[scheduleId];
@@ -190,13 +205,13 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
         oldStatus: selectedSchedule.status,
         newStatus: newStatus,
       });
-      
+
       // Update local state
       setSelectedSchedule({
         ...selectedSchedule,
         status: newStatus,
       });
-      
+
       alert(`상태가 "${newStatus}"로 변경되었습니다.`);
     }
   };
@@ -204,7 +219,6 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
   // Mock data
   const mockData = {
     stats: {
-      pendingReviews: 4,
       upcomingSchedules: 5,
       mentorApprovals: 2,
       receivedRequests: 3,
@@ -308,7 +322,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
           </h1>
 
           {/* 작성가능한 리뷰 */}
-          <Card 
+          <Card
             className="border bg-gradient-to-br from-orange-50 to-orange-100 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => onTabChange?.("reviews")}
           >
@@ -318,7 +332,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                   <MessageSquare className="size-4 text-orange-600" />
                   <span className="text-sm text-orange-700">작성가능한 리뷰</span>
                 </div>
-                <div className="text-lg text-orange-900">{mockData.stats.pendingReviews} 건</div>
+                <div className="text-lg text-orange-900">{unwrittenReviewCount} 건</div>
               </div>
             </CardContent>
           </Card>
@@ -343,8 +357,8 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
               {mockData.upcomingSchedules.length > 0 ? (
                 <div className="space-y-2">
                   {mockData.upcomingSchedules.map((schedule) => (
-                    <div 
-                      key={schedule.id} 
+                    <div
+                      key={schedule.id}
                       className="p-3 border border-gray-200 rounded-lg hover:border-blue-400 transition-colors cursor-pointer"
                       onClick={() => handleScheduleClick(schedule.id)}
                     >
@@ -385,11 +399,10 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
               <div className="flex items-center gap-2 border-b border-gray-200">
                 <button
                   onClick={() => setApprovalTab("received")}
-                  className={`px-4 py-2 text-sm font-medium transition-colors relative ${
-                    approvalTab === "received"
-                      ? "text-[#00C471]"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium transition-colors relative ${approvalTab === "received"
+                    ? "text-[#00C471]"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   승인 대기 신청 ({mockData.stats.receivedRequests})
                   {approvalTab === "received" && (
@@ -398,11 +411,10 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                 </button>
                 <button
                   onClick={() => setApprovalTab("sent")}
-                  className={`px-4 py-2 text-sm font-medium transition-colors relative ${
-                    approvalTab === "sent"
-                      ? "text-[#00C471]"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium transition-colors relative ${approvalTab === "sent"
+                    ? "text-[#00C471]"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   멘토 승인 대기 ({mockData.stats.mentorApprovals})
                   {approvalTab === "sent" && (
@@ -418,8 +430,8 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                   {mockData.mentorConfirmations.length > 0 ? (
                     <div className="space-y-2">
                       {mockData.mentorConfirmations.map((confirmation) => (
-                        <div 
-                          key={confirmation.id} 
+                        <div
+                          key={confirmation.id}
                           className="p-3 border border-gray-200 rounded-lg hover:border-[#00C471] transition-colors cursor-pointer"
                           onClick={() => handleScheduleClick(confirmation.id)}
                         >
@@ -457,8 +469,8 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                   {mockData.menteeConfirmations.length > 0 ? (
                     <div className="space-y-2">
                       {mockData.menteeConfirmations.map((confirmation) => (
-                        <div 
-                          key={confirmation.id} 
+                        <div
+                          key={confirmation.id}
                           className="p-3 border border-gray-200 rounded-lg hover:border-purple-400 transition-colors cursor-pointer"
                           onClick={() => handleScheduleClick(confirmation.id)}
                         >
@@ -510,7 +522,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
               상세한 스케줄 정보를 확인할 수 있습니다.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedSchedule && (
             <div className="space-y-6 p-6">
               {/* 예약 정보 섹션 */}
@@ -526,7 +538,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <User className="size-5 text-gray-500 mt-0.5" />
                     <div>
@@ -534,12 +546,12 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                         {selectedSchedule.mentee ? "멘티" : selectedSchedule.mentor ? "멘토" : "참여자"}
                       </div>
                       <div className="text-sm font-medium">
-                        {selectedSchedule.mentee || selectedSchedule.mentor || 
+                        {selectedSchedule.mentee || selectedSchedule.mentor ||
                           (selectedSchedule.participants ? `${selectedSchedule.participants}명` : "-")}
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <FileText className="size-5 text-gray-500 mt-0.5" />
                     <div>
@@ -563,7 +575,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                       <div className="text-sm font-medium">{selectedSchedule.type}</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <FileText className="size-5 text-gray-500 mt-0.5" />
                     <div>
@@ -573,7 +585,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <MapPin className="size-5 text-gray-500 mt-0.5" />
                     <div>
@@ -581,7 +593,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                       <div className="text-sm font-medium">{selectedSchedule.location}</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <Tag className="size-5 text-gray-500 mt-0.5" />
                     <div>
@@ -589,7 +601,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                       <div className="text-sm font-medium">{selectedSchedule.category}</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <Clock className="size-5 text-gray-500 mt-0.5" />
                     <div>
@@ -623,7 +635,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                       </Button>
                     </>
                   )}
-                  
+
                   {selectedSchedule.status === "확정" && (
                     <>
                       <Button
@@ -645,7 +657,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                     </>
                   )}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   onClick={() => setIsDetailModalOpen(false)}

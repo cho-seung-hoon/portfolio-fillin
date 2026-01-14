@@ -20,18 +20,18 @@ export function MyPage({ user, onLoginClick, onLogout, onNavigateToMain, onNavig
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <InfLearnHeader 
+      <InfLearnHeader
         user={user}
         onLoginClick={onLoginClick}
         onLogout={onLogout}
-        onNavigateToMyPage={() => {}}
+        onNavigateToMyPage={() => { }}
         onNavigateToMain={onNavigateToMain}
         onNavigateToServiceRegistration={onNavigateToServiceRegistration}
       />
-      
+
       <div className="flex flex-1">
         <MyPageSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-        
+
         <main className="flex-1 bg-gray-50">
           {activeTab === "home" && <MyPageHome userName={user.name} onTabChange={setActiveTab} />}
           {activeTab === "coupons" && (
@@ -52,7 +52,7 @@ export function MyPage({ user, onLoginClick, onLogout, onNavigateToMain, onNavig
             </div>
           )}
           {activeTab === "reviews" && <ReviewManagement />}
-          {activeTab === "profile" && <ProfileManagement user={user} />}
+          {activeTab === "profile" && <ProfileManagement />}
         </main>
       </div>
 

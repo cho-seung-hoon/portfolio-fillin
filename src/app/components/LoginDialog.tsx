@@ -11,41 +11,62 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 
+import { authService } from "../../api/auth";
+import { useAuthStore } from "../../stores/authStore";
+
 interface LoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLogin: (user: { email: string; name: string }) => void;
 }
 
-export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
+export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
+  const [phoneNum, setPhoneNum] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const login = useAuthStore((state) => state.login);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mock login - in real app, this would call an API
+
     if (email && password) {
-      const userName = isSignUp && name ? name : email.split("@")[0];
-      onLogin({
-        email,
-        name: userName,
-      });
-      onOpenChange(false);
-      setEmail("");
-      setPassword("");
-      setName("");
+      try {
+        if (isSignUp) {
+          await authService.signup({
+            email,
+            password,
+            nickname: name,
+            phoneNum: phoneNum
+          });
+          // Auto login after signup
+          const { user, token } = await authService.login(email, password);
+          login(user, token);
+        } else {
+          const { user, token } = await authService.login(email, password);
+          login(user, token);
+        }
+
+        onOpenChange(false);
+        setEmail("");
+        setPassword("");
+        setName("");
+        setPhoneNum("");
+      } catch (error) {
+        alert(error instanceof Error ? error.message : (isSignUp ? "회원가입에 실패했습니다." : "로그인에 실패했습니다."));
+      }
     }
   };
 
   const handleSocialLogin = (provider: string) => {
-    // Mock social login
-    onLogin({
-      email: `user@${provider}.com`,
+    // Mock social login - directly logging in for now
+    const mockUser = {
+      member_id: 999,
+      email: `user@${provider.toLowerCase()}.com`,
       name: `${provider} 사용자`,
-    });
+    };
+    login(mockUser, "mock-social-token");
     onOpenChange(false);
   };
 
@@ -73,6 +94,20 @@ export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
                 placeholder="홍길동"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                required={isSignUp}
+              />
+            </div>
+          )}
+
+          {isSignUp && (
+            <div className="space-y-2">
+              <Label htmlFor="phone">전화번호</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="010-0000-0000"
+                value={phoneNum}
+                onChange={(e) => setPhoneNum(e.target.value)}
                 required={isSignUp}
               />
             </div>
@@ -141,7 +176,7 @@ export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
             </svg>
             Google로 계속하기
           </Button>
-          
+
           <Button
             type="button"
             variant="outline"

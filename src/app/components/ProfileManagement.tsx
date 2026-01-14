@@ -1,26 +1,120 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { Camera, User } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
+// import { cn } from "./ui/utils"; // Removed if unused, but let's check if used elsewhere. 
+// Assuming cn is unused based on replacement.
+import { Camera, User as UserIcon } from "lucide-react";
+import { profileService } from "../../api/profile";
+import { categoryService } from "../../api/category";
+import { useAuthStore } from "../../stores/authStore";
+import { CategoryResponseDto } from "../../api/types";
 
-interface ProfileManagementProps {
-  user: { email: string; name: string };
-}
-
-export function ProfileManagement({ user }: ProfileManagementProps) {
+export function ProfileManagement() {
+  const user = useAuthStore((state) => state.user);
   const [activeTab, setActiveTab] = useState<"basic" | "introduction">("basic");
-  const [nickname, setNickname] = useState(user.name);
-  const [phone, setPhone] = useState("010-9342-3631");
-  const [introduction, setIntroduction] = useState(
-    "안녕하세요! 5년 경력의 프론트엔드 개발자입니다.\n\nReact, TypeScript, Next.js를 주로 사용하며, 사용자 경험을 중시하는 개발을 지향합니다.\n멘티분들과 함께 성장하는 것을 즐기며, 실무에서 바로 적용할 수 있는 실용적인 지식을 전달하고자 합니다."
-  );
-  const [category, setCategory] = useState("웹 개발");
 
+  // Local state for edit inputs (Draft state) only
+  const [editNickname, setEditNickname] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+
+  // Other fields state
+  const [introduction, setIntroduction] = useState("");
+  const [category, setCategory] = useState<CategoryResponseDto | null>(null);
+  const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
+  const [phone, setPhone] = useState("");
+
+  // UI States
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [isEditingIntroduction, setIsEditingIntroduction] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+
+
+  // Initialize draft state when editing starts
+  const startEditingNickname = () => {
+    setEditNickname(user?.name || "");
+    setIsEditingNickname(true);
+  };
+
+  const startEditingPhone = () => {
+    setEditPhone(phone);
+    setIsEditingPhone(true);
+  };
+
+  // Sync profile data on mount to ensure store is fresh
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const data = await profileService.getMyProfile();
+        if (data.nickname !== user.name) {
+          useAuthStore.getState().updateName(data.nickname);
+        }
+        if (data.category && data.category.name.trim() !== "") {
+          setCategory(data.category);
+        }
+        setIntroduction(data.introduction ?? "");
+        setPhone(data.phoneNum ?? "");
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        console.log("Fetched categories:", data);
+        setCategories(data);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchProfile();
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleUpdateNickname = async () => {
+    try {
+      setLoading(true);
+      await profileService.updateNickname(editNickname);
+      // Update Global Store
+      useAuthStore.getState().updateName(editNickname);
+      setIsEditingNickname(false);
+      alert("닉네임이 수정되었습니다.");
+    } catch (error) {
+      console.error("Failed to update nickname:", error);
+      alert("닉네임 수정에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateIntroduction = async () => {
+    if (!category) {
+      alert("카테고리를 선택해주세요.");
+      return;
+    }
+    try {
+      await profileService.updateIntroduction(introduction, category.categoryId);
+      setIsEditingIntroduction(false);
+      alert("자기소개와 카테고리가 수정되었습니다.");
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      alert("수정에 실패했습니다.");
+    }
+  };
+
+  if (!user) return null; // Should be handled by parent active/auth check
 
   return (
     <div className="p-8">
@@ -29,11 +123,10 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
         <div className="flex gap-4">
           <button
             onClick={() => setActiveTab("basic")}
-            className={`pb-2 transition-colors relative ${
-              activeTab === "basic"
-                ? "text-[#00C471] font-medium"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`pb-2 transition-colors relative ${activeTab === "basic"
+              ? "text-[#00C471] font-medium"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             기본정보
             {activeTab === "basic" && (
@@ -42,11 +135,10 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
           </button>
           <button
             onClick={() => setActiveTab("introduction")}
-            className={`pb-2 transition-colors relative ${
-              activeTab === "introduction"
-                ? "text-[#00C471] font-medium"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`pb-2 transition-colors relative ${activeTab === "introduction"
+              ? "text-[#00C471] font-medium"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             자기소개
             {activeTab === "introduction" && (
@@ -62,11 +154,10 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
             <div className="space-y-8">
               <h3 className="text-xl">기본정보</h3>
 
-              {/* Profile Image */}
               <div className="flex justify-center">
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#00C471] to-[#00B366] flex items-center justify-center">
-                    <User className="size-16 text-white" />
+                    <UserIcon className="size-16 text-white" />
                   </div>
                   <button className="absolute bottom-0 right-0 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 hover:border-[#00C471] transition-colors">
                     <Camera className="size-5 text-gray-600" />
@@ -74,32 +165,33 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
                 </div>
               </div>
 
-              {/* Nickname */}
+              {/* Nickname: Use store state */}
               <div className="flex items-center justify-between py-4 border-b">
                 <div className="flex items-center gap-8 flex-1">
                   <label className="text-gray-600 w-24">닉네임</label>
                   {isEditingNickname ? (
                     <Input
-                      value={nickname}
-                      onChange={(e) => setNickname(e.target.value)}
+                      value={editNickname}
+                      onChange={(e) => setEditNickname(e.target.value)}
                       className="max-w-md"
                       autoFocus
                     />
                   ) : (
-                    <span>{nickname}</span>
+                    <span>{user.name}</span>
                   )}
                 </div>
                 {isEditingNickname ? (
                   <Button
-                    onClick={() => setIsEditingNickname(false)}
+                    onClick={handleUpdateNickname}
+                    disabled={loading}
                     className="bg-[#00C471] hover:bg-[#00B366]"
                   >
-                    저장
+                    {loading ? "저장 중..." : "저장"}
                   </Button>
                 ) : (
                   <Button
                     variant="outline"
-                    onClick={() => setIsEditingNickname(true)}
+                    onClick={startEditingNickname}
                   >
                     수정
                   </Button>
@@ -123,13 +215,17 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
                   <label className="text-gray-600 w-24">연락처</label>
                   {isEditingPhone ? (
                     <Input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
                       className="max-w-md"
                       autoFocus
                     />
                   ) : (
-                    <span>{phone}</span>
+                    isLoadingProfile ? (
+                      <Skeleton className="h-6 w-32" />
+                    ) : (
+                      <span>{phone || "연락처 정보 없음"}</span>
+                    )
                   )}
                 </div>
                 {isEditingPhone ? (
@@ -142,7 +238,7 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
                 ) : (
                   <Button
                     variant="outline"
-                    onClick={() => setIsEditingPhone(true)}
+                    onClick={startEditingPhone}
                   >
                     수정
                   </Button>
@@ -156,39 +252,60 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
               {/* Category */}
               <div className="space-y-3">
                 <label className="text-gray-600">카테고리</label>
-                <Input
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="예: 웹 개발, 데이터 분석 등"
-                />
-                <p className="text-sm text-gray-500">
-                  * 카테고리는 추후 논의 예정입니다.
-                </p>
+                <div className="flex flex-col gap-2">
+                  <select
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={category?.name || ""}
+                    onChange={(e) => {
+                      const selected = categories.find((c) => c.name === e.target.value);
+                      if (selected) {
+                        setCategory(selected);
+                        console.log("Category selected:", selected);
+                      }
+                    }}
+                  >
+                    <option value="" disabled>
+                      카테고리를 선택하세요
+                    </option>
+                    {categories.map((cat) => (
+                      <option key={cat.categoryId} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-gray-500">
+                    * 전문 분야를 선택해주세요.
+                  </p>
+                </div>
               </div>
 
               {/* Introduction */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-gray-600">간단한 소개</label>
-                  {isEditingIntroduction ? (
-                    <Button
-                      onClick={() => setIsEditingIntroduction(false)}
-                      className="bg-[#00C471] hover:bg-[#00B366]"
-                      size="sm"
-                    >
-                      저장
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditingIntroduction(true)}
-                      size="sm"
-                    >
-                      수정
-                    </Button>
+                  {!isLoadingProfile && (
+                    isEditingIntroduction ? (
+                      <Button
+                        onClick={handleUpdateIntroduction}
+                        className="bg-[#00C471] hover:bg-[#00B366]"
+                        size="sm"
+                      >
+                        저장
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEditingIntroduction(true)}
+                        size="sm"
+                      >
+                        수정
+                      </Button>
+                    )
                   )}
                 </div>
-                {isEditingIntroduction ? (
+                {isLoadingProfile ? (
+                  <Skeleton className="w-full h-[300px] rounded-lg" />
+                ) : isEditingIntroduction ? (
                   <Textarea
                     value={introduction}
                     onChange={(e) => setIntroduction(e.target.value)}
@@ -197,13 +314,17 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
                   />
                 ) : (
                   <p className="text-gray-700 bg-gray-50 p-6 rounded-lg min-h-[300px] whitespace-pre-wrap">
-                    {introduction}
+                    {introduction || "자기소개가 없습니다."}
                   </p>
                 )}
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button className="bg-[#00C471] hover:bg-[#00B366]">
+                <Button
+                  onClick={handleUpdateIntroduction}
+                  className="bg-[#00C471] hover:bg-[#00B366]"
+                  disabled={isLoadingProfile}
+                >
                   자기소개 저장
                 </Button>
               </div>

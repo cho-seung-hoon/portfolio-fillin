@@ -1,17 +1,34 @@
-import { CourseCard, type Course } from "./CourseCard";
+import { LessonCard } from "./LessonCard";
+import { LessonCardSkeleton } from "./LessonCardSkeleton";
+import { Lesson } from "../../types/lesson";
 import { Pagination } from "./Pagination";
 
 interface SearchResultsProps {
-  courses: Course[];
+  lessons: Lesson[];
   searchQuery: string;
-  onCourseClick?: (courseId: number) => void;
+  onLessonClick?: (lessonId: string) => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  isLoading?: boolean;
 }
 
-export function SearchResults({ courses, searchQuery, onCourseClick, currentPage, totalPages, onPageChange }: SearchResultsProps) {
-  if (courses.length === 0) {
+export function SearchResults({ lessons, searchQuery, onLessonClick, currentPage, totalPages, onPageChange, isLoading }: SearchResultsProps) {
+  if (isLoading) {
+    return (
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <LessonCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+  if (lessons.length === 0) {
+
     return (
       <section className="py-16">
         <div className="container mx-auto px-4">
@@ -49,8 +66,8 @@ export function SearchResults({ courses, searchQuery, onCourseClick, currentPage
     <section className="py-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {courses.map((course) => (
-            <CourseCard key={course.id} course={course} onClick={() => onCourseClick?.(course.id)} />
+          {lessons.map((lesson) => (
+            <LessonCard key={lesson.id} lesson={lesson} onClick={() => onLessonClick?.(lesson.id)} />
           ))}
         </div>
         <Pagination

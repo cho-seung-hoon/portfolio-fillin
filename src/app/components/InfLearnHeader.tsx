@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { useAuthStore } from "../../stores/authStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,24 +28,22 @@ import {
 } from "./ui/avatar";
 
 interface InfLearnHeaderProps {
-  user: { email: string; name: string } | null;
   onLoginClick: () => void;
   onSignupClick?: () => void;
-  onLogout: () => void;
   onNavigateToMyPage?: () => void;
   onNavigateToMain?: () => void;
   onNavigateToServiceRegistration?: () => void;
 }
 
 export function InfLearnHeader({
-  user,
   onLoginClick,
   onSignupClick,
-  onLogout,
   onNavigateToMyPage,
   onNavigateToMain,
   onNavigateToServiceRegistration,
 }: InfLearnHeaderProps) {
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   return (
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -128,7 +127,7 @@ export function InfLearnHeader({
                       설정
                     </DropdownMenuItem> */}
                     <DropdownMenuItem
-                      onClick={onLogout}
+                      onClick={logout}
                       className="text-red-600"
                     >
                       <LogOut className="size-4 mr-2" />

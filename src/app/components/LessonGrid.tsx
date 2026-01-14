@@ -1,11 +1,12 @@
-import { CourseCard, type Course } from "./CourseCard";
+import { LessonCard } from "./LessonCard";
+import { Lesson } from "../../types/lesson";
 
-interface CourseGridProps {
-  courses: Course[];
+interface LessonGridProps {
+  lessons: Lesson[];
   title?: string;
 }
 
-export function CourseGrid({ courses, title }: CourseGridProps) {
+export function LessonGrid({ lessons, title }: LessonGridProps) {
   return (
     <section className="py-12">
       <div className="container mx-auto px-4">
@@ -17,12 +18,12 @@ export function CourseGrid({ courses, title }: CourseGridProps) {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {courses.map((course) => (
-            <CourseCard key={course.id} course={course} />
+          {lessons.map((lesson) => (
+            <LessonCard key={lesson.id} lesson={lesson} />
           ))}
         </div>
 
-        {courses.length === 0 && (
+        {lessons.length === 0 && (
           <div className="text-center py-16 text-gray-500">
             해당 카테고리의 강의가 없습니다.
           </div>

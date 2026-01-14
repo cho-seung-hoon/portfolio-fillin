@@ -12,24 +12,29 @@ import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 import { Checkbox } from "./ui/checkbox";
 
+import { authService } from "../../api/auth";
+import { useAuthStore } from "../../stores/authStore";
+
 interface SignupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSignup: (user: { email: string; name: string }) => void;
   onSwitchToLogin?: () => void;
 }
 
-export function SignupDialog({ open, onOpenChange, onSignup, onSwitchToLogin }: SignupDialogProps) {
+export function SignupDialog({ open, onOpenChange, onSwitchToLogin }: SignupDialogProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [name, setName] = useState("");
+  const [phoneNum, setPhoneNum] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const login = useAuthStore((state) => state.login);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!agreeTerms || !agreePrivacy) {
       alert("필수 약관에 동의해주세요.");
@@ -45,30 +50,43 @@ export function SignupDialog({ open, onOpenChange, onSignup, onSwitchToLogin }: 
       alert("비밀번호는 최소 8자 이상이어야 합니다.");
       return;
     }
-    
+
     // Mock signup - in real app, this would call an API
-    if (email && password && name) {
-      onSignup({
-        email,
-        name,
-      });
-      onOpenChange(false);
-      // Reset form
-      setEmail("");
-      setPassword("");
-      setPasswordConfirm("");
-      setName("");
-      setAgreeTerms(false);
-      setAgreePrivacy(false);
+    if (email && password && name && phoneNum) {
+      try {
+        await authService.signup({
+          email,
+          password,
+          nickname: name,
+          phoneNum,
+        });
+
+        // Auto login after signup
+        const { user, token } = await authService.login(email, password);
+
+        login(user, token);
+        onOpenChange(false);
+        // Reset form
+        setEmail("");
+        setPassword("");
+        setPasswordConfirm("");
+        setName("");
+        setPhoneNum("");
+        setAgreeTerms(false);
+        setAgreePrivacy(false);
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "회원가입에 실패했습니다.");
+      }
     }
   };
 
   const handleSocialSignup = (provider: string) => {
     // Mock social signup
-    onSignup({
-      email: `user@${provider}.com`,
+    login({
+      member_id: 999,
+      email: `user@${provider.toLowerCase()}.com`,
       name: `${provider} 사용자`,
-    });
+    }, "mock-social-token");
     onOpenChange(false);
   };
 
@@ -144,6 +162,18 @@ export function SignupDialog({ open, onOpenChange, onSignup, onSwitchToLogin }: 
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="phoneNum">전화번호 *</Label>
+            <Input
+              id="phoneNum"
+              type="tel"
+              placeholder="010-0000-0000"
+              value={phoneNum}
+              onChange={(e) => setPhoneNum(e.target.value)}
+              required
+            />
+          </div>
+
           <div className="space-y-3 pt-2">
             <div className="flex items-start gap-2">
               <Checkbox
@@ -174,8 +204,8 @@ export function SignupDialog({ open, onOpenChange, onSignup, onSwitchToLogin }: 
             </div>
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="w-full bg-[#00C471] hover:bg-[#00B368]"
             disabled={!agreeTerms || !agreePrivacy}
           >
@@ -217,7 +247,7 @@ export function SignupDialog({ open, onOpenChange, onSignup, onSwitchToLogin }: 
             </svg>
             Google로 계속하기
           </Button>
-          
+
           <Button
             type="button"
             variant="outline"
