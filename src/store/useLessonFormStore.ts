@@ -10,6 +10,8 @@ interface LessonFormState {
     // Category might be expanded later, DTO requires it
     categoryId: number;
     closeAt: string | null;
+    thumbnailImage: File | null;
+    thumbnailPreview: string | null;
 
     setTitle: (title: string) => void;
     setDescription: (description: string) => void;
@@ -17,6 +19,7 @@ interface LessonFormState {
     setLocation: (location: string) => void;
     setCategoryId: (id: number) => void;
     setCloseAt: (date: string | null) => void;
+    setThumbnail: (file: File | null) => void;
 
     reset: () => void;
 }
@@ -28,6 +31,8 @@ export const useLessonFormStore = create<LessonFormState>((set) => ({
     location: "",
     categoryId: 1, // Default to 1 as per current logic
     closeAt: null,
+    thumbnailImage: null,
+    thumbnailPreview: null,
 
     setTitle: (title) => set({ title }),
     setDescription: (description) => set({ description }),
@@ -35,6 +40,14 @@ export const useLessonFormStore = create<LessonFormState>((set) => ({
     setLocation: (location) => set({ location }),
     setCategoryId: (categoryId) => set({ categoryId }),
     setCloseAt: (closeAt) => set({ closeAt }),
+    setThumbnail: (file) => {
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            set({ thumbnailImage: file, thumbnailPreview: previewUrl });
+        } else {
+            set({ thumbnailImage: null, thumbnailPreview: null });
+        }
+    },
 
     reset: () => set({
         title: "",
@@ -42,6 +55,8 @@ export const useLessonFormStore = create<LessonFormState>((set) => ({
         lessonType: "",
         location: "",
         categoryId: 1,
-        closeAt: null
+        closeAt: null,
+        thumbnailImage: null,
+        thumbnailPreview: null
     })
 }));

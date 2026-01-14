@@ -14,7 +14,9 @@ import {
   Save,
   MapPin,
   Calendar as CalendarIcon,
-  Tag
+  Tag,
+  Image,
+  Upload
 } from "lucide-react";
 import {
   Select,
@@ -54,15 +56,30 @@ export function ServiceRegistration({
     location, setLocation,
     closeAt, setCloseAt,
     lessonType, setLessonType,
-    categoryId, setCategoryId
+    categoryId, setCategoryId,
+    thumbnailPreview, setThumbnail, // Added Image state
+    reset: resetLessonForm
   } = useLessonFormStore();
 
   // --- Specific Stores ---
-  const mentoringStore = useMentoringRegistrationStore();
-  const oneDayStore = useOneDayRegistrationStore();
-  const studyStore = useStudyRegistrationStore();
+  const { mentoringOptions, availableTimeList: mentoringTimeList, reset: resetMentoring } = useMentoringRegistrationStore();
+  const { availableTimeList: oneDayTimeList, reset: resetOneDay } = useOneDayRegistrationStore();
+  const { price, seats, availableTimeList: studyTimeList, reset: resetStudy } = useStudyRegistrationStore();
+
+  // Reset stores on mount (Cleanup previous state)
+  /* 
+   * [Policy Change: Session Persist]
+   * Do NOT reset on mount. Keep data (Zustand state) alive when navigating back/forward.
+   * Reset will only happen on explicit "Submit Success" or explicit "Cancel/Discard".
+   */
 
   const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setThumbnail(e.target.files[0]);
+    }
+  };
 
   // Fetch Categories
   useEffect(() => {
@@ -263,6 +280,44 @@ export function ServiceRegistration({
                       }
                     }}
                   />
+                </div>
+
+                {/* 썸네일 이미지 (Thumbnail) */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Image className="size-4" />
+                    썸네일 이미지
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`relative w-40 h-24 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors ${thumbnailPreview ? 'border-transparent' : 'border-gray-300'}`}
+                      onClick={() => document.getElementById('thumbnail-upload')?.click()}
+                    >
+                      {thumbnailPreview ? (
+                        <img
+                          src={thumbnailPreview}
+                          alt="Thumbnail Preview"
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-center text-gray-400">
+                          <Upload className="size-6 mx-auto mb-1" />
+                          <span className="text-xs">이미지 업로드</span>
+                        </div>
+                      )}
+                      <input
+                        id="thumbnail-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <p>서비스를 대표하는 이미지를 올려주세요.</p>
+                      <p className="text-xs mt-1 text-gray-400">권장 사이즈: 1200x630px (JPG, PNG)</p>
+                    </div>
+                  </div>
                 </div>
 
               </CardContent>
