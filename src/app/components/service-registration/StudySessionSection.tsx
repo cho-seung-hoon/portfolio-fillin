@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Plus, Trash2, Calendar, DollarSign, Users } from "lucide-react";
@@ -8,43 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { useServiceRegistrationStore, StudySession } from "../../../store/useServiceRegistrationStore";
 
-export interface StudySession {
-    id: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-}
-
-export interface StudySessionData {
-    price: number;
-    seats: number;
-    sessions: StudySession[];
-}
-
-interface StudySessionSectionProps {
-    onChange: (data: StudySessionData) => void;
-}
-
-export function StudySessionSection({ onChange }: StudySessionSectionProps) {
-    const [price, setPrice] = useState("");
-    const [seats, setSeats] = useState("");
-    const [sessions, setSessions] = useState<StudySession[]>([]);
+export function StudySessionSection() {
+    const {
+        studyPrice,
+        studySeats,
+        studySessions,
+        setStudyPrice,
+        setStudySeats,
+        addStudySession,
+        removeStudySession
+    } = useServiceRegistrationStore();
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [newSessionStartTime, setNewSessionStartTime] = useState("");
     const [newSessionEndTime, setNewSessionEndTime] = useState("");
-
-    useEffect(() => {
-        const numericPrice = Number(price) || 0;
-        const numericSeats = Number(seats) || 0;
-
-        onChange({
-            price: numericPrice,
-            seats: numericSeats,
-            sessions
-        });
-    }, [price, seats, sessions, onChange]);
 
     const addSession = () => {
         if (!selectedDate || !newSessionStartTime || !newSessionEndTime) {
@@ -59,21 +38,17 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
             endTime: newSessionEndTime,
         };
 
-        setSessions((prev) => [...prev, newSession]);
+        addStudySession(newSession);
         setNewSessionStartTime("");
         setNewSessionEndTime("");
     };
 
-    const removeSession = (id: string) => {
-        setSessions((prev) => prev.filter((s) => s.id !== id));
-    };
-
     const getSessionsForDate = (dateKey: string) => {
-        return sessions.filter((s) => s.date === dateKey);
+        return studySessions.filter((s) => s.date === dateKey);
     };
 
     const getSessionNumber = (id: string) => {
-        const sorted = [...sessions].sort((a, b) => {
+        const sorted = [...studySessions].sort((a, b) => {
             if (a.date !== b.date) return a.date.localeCompare(b.date);
             return a.startTime.localeCompare(b.startTime);
         });
@@ -99,8 +74,8 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                             </Label>
                             <Input
                                 type="number"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
+                                value={studyPrice || ''}
+                                onChange={(e) => setStudyPrice(Number(e.target.value))}
                                 placeholder="50000"
                                 min="0"
                                 className="bg-white"
@@ -113,8 +88,8 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                             </Label>
                             <Input
                                 type="number"
-                                value={seats}
-                                onChange={(e) => setSeats(e.target.value)}
+                                value={studySeats || ''}
+                                onChange={(e) => setStudySeats(Number(e.target.value))}
                                 placeholder="10"
                                 min="1"
                                 className="bg-white"
@@ -216,7 +191,7 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removeSession(session.id)}
+                                                    onClick={() => removeStudySession(session.id)}
                                                     className="text-gray-400 hover:text-gray-600"
                                                 >
                                                     <Trash2 className="size-4" />
@@ -229,16 +204,16 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                         </div>
                     )}
 
-                    {sessions.length > 0 && (
+                    {studySessions.length > 0 && (
                         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                             <h5 className="font-medium text-blue-900 mb-2">전체 회차 요약</h5>
                             <p className="text-sm text-blue-700 mb-3">
-                                총 {sessions.length}개의 회차가 등록되었습니다
+                                총 {studySessions.length}개의 회차가 등록되었습니다
                             </p>
                             <div className="space-y-3">
                                 {(() => {
-                                    const groupedByDate: { [date: string]: StudySession[] } = {};
-                                    sessions.forEach(session => {
+                                    const groupedByDate: { [date: string]: typeof studySessions } = {};
+                                    studySessions.forEach(session => {
                                         if (!groupedByDate[session.date]) {
                                             groupedByDate[session.date] = [];
                                         }

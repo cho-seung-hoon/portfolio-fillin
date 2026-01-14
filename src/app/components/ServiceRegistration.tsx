@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Card,
@@ -16,8 +17,9 @@ import {
 
 import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
 import { OneDayClassSection, OneDayClassData } from "./service-registration/OneDayClassSection";
-import { StudySessionSection, StudySessionData } from "./service-registration/StudySessionSection";
+import { StudySessionSection } from "./service-registration/StudySessionSection";
 import { MentoringSection, MentoringData } from "./service-registration/MentoringSection";
+import { useServiceRegistrationStore } from "../../store/useServiceRegistrationStore";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -38,8 +40,9 @@ export function ServiceRegistration({
 
   // State for OneDay Class 
   const [oneDayClassData, setOneDayClassData] = useState<OneDayClassData>({ sessions: [] });
-  // State for Study
-  const [studySessionData, setStudySessionData] = useState<StudySessionData>({ price: 0, seats: 0, sessions: [] });
+
+  // Store for Study
+  const { studyPrice, studySeats, studySessions } = useServiceRegistrationStore();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +51,14 @@ export function ServiceRegistration({
     } else if (serviceType === "1-n-oneday") {
       console.log({ title, content, serviceType, ...oneDayClassData });
     } else if (serviceType === "1-n-study") {
-      console.log({ title, content, serviceType, ...studySessionData });
+      console.log({
+        title,
+        content,
+        serviceType,
+        price: studyPrice,
+        seats: studySeats,
+        sessions: studySessions
+      });
     }
     alert("서비스가 등록되었습니다!");
     onBack();
@@ -69,7 +79,7 @@ export function ServiceRegistration({
     } else if (serviceType === "1-n-oneday") {
       return oneDayClassData.sessions.length > 0;
     } else if (serviceType === "1-n-study") {
-      return studySessionData.price > 0 && studySessionData.sessions.length > 0;
+      return studyPrice > 0 && studySeats > 0 && studySessions.length > 0;
     }
     return false;
   };
@@ -152,7 +162,7 @@ export function ServiceRegistration({
 
             {/* 스터디 일정 설정 - 1:N 스터디일 때만 표시 (전체 가격/인원) */}
             {serviceType === "1-n-study" && (
-              <StudySessionSection onChange={setStudySessionData} />
+              <StudySessionSection />
             )}
 
             {/* 제출 버튼 */}
