@@ -26,6 +26,7 @@ import { MentoringSection } from "./service-registration/MentoringSection";
 import { useStudyRegistrationStore } from "../../store/useStudyRegistrationStore";
 import { useMentoringRegistrationStore } from "../../store/useMentoringRegistrationStore";
 import { useOneDayRegistrationStore } from "../../store/useOneDayRegistrationStore";
+import { useLessonFormStore } from "../../store/useLessonFormStore";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -35,13 +36,17 @@ export function ServiceRegistration({
   onBack,
 }: ServiceRegistrationProps) {
   // --- Global State Management ---
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [closeAt, setCloseAt] = useState<string | null>(null);
-  const [lessonType, setLessonType] = useState<string>("");
+  // Basic Info Store
+  const {
+    title, setTitle,
+    description, setDescription,
+    location, setLocation,
+    closeAt, setCloseAt,
+    lessonType, setLessonType,
+    categoryId
+  } = useLessonFormStore();
 
-  // --- Stores ---
+  // --- Specific Stores ---
   const mentoringStore = useMentoringRegistrationStore();
   const oneDayStore = useOneDayRegistrationStore();
   const studyStore = useStudyRegistrationStore();
@@ -61,7 +66,7 @@ export function ServiceRegistration({
       lessonType,
       description,
       location,
-      categoryId: 1,
+      categoryId,
       closeAt: closeAt || null,
       price: 0,
       seats: 0,
@@ -91,7 +96,6 @@ export function ServiceRegistration({
     } else if (lessonType === "1-n-oneday") {
       const { availableTimeList } = oneDayStore;
       // OneDay: store already has ISO times, price, seats.
-      // It does not use Top-Level optionList usually.
       requestDTO.availableTimeList = availableTimeList;
 
     } else if (lessonType === "1-n-study") {
