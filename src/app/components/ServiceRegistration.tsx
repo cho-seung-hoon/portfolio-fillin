@@ -10,13 +10,6 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import {
   ArrowLeft,
   Save,
   Users,
@@ -27,23 +20,22 @@ import {
   Clock,
 } from "lucide-react";
 import { format } from "date-fns";
-import { ko } from "date-fns/locale";
 import "react-day-picker/dist/style.css";
-import { CalendarModule } from "./service-registration/CalendarModule";
 import { MentoringScheduleSection } from "./service-registration/MentoringScheduleSection";
 import { OneDaySessionSection } from "./service-registration/OneDaySessionSection";
+import { MentoringOptionSection } from "./service-registration/MentoringOptionSection";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
 }
 
-interface PriceOption {
+export interface PriceOption {
   id: string;
   duration: string;
   price: string;
 }
 
-interface ServiceOption {
+export interface ServiceOption {
   id: string;
   name: string;
   priceOptions: PriceOption[];
@@ -451,183 +443,21 @@ export function ServiceRegistration({
                     );
                   })}
                 </div>
-
-                {/* 1:1 멘토링 옵션 */}
-                {serviceType === "1-1-mentoring" && (
-                  <div className="space-y-6 pt-6 border-t">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>멘토링 옵션</Label>
-                        <p className="text-sm text-gray-500 mt-1">
-                          제공할 멘토링 옵션과 각 옵션별 시간/가격을 설정해주세요
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addOption}
-                        className="gap-2"
-                      >
-                        <Plus className="size-4" />
-                        옵션 추가
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3">
-                      {options.map((option, index) => (
-                        <div
-                          key={option.id}
-                          className="p-4 bg-gray-50 rounded-md space-y-3"
-                        >
-                          {/* 옵션 이름 */}
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="text"
-                              value={option.name}
-                              onChange={(e) =>
-                                updateOptionName(
-                                  option.id,
-                                  e.target.value,
-                                )
-                              }
-                              placeholder={`옵션 ${index + 1} (예: 기본 상담)`}
-                              className="flex-1 bg-white"
-                            />
-                            {options.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  removeOption(option.id)
-                                }
-                              >
-                                <Trash2 className="size-4 text-gray-400" />
-                              </Button>
-                            )}
-                          </div>
-
-                          {/* 진행시간 및 가격 추가 */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <Label className="text-sm text-gray-600">
-                                진행시간 및 가격
-                              </Label>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  addPriceOption(option.id)
-                                }
-                                className="gap-1 h-8 text-xs"
-                              >
-                                <Plus className="size-3" />
-                                추가
-                              </Button>
-                            </div>
-
-                            {option.priceOptions.length === 0 ? (
-                              <p className="text-sm text-gray-500 text-center py-3 bg-white rounded border border-dashed border-gray-300">
-                                시간/가격을 추가해주세요
-                              </p>
-                            ) : (
-                              <div className="space-y-2">
-                                {option.priceOptions.map(
-                                  (priceOption) => (
-                                    <div
-                                      key={priceOption.id}
-                                      className="flex items-end gap-2 p-3 bg-white rounded-md border border-gray-200"
-                                    >
-                                      <div className="flex-1 space-y-1">
-                                        <Label className="text-xs text-gray-600">
-                                          진행시간
-                                        </Label>
-                                        <Select
-                                          value={
-                                            priceOption.duration
-                                          }
-                                          onValueChange={(
-                                            value,
-                                          ) =>
-                                            updatePriceOption(
-                                              option.id,
-                                              priceOption.id,
-                                              "duration",
-                                              value,
-                                            )
-                                          }
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="시간 선택" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="30">
-                                              30분
-                                            </SelectItem>
-                                            <SelectItem value="60">
-                                              60분
-                                            </SelectItem>
-                                            <SelectItem value="90">
-                                              90분
-                                            </SelectItem>
-                                            <SelectItem value="120">
-                                              120분
-                                            </SelectItem>
-                                            <SelectItem value="180">
-                                              180분
-                                            </SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <div className="flex-1 space-y-1">
-                                        <Label className="text-xs text-gray-600">
-                                          가격 (원)
-                                        </Label>
-                                        <Input
-                                          type="number"
-                                          value={
-                                            priceOption.price
-                                          }
-                                          onChange={(e) =>
-                                            updatePriceOption(
-                                              option.id,
-                                              priceOption.id,
-                                              "price",
-                                              e.target.value,
-                                            )
-                                          }
-                                          placeholder="50000"
-                                        />
-                                      </div>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          removePriceOption(
-                                            option.id,
-                                            priceOption.id,
-                                          )
-                                        }
-                                        className="mb-0.5"
-                                      >
-                                        <Trash2 className="size-4 text-gray-400" />
-                                      </Button>
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
+
+            {/* 1:1 멘토링 옵션 */}
+            {serviceType === "1-1-mentoring" && (
+              <MentoringOptionSection
+                options={options}
+                addOption={addOption}
+                removeOption={removeOption}
+                updateOptionName={updateOptionName}
+                addPriceOption={addPriceOption}
+                removePriceOption={removePriceOption}
+                updatePriceOption={updatePriceOption}
+              />
+            )}
 
             {/* 가능한 시간 설정 (캘린더) - 1:1 멘토링일 때만 표시 */}
             {serviceType === "1-1-mentoring" && (
