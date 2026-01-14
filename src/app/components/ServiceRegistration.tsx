@@ -12,9 +12,6 @@ import { Label } from "./ui/label";
 import {
   ArrowLeft,
   Save,
-  Users,
-  Calendar,
-  BookOpen,
   Plus,
   Trash2,
   Clock,
@@ -24,6 +21,7 @@ import "react-day-picker/dist/style.css";
 import { MentoringScheduleSection } from "./service-registration/MentoringScheduleSection";
 import { OneDaySessionSection } from "./service-registration/OneDaySessionSection";
 import { MentoringOptionSection } from "./service-registration/MentoringOptionSection";
+import { ServiceTypeSelectionSection } from "./service-registration/ServiceTypeSelectionSection";
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -317,26 +315,7 @@ export function ServiceRegistration({
     }
   };
 
-  const serviceTypes = [
-    {
-      value: "1-1-mentoring",
-      label: "1:1 멘토링",
-      icon: Users,
-      description: "멘토와 1대1로 진행하는 맞춤형 멘토링",
-    },
-    {
-      value: "1-n-oneday",
-      label: "1:N 원데이",
-      icon: Calendar,
-      description: "하루 완성 그룹 클래스",
-    },
-    {
-      value: "1-n-study",
-      label: "1:N 스터디",
-      icon: BookOpen,
-      description: "장기간 진행하는 그룹 스터디",
-    },
-  ];
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -399,52 +378,10 @@ export function ServiceRegistration({
             </Card>
 
             {/* 서비스 종류 선택 */}
-            <Card>
-              <CardHeader>
-                <CardTitle>서비스 종류</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {serviceTypes.map((type) => {
-                    const Icon = type.icon;
-                    return (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() =>
-                          setServiceType(type.value)
-                        }
-                        className={`
-                          p-4 rounded-md border-2 transition-all text-left
-                          ${serviceType === type.value
-                            ? "border-[#00C471] bg-[#E6F9F2]"
-                            : "border-gray-200 hover:border-gray-300"
-                          }
-                        `}
-                      >
-                        <Icon
-                          className={`size-6 mb-2 ${serviceType === type.value
-                            ? "text-[#00C471]"
-                            : "text-gray-400"
-                            }`}
-                        />
-                        <h3
-                          className={`font-medium mb-1 ${serviceType === type.value
-                            ? "text-[#00C471]"
-                            : "text-gray-900"
-                            }`}
-                        >
-                          {type.label}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {type.description}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <ServiceTypeSelectionSection
+              serviceType={serviceType}
+              setServiceType={setServiceType}
+            />
 
             {/* 1:1 멘토링 옵션 */}
             {serviceType === "1-1-mentoring" && (
