@@ -32,13 +32,7 @@ public class CategoryService {
         return categoryRepository.findAll().stream()
                 .collect(Collectors.toMap(
                         Category::getId,
-                        category -> new CategoryResponseDto(
-                                category.getId(),
-                                category.getName(),
-                                category.getParentCategory() != null
-                                        ? category.getParentCategory().getId()
-                                        : null
-                        )
+                        CategoryResponseDto::of
                 ));
     }
 }
