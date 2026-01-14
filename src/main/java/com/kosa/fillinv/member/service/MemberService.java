@@ -22,7 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +71,33 @@ public class MemberService {
                         category.getName(),
                         category.getParentCategory() != null ? category.getParentCategory().getId() : null))
                 .build();
+    }
+
+    public Map<String, ProfileResponseDto> getAllProfilesByMemberIds(Collection<String> memberIds) {
+        Map<String, Member> memberMap = memberRepository.findByIdIn(memberIds).stream()
+                .collect(Collectors.toMap(Member::getId, member -> member));
+
+        Map<String, Profile> profileMap = profileRepository.findByMemberIdIn(memberIds).stream()
+                .collect(Collectors.toMap(Profile::getMemberId, profile -> profile));
+
+        Map<Long, Category> categoryMap = categoryRepository.findAll().stream()
+                .collect(Collectors.toMap(Category::getId, category -> category));
+
+        return memberMap.keySet().stream()
+                .collect(Collectors.toMap(
+                        memberId -> memberId,
+                        memberId -> {
+                            Member member = memberMap.get(memberId);
+                            Profile profile = profileMap.get(memberId);
+
+                            Category category = null;
+                            if (profile != null && profile.getCategoryId() != null) {
+                                category = categoryMap.get(profile.getCategoryId());
+                            }
+
+                            return ProfileResponseDto.of(member, profile, category);
+                        }
+                ));
     }
 
     @Transactional

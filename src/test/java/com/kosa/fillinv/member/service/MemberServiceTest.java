@@ -25,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -367,5 +369,38 @@ class MemberServiceTest {
                                 .setParameter("id", savedMember.getId()) // Profile의 PK는 Member ID와 같음
                                 .getSingleResult();
                 assertThat(profileDeletedAt).isNotNull();
+        }
+
+        @Test
+        @DisplayName("멤버 ID 컬렉션으로 한번의 여러 프로필 조회")
+        void getAllProfilesByMemberIds() {
+                // given
+                Member member1 = new Member("member-001", "nickname1", "01012341234", "email1@site.com", "1234");
+                Member member2 = new Member("member-002", "nickname2", "01012345678", "email2@site.com", "1234");
+
+                Profile profile1 = Profile.builder().member(member1).image("image1").introduce("introduce1").categoryId(1001L).build();
+                Profile profile2 = Profile.builder().member(member2).image("image2").introduce("introduce2").categoryId(1002L).build();
+
+                memberRepository.save(member1);
+                memberRepository.save(member2);
+                entityManager.flush(); entityManager.clear();
+                profileRepository.save(profile1);
+                profileRepository.save(profile2);
+                entityManager.flush(); entityManager.clear();
+
+                // when
+                Map<String, ProfileResponseDto> allProfilesByMemberIds = memberService.getAllProfilesByMemberIds(Set.of("member-001", "member-002"));
+
+                // then
+                assertThat(allProfilesByMemberIds.get("member-001").nickname()).isEqualTo("nickname1");
+                assertThat(allProfilesByMemberIds.get("member-001").imageUrl()).isEqualTo("image1");
+                assertThat(allProfilesByMemberIds.get("member-001").introduction()).isEqualTo("introduce1");
+                assertThat(allProfilesByMemberIds.get("member-001").category().categoryId()).isEqualTo(1001L);
+
+                assertThat(allProfilesByMemberIds.get("member-002").nickname()).isEqualTo("nickname2");
+                assertThat(allProfilesByMemberIds.get("member-002").imageUrl()).isEqualTo("image2");
+                assertThat(allProfilesByMemberIds.get("member-002").introduction()).isEqualTo("introduce2");
+                assertThat(allProfilesByMemberIds.get("member-002").category().categoryId()).isEqualTo(1002L);
+
         }
 }
