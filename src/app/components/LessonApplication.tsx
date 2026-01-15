@@ -11,7 +11,7 @@ import { MentoringApplicationView } from "./lesson-application/MentoringApplicat
 import { LessonApplicationUiModel } from "../../types/lesson-application-ui";
 import { mapApiToLesson } from "../../utils/lesson-application-mapper";
 
-import { applicationService } from "../../api/lesson-application-service";
+import { applicationService, ScheduleCreateRequest } from "../../api/lesson-application-service";
 
 interface LessonApplicationProps {
   lessonId: string;
@@ -55,18 +55,50 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
 
   const selectedOption = lesson.options?.find(opt => opt.optionId === selectedOptionId);
 
-  const handlePayment = () => {
-    if (!selectedOption) {
-      alert("레슨 옵션을 선택해주세요.");
-      return;
+  const handlePayment = async () => {
+    if (!lesson) return;
+
+    // Validation
+    if (lesson.lessonType === "mentoring") {
+      if (!selectedOption) {
+        alert("레슨 옵션을 선택해주세요.");
+        return;
+      }
+      if (!selectedSlot) {
+        alert("일정을 선택해주세요.");
+        return;
+      }
+    } else if (lesson.lessonType === "oneday") {
+      if (!selectedSlot) {
+        alert("일정을 선택해주세요.");
+        return;
+      }
     }
 
-    if (lesson.lessonType === "mentoring" && !selectedSlot) {
-      alert("일정을 선택해주세요.");
-      return;
+    // Construct Payload
+    const request: ScheduleCreateRequest = {
+      lessonId: lessonId,
+      optionId: null,
+      availableTimeId: null,
+      startTime: null,
+    };
+
+    if (lesson.lessonType === "mentoring") {
+      request.optionId = selectedOptionId;
+      request.availableTimeId = selectedSlot.availableTimeId;
+      request.startTime = selectedSlot.startTime;
+    } else if (lesson.lessonType === "oneday") {
+      request.availableTimeId = selectedSlot.availableTimeId;
     }
 
-    alert("결제 페이지로 이동합니다.");
+    // Call API
+    const success = await applicationService.createSchedule(request);
+    if (success) {
+      alert("신청이 완료되었습니다.");
+      onBack();
+    } else {
+      alert("신청에 실패했습니다.");
+    }
   };
 
   // 가격 표시 로직

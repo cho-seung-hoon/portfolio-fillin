@@ -1,6 +1,13 @@
 import client from "./client";
 import { SuccessResponse, LessonDetailResult } from "../types/service-application-data";
 
+export interface ScheduleCreateRequest {
+    lessonId: string;
+    optionId: string | null;
+    availableTimeId: string | null;
+    startTime: string | null; // ISOString
+}
+
 export const applicationService = {
     /**
      * Fetch raw service detail data from API.
@@ -15,4 +22,17 @@ export const applicationService = {
             return null;
         }
     },
+
+    /**
+     * Create a schedule (Apply for a lesson).
+     */
+    async createSchedule(request: ScheduleCreateRequest): Promise<boolean> {
+        try {
+            await client.post<SuccessResponse<void>>("/v1/schedules", request);
+            return true;
+        } catch (error) {
+            console.error("Failed to create schedule:", error);
+            return false;
+        }
+    }
 };
