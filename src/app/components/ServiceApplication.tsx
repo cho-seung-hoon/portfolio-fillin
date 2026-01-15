@@ -10,6 +10,7 @@ import { StudyApplicationView } from "./service-application/StudyApplicationView
 import { OneDayClassApplicationView } from "./service-application/OneDayClassApplicationView";
 import { MentoringApplicationView } from "./service-application/MentoringApplicationView";
 import { ServiceApplicationUiModel } from "../../types/service-application-ui";
+import { mapApiToUi } from "../../utils/service-application-mapper";
 
 interface ServiceApplicationProps {
   serviceId: string;
@@ -29,11 +30,13 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
   useEffect(() => {
     const fetchService = async () => {
       try {
-        // const data = await serviceDetailService.getServiceDetail(serviceId);
-        // setService(data);
-        // if (data && data.options && data.options.length > 0) {
-        //   setSelectedOptionId(data.options[0].optionId); // Default to first option
-        // }
+        const data = await serviceDetailService.getServiceDetail(serviceId);
+        // @ts-ignore - Assuming getServiceDetail returns the new API structure or we cast it
+        const uiData = mapApiToUi(data);
+        setService(uiData);
+        if (uiData && uiData.options && uiData.options.length > 0) {
+          setSelectedOptionId(uiData.options[0].optionId); // Default to first option
+        }
       } catch (error) {
         console.error("Failed to fetch service:", error);
       } finally {
