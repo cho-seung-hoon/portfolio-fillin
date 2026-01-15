@@ -1,6 +1,6 @@
 export interface LessonApplicationUiModel {
     title: string;
-    serviceType: "mentoring" | "oneday" | "study";
+    lessonType: "mentoring" | "oneday" | "study";
     mentor: UiMentor;
     options: UiOption[];
     schedules: UiSchedules;

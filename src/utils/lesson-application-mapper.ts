@@ -80,7 +80,7 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
 
     return {
         title: lesson.title,
-        serviceType: lessonType as "mentoring" | "oneday" | "study",
+        lessonType: lessonType as "mentoring" | "oneday" | "study",
         mentor: {
             nickname: mentor.nickname,
             profileImage: mentor.profileImage,

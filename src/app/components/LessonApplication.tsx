@@ -61,7 +61,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
       return;
     }
 
-    if (lesson.serviceType === "mentoring" && !selectedSlot) {
+    if (lesson.lessonType === "mentoring" && !selectedSlot) {
       alert("일정을 선택해주세요.");
       return;
     }
@@ -115,7 +115,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4">일정 선택</h2>
 
-                {lesson.serviceType === "mentoring" && (
+                {lesson.lessonType === "mentoring" && (
                   <MentoringApplicationView
                     lesson={lesson}
                     selectedOptionId={selectedOptionId}
@@ -125,7 +125,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                   />
                 )}
 
-                {lesson.serviceType === "oneday" && (
+                {lesson.lessonType === "oneday" && (
                   <OneDayClassApplicationView
                     lesson={lesson}
                     selectedSlot={selectedSlot}
@@ -133,7 +133,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                   />
                 )}
 
-                {lesson.serviceType === "study" && (
+                {lesson.lessonType === "study" && (
                   <StudyApplicationView lesson={lesson} />
                 )}
               </CardContent>
@@ -182,7 +182,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
 
                   <Button
                     className="w-full h-12 text-lg font-bold bg-[#00C471] hover:bg-[#00B066]"
-                    disabled={!selectedOption || (lesson.serviceType === "mentoring" && !selectedSlot)}
+                    disabled={!selectedOption || (lesson.lessonType === "mentoring" && !selectedSlot)}
                     onClick={handlePayment}
                   >
                     신청하기
