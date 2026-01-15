@@ -82,6 +82,8 @@ class DefaultServiceDetailService implements ServiceDetailService {
           const formatTime = (d: Date) => d.toTimeString().slice(0, 5);
 
           return {
+            availableTimeId: at.availableTimeId,
+            startTime: at.startTime,
             date: startTime.toISOString().split('T')[0], // YYYY-MM-DD
             time: `${formatTime(startTime)}-${formatTime(endTime)}`,
             maxSeats: 99999, // Mocked as data not in API

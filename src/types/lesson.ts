@@ -49,7 +49,7 @@ export interface Schedule {
         }[];
     };
     "1-n-oneday"?: {
-        sessions: { date: string; time: string; remaining: number; maxSeats: number }[];
+        sessions: { availableTimeId: string; startTime: string; date: string; time: string; remaining: number; maxSeats: number }[];
     };
     "1-n-study"?: {
         totalSessions: number;

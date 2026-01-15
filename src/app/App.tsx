@@ -17,6 +17,7 @@ import { MyPage } from "./components/MyPage";
 import { ServiceRegistration } from "./components/ServiceRegistration";
 import { ServiceDetail } from "./components/ServiceDetail";
 import { ServiceApplication } from "./components/ServiceApplication";
+import { PaymentSuccessPage } from "./components/PaymentSuccessPage";
 import Home from "./components/Home";
 
 // 라우터 컨텍스트 타입 정의
@@ -123,6 +124,17 @@ const serviceApplyRoute = createRoute({
   },
 });
 
+const paymentSuccessRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/success",
+  validateSearch: (search: Record<string, unknown>) => ({
+    paymentKey: (search.paymentKey as string) || "",
+    orderId: (search.orderId as string) || "",
+    amount: (search.amount as string) || "",
+  }),
+  component: PaymentSuccessPage,
+});
+
 // 라우트 트리 구성
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -130,6 +142,7 @@ const routeTree = rootRoute.addChildren([
   serviceRegisterRoute,
   serviceDetailRoute,
   serviceApplyRoute,
+  paymentSuccessRoute,
 ]);
 
 // 라우터 생성

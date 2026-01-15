@@ -18,6 +18,11 @@ import { ko } from "date-fns/locale";
 import { serviceDetailService } from "../../api/serviceDetail";
 import { LessonDetail, LessonOption } from "../../types/lesson";
 
+import { PaymentDialog } from "./PaymentDialog";
+import { OrderConfirmDialog } from "./OrderConfirmDialog";
+import client from "../../api/client";
+
+
 interface ServiceApplicationProps {
   serviceId: string;
   onBack: () => void;
@@ -37,6 +42,16 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  // Payment & Order States
+  const [isOrderConfirmDialogOpen, setIsOrderConfirmDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [scheduleId, setScheduleId] = useState<string>("");
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentOrderName, setPaymentOrderName] = useState<string>("");
+  const [paymentOrderId, setPaymentOrderId] = useState<string>("");
+
+  const originalPrice = service ? (service.serviceType === "mentoring" ? (service.options?.find(opt => opt.id === selectedOptionId)?.price || 0) : service.price) : 0;
 
   useEffect(() => {
     const fetchService = async () => {
@@ -301,19 +316,71 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
   // 선택된 날짜의 스터디 세션
   const selectedStudySessions = selectedDate ? getStudySessionsForDate(selectedDate) : [];
 
-  const handlePayment = () => {
-    if (!selectedOption) {
+  const handleApply = async () => {
+    if (service.serviceType === "mentoring" && !selectedOptionId) {
       alert("서비스 옵션을 선택해주세요.");
       return;
     }
 
-    if (service.serviceType === "mentoring" && !selectedSlot) {
+    if (service.serviceType !== "study" && !selectedSlot) {
       alert("일정을 선택해주세요.");
       return;
     }
 
-    alert("결제 페이지로 이동합니다.");
+    try {
+      let availableTimeId = "";
+      let startTime = "";
+
+      if (service.serviceType === "mentoring") {
+        const rawTimes = service.schedules?.["1-1"]?.rawAvailableTimes || [];
+        const slot = rawTimes.find((t: any) =>
+          isSameDay(new Date(t.startTime), selectedDate!) &&
+          `${format(new Date(t.startTime), "HH:mm")}-${format(new Date(t.endTime), "HH:mm")}` === selectedSlot
+        );
+        availableTimeId = slot?.availableTimeId || "";
+        startTime = slot?.startTime || "";
+      } else if (service.serviceType === "oneday") {
+        // Assuming selectedSlot for oneday is the AvailableTimeDTO object
+        availableTimeId = selectedSlot.availableTimeId;
+        startTime = selectedSlot.startTime;
+      }
+
+      const response = await client.post("/v1/apply", {
+        lessonId: serviceId,
+        optionId: selectedOptionId,
+        availableTimeId,
+        startTime,
+      });
+
+      if (response.data.status === 200) {
+        setScheduleId(response.data.data.scheduleId);
+        setIsOrderConfirmDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Failed to apply:", error);
+      alert("신청 중 오류가 발생했습니다.");
+    }
   };
+
+  const handleConfirmOrder = async () => {
+    try {
+      const response = await client.post("/v1/apply/checkout", {
+        scheduleId: scheduleId
+      });
+
+      if (response.data.status === 200) {
+        setPaymentAmount(response.data.data.amount);
+        setPaymentOrderName(response.data.data.orderName);
+        setPaymentOrderId(response.data.data.orderId);
+        setIsOrderConfirmDialogOpen(false);
+        setIsPaymentDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      alert("결제 정보를 불러오는 데 실패했습니다.");
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
@@ -738,7 +805,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
                         </h3>
                         <div className="space-y-3">
                           {selectedDateSessions.map((session, idx) => {
-                            const isSelected = selectedSlot?.date === session.date && selectedSlot?.time === session.time;
+                            const isSelected = selectedSlot?.availableTimeId === session.availableTimeId;
                             const isFull = session.remaining === 0;
 
                             return (
@@ -1116,7 +1183,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-gray-600">서비스 금액</span>
                           <span className="font-medium">
-                            ₩{(service.serviceType === "mentoring" ? (selectedOption?.price || 0) : service.price).toLocaleString()}
+                            ₩{originalPrice.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
@@ -1126,18 +1193,18 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-lg">총 결제금액</span>
                             <span className="font-bold text-2xl text-[#00C471]">
-                              ₩{(service.serviceType === "mentoring" ? (selectedOption?.price || 0) : service.price).toLocaleString()}
+                              ₩{originalPrice.toLocaleString()}
                             </span>
                           </div>
                         </div>
                       </div>
 
                       <Button
-                        onClick={handlePayment}
+                        onClick={handleApply}
                         disabled={service.serviceType !== "study" && !selectedSlot}
                         className="w-full bg-[#00C471] hover:bg-[#00B366] text-white py-6 text-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
                       >
-                        결제하기
+                        신청하기
                       </Button>
 
                       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
@@ -1155,6 +1222,25 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
           </div>
         </div>
       </div>
+      <OrderConfirmDialog
+        open={isOrderConfirmDialogOpen}
+        onOpenChange={setIsOrderConfirmDialogOpen}
+        onConfirm={handleConfirmOrder}
+        service={service}
+        selectedOption={selectedOption}
+        selectedSlot={selectedSlot}
+        selectedDate={selectedDate}
+        totalPrice={originalPrice}
+      />
+      <PaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        price={paymentAmount}
+        orderName={paymentOrderName}
+        orderId={paymentOrderId}
+        customerName="홍길동"
+        customerEmail="customer@example.com"
+      />
     </div>
   );
 }

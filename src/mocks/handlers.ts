@@ -3,7 +3,8 @@ import { membersMap, lessonsData, categoryMap, profileMap } from "./data"; // Im
 import {
     MemberDTO, LessonReviewListResponseDTO,
     LessonDetailResponseDTO,
-    MyReviewResponseDTO
+    MyReviewResponseDTO,
+    ReviewDTO
 } from "../api/types";
 
 
@@ -180,7 +181,7 @@ export const handlers = [
             }
 
             const body = await request.json() as { introduction: string };
-            member.introduction = body.introduction; // Update Mock Data
+            (member as any).introduction = body.introduction; // Update Mock Data
 
             return HttpResponse.json({
                 status: 200,
@@ -293,6 +294,7 @@ export const handlers = [
                 score: 5,
                 content: "정말 유익한 멘토링이었습니다!",
                 writerId: "user-1",
+                nickname: "User1",
                 lessonId: String(lesson.lesson_id),
                 createdAt: "2025-01-02T10:00:00",
             },
@@ -301,6 +303,7 @@ export const handlers = [
                 score: 5,
                 content: "실무에서 바로 쓸 수 있는 팁이 많았어요.",
                 writerId: "user-2",
+                nickname: "User2",
                 lessonId: String(lesson.lesson_id),
                 createdAt: "2024-12-28T14:30:00",
             },
@@ -309,6 +312,7 @@ export const handlers = [
                 score: 4,
                 content: "커리큘럼이 좋았습니다.",
                 writerId: "user-3",
+                nickname: "User3",
                 lessonId: String(lesson.lesson_id),
                 createdAt: "2024-12-20T09:00:00",
             }
@@ -472,6 +476,76 @@ export const handlers = [
                 page,
                 size,
                 totalElements
+            }
+        });
+    }),
+    // 5. Apply Handler
+    http.post("/api/v1/apply", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const { lessonId, optionId, availableTimeId, startTime } = body;
+
+        if (!lessonId) {
+            return new HttpResponse(
+                JSON.stringify({ message: "Lesson ID is required" }),
+                { status: 400 }
+            );
+        }
+
+        return HttpResponse.json({
+            status: 200,
+            message: "Apply success",
+            data: {
+                scheduleId: `sch_${Math.floor(Math.random() * 1000000)}`
+            }
+        });
+    }),
+
+    // 6. Checkout Handler
+    http.post("/api/v1/apply/checkout", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const { scheduleId } = body;
+
+        if (!scheduleId) {
+            return new HttpResponse(
+                JSON.stringify({ message: "Schedule ID is required" }),
+                { status: 400 }
+            );
+        }
+
+        return HttpResponse.json({
+            status: 200,
+            message: "Checkout data fetched",
+            data: {
+                amount: 50000, // Mock amount
+                orderName: "테스트 주문",
+                orderId: `ORD_${scheduleId.split('_')[1] || Math.floor(Math.random() * 1000000)}`
+            }
+        });
+    }),
+
+    // 7. Payment Confirm Handler
+    http.post("/api/v1/apply/confirm", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const { paymentKey, scheduleId, amount } = body;
+
+        if (!paymentKey || !scheduleId || !amount) {
+            return new HttpResponse(
+                JSON.stringify({ message: "Invalid payment data" }),
+                { status: 400 }
+            );
+        }
+
+        // Simulate processing delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        return HttpResponse.json({
+            status: 200,
+            message: "Payment confirmed successfully",
+            data: {
+                paymentKey,
+                scheduleId,
+                amount,
+                approvedAt: new Date().toISOString()
             }
         });
     }),
