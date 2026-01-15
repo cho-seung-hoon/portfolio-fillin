@@ -38,4 +38,6 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
             "JOIN Member m ON l.mentorId = m.id " +
             "WHERE r.writerId = :writerId")
     Page<MyReviewVO> findByWriterId(@Param("writerId") String writerId, Pageable pageable);
+
+    boolean existsByScheduleId(String scheduleId);
 }
