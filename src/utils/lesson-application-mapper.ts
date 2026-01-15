@@ -73,8 +73,8 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
             totalSessions,
             duration: durationStr,
             sessions,
-            remaining: firstSlot?.remainSeats ?? 0,
-            maxSeats: firstSlot?.seats ?? 0,
+            remaining: lesson.remainSeats ?? 0,
+            maxSeats: lesson.seats ?? 0,
         };
     }
 
