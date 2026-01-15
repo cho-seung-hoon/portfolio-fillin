@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, Clock, Check } from "lucide-react";
 import { format, addDays, startOfWeek, addWeeks } from "date-fns";
 import { ko } from "date-fns/locale";
-import { LessonDetail, LessonOption } from "../../../types/lesson";
+import { ServiceApplicationUiModel, UiOption } from "../../../types/service-application-ui";
 
 interface Slot {
     date: string;
@@ -11,7 +11,7 @@ interface Slot {
 }
 
 interface MentoringApplicationViewProps {
-    service: LessonDetail;
+    service: ServiceApplicationUiModel;
     selectedOptionId: string;
     onSelectOptionId: (id: string) => void;
     selectedSlot: Slot | null;

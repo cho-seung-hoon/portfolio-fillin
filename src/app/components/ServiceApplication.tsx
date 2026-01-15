@@ -9,7 +9,7 @@ import { serviceDetailService } from "../../api/serviceDetail";
 import { StudyApplicationView } from "./service-application/StudyApplicationView";
 import { OneDayClassApplicationView } from "./service-application/OneDayClassApplicationView";
 import { MentoringApplicationView } from "./service-application/MentoringApplicationView";
-import { LessonDetail } from "../../types/lesson";
+import { ServiceApplicationUiModel } from "../../types/service-application-ui";
 
 interface ServiceApplicationProps {
   serviceId: string;
@@ -17,7 +17,7 @@ interface ServiceApplicationProps {
 }
 
 export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProps) {
-  const [service, setService] = useState<LessonDetail | null>(null);
+  const [service, setService] = useState<ServiceApplicationUiModel | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 1:1 Mentoring State
@@ -29,11 +29,11 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
   useEffect(() => {
     const fetchService = async () => {
       try {
-        const data = await serviceDetailService.getServiceDetail(serviceId);
-        setService(data);
-        if (data && data.options && data.options.length > 0) {
-          setSelectedOptionId(data.options[0].id); // Default to first option
-        }
+        // const data = await serviceDetailService.getServiceDetail(serviceId);
+        // setService(data);
+        // if (data && data.options && data.options.length > 0) {
+        //   setSelectedOptionId(data.options[0].id); // Default to first option
+        // }
       } catch (error) {
         console.error("Failed to fetch service:", error);
       } finally {

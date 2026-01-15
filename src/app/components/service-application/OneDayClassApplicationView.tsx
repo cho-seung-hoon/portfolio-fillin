@@ -12,10 +12,10 @@ import {
     eachDayOfInterval,
 } from "date-fns";
 import { ko } from "date-fns/locale";
-import { LessonDetail } from "../../../types/lesson";
+import { ServiceApplicationUiModel } from "../../../types/service-application-ui";
 
 interface OneDayClassApplicationViewProps {
-    service: LessonDetail;
+    service: ServiceApplicationUiModel;
     selectedSlot: any;
     onSelectSlot: (slot: any) => void;
 }

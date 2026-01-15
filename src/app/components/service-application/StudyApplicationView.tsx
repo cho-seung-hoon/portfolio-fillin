@@ -12,10 +12,10 @@ import {
     eachDayOfInterval,
 } from "date-fns";
 import { ko } from "date-fns/locale";
-import { LessonDetail } from "../../../types/lesson";
+import { ServiceApplicationUiModel } from "../../../types/service-application-ui";
 
 interface StudyApplicationViewProps {
-    service: LessonDetail;
+    service: ServiceApplicationUiModel;
 }
 
 export function StudyApplicationView({ service }: StudyApplicationViewProps) {
@@ -156,10 +156,10 @@ export function StudyApplicationView({ service }: StudyApplicationViewProps) {
                             <div
                                 key={day}
                                 className={`text-center text-sm font-medium py-2 ${idx === 0
-                                        ? "text-red-500"
-                                        : idx === 6
-                                            ? "text-blue-500"
-                                            : "text-gray-700"
+                                    ? "text-red-500"
+                                    : idx === 6
+                                        ? "text-blue-500"
+                                        : "text-gray-700"
                                     }`}
                             >
                                 {day}
@@ -230,8 +230,8 @@ export function StudyApplicationView({ service }: StudyApplicationViewProps) {
                                             <div key={sessionIdx} className="w-full space-y-1">
                                                 <div
                                                     className={`text-xs px-1.5 py-1 rounded font-medium ${isSelected
-                                                            ? "bg-white/20 text-white"
-                                                            : "bg-[#FF9500] text-white"
+                                                        ? "bg-white/20 text-white"
+                                                        : "bg-[#FF9500] text-white"
                                                         }`}
                                                     title={`${session.session}회차: ${session.topic}`}
                                                 >
