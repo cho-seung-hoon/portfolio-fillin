@@ -198,7 +198,7 @@ export function MentoringApplicationView({
             <div>
                 <h3 className="font-medium mb-3">시간 옵션 선택</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {service.options?.map((option: LessonOption) => (
+                    {service.options?.map((option: UiOption) => (
                         <button
                             key={option.id}
                             onClick={() => {
