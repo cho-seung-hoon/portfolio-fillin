@@ -106,6 +106,9 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
     if (lesson.lessonType === "oneday") {
       return selectedSlot ? selectedSlot.price : 0;
     }
+    if (lesson.lessonType === "study") {
+      return lesson.schedules["1-n-study"]?.price || 0;
+    }
     // Mentoring, Study (assuming study typically uses a fixed price or option, but user said keep it conservative so stick to option logic for others)
     // Actually user said "Study has price in lesson key", but let's stick to "Don't touch other types" instruction.
     // The current code uses selectedOption.price.

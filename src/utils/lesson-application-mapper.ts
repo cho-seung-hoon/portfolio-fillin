@@ -78,6 +78,7 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
             sessions,
             remaining: lesson.remainSeats ?? 0,
             maxSeats: lesson.seats ?? 0,
+            price: lesson.price ?? 0,
         };
     }
 

@@ -55,4 +55,5 @@ export interface StudySchedule {
         time: string;    // "HH:mm-HH:mm"
         topic: string;
     }[];
+    price: number;
 }
