@@ -7,12 +7,12 @@ export interface ServiceApplicationUiModel {
 }
 
 export interface UiMentor {
-    name: string;
-    avatar: string;
+    nickname: string;
+    profileImage: string;
 }
 
 export interface UiOption {
-    id: string;
+    optionId: string;
     name: string;
     price: number;
     duration: string; // e.g., "1시간" or "30분" - Used for display
