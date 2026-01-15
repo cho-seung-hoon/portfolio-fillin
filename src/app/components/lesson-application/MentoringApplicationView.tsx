@@ -8,6 +8,8 @@ import { LessonApplicationUiModel, UiOption } from "../../../types/lesson-applic
 interface Slot {
     date: string;
     time: string;
+    availableTimeId: string;
+    startTime: string; // ISO string for the specific slot start
 }
 
 interface MentoringApplicationViewProps {
@@ -61,7 +63,7 @@ export function MentoringApplicationView({
     };
 
     // 특정 날짜의 예약된 슬롯 가져오기
-    const getBookedSlotsForDate = (date: Date) => {
+    const getBookedSlotsForDate = (date: Date): { time: string }[] => {
         return [];
     };
 
@@ -145,6 +147,28 @@ export function MentoringApplicationView({
 
         // 종료 시간도 가능한 범위 내에 있는지 확인
         const endMinutes = roundedMinutes + durationMinutes;
+        const rawTimes = lesson.schedules?.["1-1"]?.rawAvailableTimes || [];
+
+        // Find which raw available time this slot belongs to
+        let matchedRawTime: any = null;
+
+        for (const raw of rawTimes) {
+            const rawDate = new Date(raw.startTime);
+            if (format(rawDate, "yyyy-MM-dd") !== format(date, "yyyy-MM-dd")) continue;
+
+            const startMinutes = new Date(raw.startTime).getHours() * 60 + new Date(raw.startTime).getMinutes();
+            const endMinutes = new Date(raw.endTime).getHours() * 60 + new Date(raw.endTime).getMinutes();
+
+            if (roundedMinutes >= startMinutes && endMinutes <= endMinutes) {
+                // Check overlap with OTHER slots (handled by isTimeOverlapping calls later, but this checks if it fits in the block)
+                matchedRawTime = raw;
+                break;
+            }
+        }
+
+        if (!matchedRawTime) return;
+
+        // Double check validity (redundant but safe)
         const timeRanges = getAvailableTimesForDate(date);
         let isValidSlot = false;
 
@@ -177,7 +201,17 @@ export function MentoringApplicationView({
         const endTime = minutesToTime(endMinutes);
         const slotDate = format(date, "yyyy-MM-dd");
 
-        onSelectSlot({ date: slotDate, time: `${startTime}-${endTime}` });
+        // Construct ISO startTime for the specific selected slot
+        const slotStartDate = new Date(date);
+        const [startH, startM] = startTime.split(":").map(Number);
+        slotStartDate.setHours(startH, startM, 0, 0);
+
+        onSelectSlot({
+            date: slotDate,
+            time: `${startTime}-${endTime}`,
+            availableTimeId: matchedRawTime.availableTimeId,
+            startTime: slotStartDate.toISOString()
+        });
     };
 
     const weekDates = getWeekDates(currentWeekOffset);
