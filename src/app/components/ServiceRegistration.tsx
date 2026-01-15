@@ -39,6 +39,7 @@ import { useLessonFormStore } from "../../store/useLessonFormStore";
 
 // API
 import { categoryService } from "../../api/category";
+import { lessonService } from "../../api/lesson"; // Import lessonService
 import { CategoryResponseDto } from "../../api/types";
 
 interface ServiceRegistrationProps {
@@ -57,7 +58,7 @@ export function ServiceRegistration({
     closeAt, setCloseAt,
     lessonType, setLessonType,
     categoryId, setCategoryId,
-    thumbnailPreview, setThumbnail, // Added Image state
+    thumbnailImage, thumbnailPreview, setThumbnail, // Added Image state
     reset: resetLessonForm
   } = useLessonFormStore();
 
@@ -74,6 +75,7 @@ export function ServiceRegistration({
    */
 
   const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -103,70 +105,136 @@ export function ServiceRegistration({
     return localDate.toISOString();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Helper to reset all stores
+  const resetAllStores = () => {
+    resetLessonForm();
+    resetMentoring();
+    resetOneDay();
+    resetStudy();
+  };
+
+  const handleCancel = () => {
+    // Explicit Cancel triggers data discard
+    if (window.confirm("작성 중인 내용이 삭제됩니다. 정말 취소하시겠습니까?")) {
+      resetAllStores();
+      onBack();
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Base DTO
-    const requestDTO = {
-      title,
-      lessonType,
-      description,
-      location,
-      categoryId,
-      closeAt: closeAt || null,
-      price: 0,
-      seats: 0,
-      optionList: [] as any[],
-      availableTimeList: [] as any[]
-    };
-
-    if (lessonType === "1-1-mentoring") {
-      const { mentoringOptions, availableTimeList } = mentoringStore;
-
-      // Flatten Options
-      const flattenedOptions: any[] = [];
-      mentoringOptions.forEach(opt => {
-        opt.priceOptions.forEach(po => {
-          flattenedOptions.push({
-            name: `${opt.name} (${po.duration}분)`,
-            minute: Number(po.duration),
-            price: Number(po.price)
-          });
-        });
-      });
-      requestDTO.optionList = flattenedOptions;
-
-      // Schedules
-      requestDTO.availableTimeList = availableTimeList;
-
-    } else if (lessonType === "1-n-oneday") {
-      const { availableTimeList } = oneDayStore;
-      // OneDay: store already has ISO times, price, seats.
-      requestDTO.availableTimeList = availableTimeList;
-
-    } else if (lessonType === "1-n-study") {
-      const { price, seats, availableTimeList } = studyStore;
-      requestDTO.price = price;
-      requestDTO.seats = seats;
-      requestDTO.availableTimeList = availableTimeList;
+    if (!thumbnailImage) {
+      alert("썸네일 이미지를 등록해주세요.");
+      return;
     }
 
-    console.log("RegisterLessonRequest:", requestDTO);
-    alert("서비스 등록 요청 (콘솔 확인)");
+    setIsSubmitting(true);
+
+    try {
+      // Map UI Type to API Enum
+      const lessonTypeMap: Record<string, "MENTORING" | "ONEDAY" | "STUDY"> = {
+        "1-1-mentoring": "MENTORING",
+        "1-n-oneday": "ONEDAY",
+        "1-n-study": "STUDY"
+      };
+
+      const apiLessonType = lessonTypeMap[lessonType] || "MENTORING";
+
+      // Base DTO
+      const requestDTO: any = {
+        title,
+        lessonType: apiLessonType,
+        description,
+        location,
+        categoryId,
+        closeAt: closeAt || null,
+        price: 0,
+        seats: 0,
+        optionList: [],
+        availableTimeList: []
+      };
+
+      if (lessonType === "1-1-mentoring") {
+        // Internal Store Struct: { startTime, endTime, price, seats }
+
+        // Flatten Options
+        const flattenedOptions: any[] = [];
+        mentoringOptions.forEach(opt => {
+          opt.priceOptions.forEach(po => {
+            flattenedOptions.push({
+              name: `${opt.name} (${po.duration}분)`,
+              minute: Number(po.duration),
+              price: Number(po.price)
+            });
+          });
+        });
+        requestDTO.optionList = flattenedOptions;
+
+        // Schedules (Mentoring usually has seats=1 per slot)
+        requestDTO.availableTimeList = mentoringTimeList.map(t => ({
+          startTime: t.startTime,
+          endTime: t.endTime,
+          price: t.price,
+          seats: 1 // Explicitly set seats to 1 for Mentoring
+        }));
+
+      } else if (lessonType === "1-n-oneday") {
+        // Internal Store Struct: { startTime, endTime, price, seats }
+        // OneDay: store already has ISO times, price, seats.
+        // Ensure mapping is correct just in case
+        requestDTO.availableTimeList = oneDayTimeList.map(t => ({
+          startTime: t.startTime,
+          endTime: t.endTime,
+          price: t.price,
+          seats: t.seats || 1 // Use store seats or default
+        }));
+
+      } else if (lessonType === "1-n-study") {
+        requestDTO.price = price;
+        requestDTO.seats = seats;
+        // Study availableTimeList might need checking if it has seats. 
+        // Usually Study has top-level seats (capacity). The sessions (AvailableTime) might not need seats or set to 0/1.
+        // Let's assume Study sessions don't have individual capacity limits beyond the group limit, or we pass existing structure.
+        requestDTO.availableTimeList = studyTimeList.map(t => ({
+          startTime: t.startTime,
+          endTime: t.endTime,
+          price: 0, // Study usually has top-level price
+          seats: 0  // Study usually has top-level seats
+        }));
+      }
+
+      console.log("RegisterLessonRequest:", requestDTO);
+
+      // Call API
+      await lessonService.createLesson(requestDTO, thumbnailImage);
+
+      alert("서비스가 성공적으로 등록되었습니다.");
+
+      // Success: Clear data and navigate back
+      //resetAllStores();
+      //onBack();
+
+    } catch (error) {
+      console.error("Failed to create lesson:", error);
+      alert("서비스 등록에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = () => {
     if (!title || !description || !lessonType || !categoryId) return false;
 
     if (lessonType === "1-1-mentoring") {
-      const { mentoringOptions } = mentoringStore;
+      // Use destructured mentoringOptions
       return mentoringOptions.length > 0 && mentoringOptions.some(o => o.priceOptions.length > 0);
     } else if (lessonType === "1-n-oneday") {
-      const { availableTimeList } = oneDayStore;
-      return availableTimeList.length > 0;
+      // Use destructured oneDayTimeList
+      return oneDayTimeList.length > 0;
     } else if (lessonType === "1-n-study") {
-      const { price, seats, availableTimeList } = studyStore;
-      return price > 0 && seats > 0 && availableTimeList.length > 0;
+      // Use destructured study store values
+      return price > 0 && seats > 0 && studyTimeList.length > 0;
     }
     return false;
   };
@@ -356,11 +424,17 @@ export function ServiceRegistration({
               <Button
                 type="button"
                 className="bg-[#00C471] hover:bg-[#00B366] gap-2"
-                disabled={!isFormValid()}
+                disabled={!isFormValid() || isSubmitting}
                 onClick={handleSubmit}
               >
-                <Save className="size-4" />
-                서비스 등록
+                {isSubmitting ? (
+                  "등록 중..."
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    서비스 등록
+                  </>
+                )}
               </Button>
             </div>
           </form>
