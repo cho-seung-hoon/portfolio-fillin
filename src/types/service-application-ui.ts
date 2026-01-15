@@ -9,7 +9,6 @@ export interface ServiceApplicationUiModel {
 export interface UiMentor {
     name: string;
     avatar: string;
-    title: string;
 }
 
 export interface UiOption {

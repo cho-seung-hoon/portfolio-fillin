@@ -98,8 +98,6 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Award className="size-4 text-[#00C471]" />
                       <span>{service.mentor.name}</span>
-                      <span>•</span>
-                      <span>{service.mentor.title}</span>
                     </div>
                   </div>
                 </div>
