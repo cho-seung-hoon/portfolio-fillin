@@ -69,6 +69,19 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
     alert("결제 페이지로 이동합니다.");
   };
 
+  // 가격 표시 로직
+  const getDisplayPrice = () => {
+    if (lesson.lessonType === "oneday") {
+      return selectedSlot ? selectedSlot.price : 0;
+    }
+    // Mentoring, Study (assuming study typically uses a fixed price or option, but user said keep it conservative so stick to option logic for others)
+    // Actually user said "Study has price in lesson key", but let's stick to "Don't touch other types" instruction.
+    // The current code uses selectedOption.price.
+    return selectedOption ? selectedOption.price : 0;
+  };
+
+  const displayPrice = getDisplayPrice();
+
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
       {/* 헤더 */}
@@ -166,7 +179,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                     <div className="flex justify-between">
                       <span className="text-gray-600">레슨 금액</span>
                       <span className="font-medium">
-                        ₩{selectedOption ? selectedOption.price.toLocaleString() : 0}
+                        ₩{displayPrice.toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -175,14 +188,17 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                     <div className="flex justify-between items-center">
                       <span className="font-bold">총 결제 금액</span>
                       <span className="text-xl font-bold text-[#00C471]">
-                        ₩{selectedOption ? selectedOption.price.toLocaleString() : 0}
+                        ₩{displayPrice.toLocaleString()}
                       </span>
                     </div>
                   </div>
 
                   <Button
                     className="w-full h-12 text-lg font-bold bg-[#00C471] hover:bg-[#00B066]"
-                    disabled={!selectedOption || (lesson.lessonType === "mentoring" && !selectedSlot)}
+                    disabled={
+                      (lesson.lessonType === "mentoring" && (!selectedOption || !selectedSlot)) ||
+                      (lesson.lessonType === "oneday" && !selectedSlot)
+                    }
                     onClick={handlePayment}
                   >
                     신청하기

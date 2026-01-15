@@ -37,6 +37,7 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
                     time: `${format(localDate, "HH:mm")}-${format(new Date(t.endTime), "HH:mm")}`,
                     remaining: t.remainSeats ?? 0,
                     maxSeats: t.seats ?? 0,
+                    price: t.price,
                 };
             }),
         };

@@ -38,6 +38,7 @@ export interface OneDaySchedule {
         time: string;      // "HH:mm-HH:mm"
         remaining: number;
         maxSeats: number;
+        price: number;
     }[];
 }
 
