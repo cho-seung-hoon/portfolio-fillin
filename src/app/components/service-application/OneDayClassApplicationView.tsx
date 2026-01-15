@@ -12,15 +12,15 @@ import {
     eachDayOfInterval,
 } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ServiceApplicationUiModel } from "../../../types/service-application-ui";
+import { LessonApplicationUiModel } from "../../../types/lesson-application-ui";
 
 interface OneDayClassApplicationViewProps {
-    service: ServiceApplicationUiModel;
+    lesson: LessonApplicationUiModel;
     selectedSlot: any;
     onSelectSlot: (slot: any) => void;
 }
 
-export function OneDayClassApplicationView({ service, selectedSlot, onSelectSlot }: OneDayClassApplicationViewProps) {
+export function OneDayClassApplicationView({ lesson, selectedSlot, onSelectSlot }: OneDayClassApplicationViewProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -40,10 +40,10 @@ export function OneDayClassApplicationView({ service, selectedSlot, onSelectSlot
 
     // 특정 날짜의 원데이 클래스 세션 찾기
     const getOnedaySessionsForDate = (date: Date) => {
-        if (!service.schedules?.["1-n-oneday"]?.sessions) return [];
+        if (!lesson.schedules?.["1-n-oneday"]?.sessions) return [];
 
         const dateStr = format(date, "yyyy-MM-dd");
-        return service.schedules["1-n-oneday"].sessions.filter((slot: any) => slot.date === dateStr);
+        return lesson.schedules["1-n-oneday"].sessions.filter((slot: any) => slot.date === dateStr);
     };
 
     // 선택된 날짜의 원데이 클래스 세션

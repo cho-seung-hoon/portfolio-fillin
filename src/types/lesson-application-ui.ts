@@ -1,4 +1,4 @@
-export interface ServiceApplicationUiModel {
+export interface LessonApplicationUiModel {
     title: string;
     serviceType: "mentoring" | "oneday" | "study";
     mentor: UiMentor;

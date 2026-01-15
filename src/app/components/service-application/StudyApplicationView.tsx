@@ -12,13 +12,13 @@ import {
     eachDayOfInterval,
 } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ServiceApplicationUiModel } from "../../../types/service-application-ui";
+import { LessonApplicationUiModel } from "../../../types/lesson-application-ui";
 
 interface StudyApplicationViewProps {
-    service: ServiceApplicationUiModel;
+    lesson: LessonApplicationUiModel;
 }
 
-export function StudyApplicationView({ service }: StudyApplicationViewProps) {
+export function StudyApplicationView({ lesson }: StudyApplicationViewProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -40,10 +40,10 @@ export function StudyApplicationView({ service }: StudyApplicationViewProps) {
 
     // 특정 날짜의 스터디 세션 찾기
     const getStudySessionsForDate = (date: Date) => {
-        if (!service.schedules?.["1-n-study"]?.sessions) return [];
+        if (!lesson.schedules?.["1-n-study"]?.sessions) return [];
 
         const dateStr = format(date, "yyyy-MM-dd");
-        return service.schedules["1-n-study"].sessions.filter(
+        return lesson.schedules["1-n-study"].sessions.filter(
             (session: any) => session.date === dateStr
         );
     };
@@ -59,16 +59,16 @@ export function StudyApplicationView({ service }: StudyApplicationViewProps) {
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="font-medium text-[#00C471]">
-                            전체 {service.schedules?.["1-n-study"]?.totalSessions}회차 스터디
+                            전체 {lesson.schedules?.["1-n-study"]?.totalSessions}회차 스터디
                         </h3>
                         <p className="text-sm text-gray-700 mt-1">
-                            기간: {service.schedules?.["1-n-study"]?.duration}
+                            기간: {lesson.schedules?.["1-n-study"]?.duration}
                         </p>
                     </div>
                     <div className="text-right">
                         <div className="text-sm text-[#00C471] font-medium">
-                            잔여 {service.schedules?.["1-n-study"]?.remaining}/
-                            {service.schedules?.["1-n-study"]?.maxSeats}석
+                            잔여 {lesson.schedules?.["1-n-study"]?.remaining}/
+                            {lesson.schedules?.["1-n-study"]?.maxSeats}석
                         </div>
                     </div>
                 </div>
@@ -77,7 +77,7 @@ export function StudyApplicationView({ service }: StudyApplicationViewProps) {
             {/* 커리큘럼 리스트 */}
             <h4 className="font-medium mb-3">커리큘럼</h4>
             <div className="space-y-2 mb-6">
-                {service.schedules?.["1-n-study"]?.sessions?.map(
+                {lesson.schedules?.["1-n-study"]?.sessions?.map(
                     (session: any, idx: number) => {
                         const [year, month, day] = session.date.split("-").map(Number);
                         const dateObj = new Date(year, month - 1, day);
@@ -114,7 +114,7 @@ export function StudyApplicationView({ service }: StudyApplicationViewProps) {
             <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-900">
                     💡 <strong>스터디 과정:</strong> 전체{" "}
-                    {service.schedules?.["1-n-study"]?.totalSessions}회차를 모두 수강해야
+                    {lesson.schedules?.["1-n-study"]?.totalSessions}회차를 모두 수강해야
                     하며, 체계적인 학습을 위해 순차적으로 진행됩니다.
                 </p>
             </div>

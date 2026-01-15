@@ -8,18 +8,18 @@ import {
 import { StudyApplicationView } from "./service-application/StudyApplicationView";
 import { OneDayClassApplicationView } from "./service-application/OneDayClassApplicationView";
 import { MentoringApplicationView } from "./service-application/MentoringApplicationView";
-import { ServiceApplicationUiModel } from "../../types/service-application-ui";
-import { mapApiToUi } from "../../utils/service-application-mapper";
+import { LessonApplicationUiModel } from "../../types/lesson-application-ui";
+import { mapApiToLesson } from "../../utils/lesson-application-mapper";
 
-import { applicationService } from "../../api/application-service";
+import { applicationService } from "../../api/lesson-application-service";
 
-interface ServiceApplicationProps {
-  serviceId: string;
+interface LessonApplicationProps {
+  lessonId: string;
   onBack: () => void;
 }
 
-export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProps) {
-  const [service, setService] = useState<ServiceApplicationUiModel | null>(null);
+export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) {
+  const [lesson, setLesson] = useState<LessonApplicationUiModel | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 1:1 Mentoring State
@@ -29,38 +29,39 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const fetchService = async () => {
+    const fetchLesson = async () => {
       try {
-        const data = await applicationService.getApplicationData(serviceId);
+        const data = await applicationService.getLessonApplicationData(lessonId);
         if (!data) return;
 
-        const uiData = mapApiToUi(data);
-        setService(uiData);
+        const uiData = mapApiToLesson(data);
+        setLesson(uiData);
         if (uiData && uiData.options && uiData.options.length > 0) {
           setSelectedOptionId(uiData.options[0].optionId); // Default to first option
         }
       } catch (error) {
-        console.error("Failed to fetch service:", error);
+        console.error("Failed to fetch lesson:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchService();
-  }, [serviceId]);
 
-  if (loading || !service) {
+    fetchLesson();
+  }, [lessonId]);
+
+  if (loading || !lesson) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  const selectedOption = service.options?.find(opt => opt.optionId === selectedOptionId);
+  const selectedOption = lesson.options?.find(opt => opt.optionId === selectedOptionId);
 
   const handlePayment = () => {
     if (!selectedOption) {
-      alert("서비스 옵션을 선택해주세요.");
+      alert("레슨 옵션을 선택해주세요.");
       return;
     }
 
-    if (service.serviceType === "mentoring" && !selectedSlot) {
+    if (lesson.serviceType === "mentoring" && !selectedSlot) {
       alert("일정을 선택해주세요.");
       return;
     }
@@ -88,49 +89,35 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 메인 컨텐츠 */}
           <div className="lg:col-span-2 space-y-6">
-            {/* 서비스 정보 */}
+            {/* 레슨 정보 */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-bold mb-4">서비스 정보</h2>
+                <h2 className="text-xl font-bold mb-4">레슨 정보</h2>
                 <div className="flex items-start gap-4">
                   <img
-                    src={service.mentor.profileImage}
-                    alt={service.mentor.nickname}
+                    src={lesson.mentor.profileImage}
+                    alt={lesson.mentor.nickname}
                     className="size-16 rounded-full object-cover"
                   />
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-1">{service.title}</h3>
+                    <h3 className="font-bold text-lg mb-1">{lesson.title}</h3>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Award className="size-4 text-[#00C471]" />
-                      <span>{service.mentor.nickname}</span>
+                      <span>{lesson.mentor.nickname}</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 탭 네비게이션 */}
-            <div className="border-b border-gray-200">
-              <div className="flex gap-1">
-                <button
-                  className="px-6 py-3 font-medium transition-colors relative text-[#00C471]"
-                >
-                  {service.serviceType === "mentoring" && "1:1 멘토링"}
-                  {service.serviceType === "oneday" && "1:N 원데이"}
-                  {service.serviceType === "study" && "1:N 스터디"}
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00C471]"></div>
-                </button>
-              </div>
-            </div>
-
             {/* 일정 선택 */}
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4">일정 선택</h2>
 
-                {service.serviceType === "mentoring" && (
+                {lesson.serviceType === "mentoring" && (
                   <MentoringApplicationView
-                    service={service}
+                    lesson={lesson}
                     selectedOptionId={selectedOptionId}
                     onSelectOptionId={setSelectedOptionId}
                     selectedSlot={selectedSlot}
@@ -138,20 +125,19 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
                   />
                 )}
 
-                {service.serviceType === "oneday" && (
+                {lesson.serviceType === "oneday" && (
                   <OneDayClassApplicationView
-                    service={service}
+                    lesson={lesson}
                     selectedSlot={selectedSlot}
                     onSelectSlot={setSelectedSlot}
                   />
                 )}
 
-                {service.serviceType === "study" && (
-                  <StudyApplicationView service={service} />
+                {lesson.serviceType === "study" && (
+                  <StudyApplicationView lesson={lesson} />
                 )}
               </CardContent>
             </Card>
-
 
             {/* 요청사항 */}
             {selectedOption && (
@@ -178,7 +164,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
 
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">서비스 금액</span>
+                      <span className="text-gray-600">레슨 금액</span>
                       <span className="font-medium">
                         ₩{selectedOption ? selectedOption.price.toLocaleString() : 0}
                       </span>
@@ -196,7 +182,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
 
                   <Button
                     className="w-full h-12 text-lg font-bold bg-[#00C471] hover:bg-[#00B066]"
-                    disabled={!selectedOption || (service.serviceType === "mentoring" && !selectedSlot)}
+                    disabled={!selectedOption || (lesson.serviceType === "mentoring" && !selectedSlot)}
                     onClick={handlePayment}
                   >
                     신청하기
@@ -205,7 +191,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
               </Card>
 
               <div className="text-xs text-gray-500 text-center">
-                결제 시 서비스 이용 약관에 동의하게 됩니다.
+                결제 시 레슨 이용 약관에 동의하게 됩니다.
               </div>
             </div>
           </div>

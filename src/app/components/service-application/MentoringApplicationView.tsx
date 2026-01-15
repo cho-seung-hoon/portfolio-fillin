@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, Clock, Check } from "lucide-react";
 import { format, addDays, startOfWeek, addWeeks } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ServiceApplicationUiModel, UiOption } from "../../../types/service-application-ui";
+import { LessonApplicationUiModel, UiOption } from "../../../types/lesson-application-ui";
 
 interface Slot {
     date: string;
@@ -11,7 +11,7 @@ interface Slot {
 }
 
 interface MentoringApplicationViewProps {
-    service: ServiceApplicationUiModel;
+    lesson: LessonApplicationUiModel;
     selectedOptionId: string;
     onSelectOptionId: (id: string) => void;
     selectedSlot: Slot | null;
@@ -19,7 +19,7 @@ interface MentoringApplicationViewProps {
 }
 
 export function MentoringApplicationView({
-    service,
+    lesson,
     selectedOptionId,
     onSelectOptionId,
     selectedSlot,
@@ -27,7 +27,7 @@ export function MentoringApplicationView({
 }: MentoringApplicationViewProps) {
     const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
 
-    const selectedOption = service.options?.find((opt) => opt.optionId === selectedOptionId);
+    const selectedOption = lesson.options?.find((opt) => opt.optionId === selectedOptionId);
 
     // 현재 주의 월요일 계산
     const getWeekStart = (offset: number) => {
@@ -44,7 +44,7 @@ export function MentoringApplicationView({
 
     // 특정 날짜에 가능한 시간대 찾기 (1:1 Mentoring)
     const getAvailableTimesForDate = (date: Date) => {
-        const rawTimes = service.schedules?.["1-1"]?.rawAvailableTimes || [];
+        const rawTimes = lesson.schedules?.["1-1"]?.rawAvailableTimes || [];
         const dateStr = format(date, "yyyy-MM-dd");
 
         const timesForDate = rawTimes.filter((t: any) => {
@@ -198,7 +198,7 @@ export function MentoringApplicationView({
             <div>
                 <h3 className="font-medium mb-3">시간 옵션 선택</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {service.options?.map((option: UiOption) => (
+                    {lesson.options?.map((option: UiOption) => (
                         <button
                             key={option.optionId}
                             onClick={() => {

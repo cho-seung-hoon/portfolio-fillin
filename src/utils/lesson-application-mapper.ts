@@ -1,8 +1,8 @@
 import { format, parseISO } from "date-fns";
 import { LessonDetailResult, AvailableTime, Option } from "../types/service-application-data";
-import { ServiceApplicationUiModel, UiOption, UiSchedules } from "../types/service-application-ui";
+import { LessonApplicationUiModel, UiOption, UiSchedules } from "../types/lesson-application-ui";
 
-export function mapApiToUi(apiData: LessonDetailResult): ServiceApplicationUiModel {
+export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUiModel {
     const { lesson, mentor, options, availableTimes } = apiData;
 
     // 1. Map Options (minute -> duration string)
@@ -16,9 +16,9 @@ export function mapApiToUi(apiData: LessonDetailResult): ServiceApplicationUiMod
 
     // 2. Map Schedules based on Lesson Type
     const schedules: UiSchedules = {};
-    const serviceType = mapServiceType(lesson.lessonType);
+    const lessonType = mapLessonType(lesson.lessonType);
 
-    if (serviceType === "mentoring") {
+    if (lessonType === "mentoring") {
         // 1:1 Mentoring - availableTimes to rawAvailableTimes
         // API times are UTC ISO strings. valid local Date objects are created by parseISO/new Date
         schedules["1-1"] = {
@@ -27,7 +27,7 @@ export function mapApiToUi(apiData: LessonDetailResult): ServiceApplicationUiMod
                 endTime: t.endTime,
             })),
         };
-    } else if (serviceType === "oneday") {
+    } else if (lessonType === "oneday") {
         // 1:N OneDay - availableTimes to sessions
         schedules["1-n-oneday"] = {
             sessions: availableTimes.map((t) => {
@@ -40,7 +40,7 @@ export function mapApiToUi(apiData: LessonDetailResult): ServiceApplicationUiMod
                 };
             }),
         };
-    } else if (serviceType === "study") {
+    } else if (lessonType === "study") {
         // 1:N Study - availableTimes to sessions + Summary Info
         const sortedTimes = [...availableTimes].sort(
             (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
@@ -80,7 +80,7 @@ export function mapApiToUi(apiData: LessonDetailResult): ServiceApplicationUiMod
 
     return {
         title: lesson.title,
-        serviceType: serviceType as "mentoring" | "oneday" | "study",
+        serviceType: lessonType as "mentoring" | "oneday" | "study",
         mentor: {
             nickname: mentor.nickname,
             profileImage: mentor.profileImage,
@@ -90,7 +90,7 @@ export function mapApiToUi(apiData: LessonDetailResult): ServiceApplicationUiMod
     };
 }
 
-function mapServiceType(apiType: string): string {
+function mapLessonType(apiType: string): string {
     // Simple lowercase mapping, assuming API returns "MENTORING", "ONEDAY", "STUDY" or similar
     return apiType.toLowerCase();
 }
