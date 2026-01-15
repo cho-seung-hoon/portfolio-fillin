@@ -5,12 +5,13 @@ import {
   ChevronLeft,
   Award,
 } from "lucide-react";
-import { serviceDetailService } from "../../api/serviceDetail";
 import { StudyApplicationView } from "./service-application/StudyApplicationView";
 import { OneDayClassApplicationView } from "./service-application/OneDayClassApplicationView";
 import { MentoringApplicationView } from "./service-application/MentoringApplicationView";
 import { ServiceApplicationUiModel } from "../../types/service-application-ui";
 import { mapApiToUi } from "../../utils/service-application-mapper";
+
+import { applicationService } from "../../api/application-service";
 
 interface ServiceApplicationProps {
   serviceId: string;
@@ -30,8 +31,9 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
   useEffect(() => {
     const fetchService = async () => {
       try {
-        const data = await serviceDetailService.getServiceDetail(serviceId);
-        // @ts-ignore - Assuming getServiceDetail returns the new API structure or we cast it
+        const data = await applicationService.getApplicationData(serviceId);
+        if (!data) return;
+
         const uiData = mapApiToUi(data);
         setService(uiData);
         if (uiData && uiData.options && uiData.options.length > 0) {
