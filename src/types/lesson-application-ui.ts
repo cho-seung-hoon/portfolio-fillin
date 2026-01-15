@@ -27,6 +27,7 @@ export interface UiSchedules {
 
 export interface MentoringSchedule {
     rawAvailableTimes: {
+        availableTimeId: string;
         startTime: string; // ISO 8601 string
         endTime: string;   // ISO 8601 string
     }[];
@@ -39,6 +40,7 @@ export interface OneDaySchedule {
         remaining: number;
         maxSeats: number;
         price: number;
+        availableTimeId: string;
     }[];
 }
 

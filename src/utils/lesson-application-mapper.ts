@@ -23,6 +23,7 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
         // API times are UTC ISO strings. valid local Date objects are created by parseISO/new Date
         schedules["1-1"] = {
             rawAvailableTimes: availableTimes.map((t) => ({
+                availableTimeId: t.availableTimeId,
                 startTime: t.startTime, // Keep ISO string, UI components parse it to local Date
                 endTime: t.endTime,
             })),
@@ -38,6 +39,7 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
                     remaining: t.remainSeats ?? 0,
                     maxSeats: t.seats ?? 0,
                     price: t.price,
+                    availableTimeId: t.availableTimeId,
                 };
             }),
         };
