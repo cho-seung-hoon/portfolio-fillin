@@ -32,7 +32,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
         // const data = await serviceDetailService.getServiceDetail(serviceId);
         // setService(data);
         // if (data && data.options && data.options.length > 0) {
-        //   setSelectedOptionId(data.options[0].id); // Default to first option
+        //   setSelectedOptionId(data.options[0].optionId); // Default to first option
         // }
       } catch (error) {
         console.error("Failed to fetch service:", error);
@@ -47,7 +47,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  const selectedOption = service.options?.find(opt => opt.id === selectedOptionId);
+  const selectedOption = service.options?.find(opt => opt.optionId === selectedOptionId);
 
   const handlePayment = () => {
     if (!selectedOption) {
@@ -89,15 +89,15 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
                 <h2 className="text-xl font-bold mb-4">서비스 정보</h2>
                 <div className="flex items-start gap-4">
                   <img
-                    src={service.mentor.avatar}
-                    alt={service.mentor.name}
+                    src={service.mentor.profileImage}
+                    alt={service.mentor.nickname}
                     className="size-16 rounded-full object-cover"
                   />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-1">{service.title}</h3>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Award className="size-4 text-[#00C471]" />
-                      <span>{service.mentor.name}</span>
+                      <span>{service.mentor.nickname}</span>
                     </div>
                   </div>
                 </div>

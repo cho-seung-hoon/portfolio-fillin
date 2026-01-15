@@ -27,7 +27,7 @@ export function MentoringApplicationView({
 }: MentoringApplicationViewProps) {
     const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
 
-    const selectedOption = service.options?.find((opt) => opt.id === selectedOptionId);
+    const selectedOption = service.options?.find((opt) => opt.optionId === selectedOptionId);
 
     // 현재 주의 월요일 계산
     const getWeekStart = (offset: number) => {
@@ -200,19 +200,19 @@ export function MentoringApplicationView({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {service.options?.map((option: UiOption) => (
                         <button
-                            key={option.id}
+                            key={option.optionId}
                             onClick={() => {
-                                onSelectOptionId(option.id);
+                                onSelectOptionId(option.optionId);
                                 onSelectSlot(null);
                             }}
-                            className={`p-4 rounded-lg border-2 transition-all text-left ${selectedOptionId === option.id
+                            className={`p-4 rounded-lg border-2 transition-all text-left ${selectedOptionId === option.optionId
                                 ? "border-[#00C471] bg-[#E6F9F2]"
                                 : "border-gray-200 hover:border-gray-300"
                                 }`}
                         >
                             <div className="flex items-start justify-between mb-2">
                                 <h4 className="font-bold">{option.name}</h4>
-                                {selectedOptionId === option.id && (
+                                {selectedOptionId === option.optionId && (
                                     <div className="size-5 rounded-full bg-[#00C471] flex items-center justify-center">
                                         <Check className="size-3 text-white" />
                                     </div>
