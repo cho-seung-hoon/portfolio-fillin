@@ -5,9 +5,9 @@ import {
   ChevronLeft,
   Award,
 } from "lucide-react";
-import { StudyApplicationView } from "./service-application/StudyApplicationView";
-import { OneDayClassApplicationView } from "./service-application/OneDayClassApplicationView";
-import { MentoringApplicationView } from "./service-application/MentoringApplicationView";
+import { StudyApplicationView } from "./lesson-application/StudyApplicationView";
+import { OneDayClassApplicationView } from "./lesson-application/OneDayClassApplicationView";
+import { MentoringApplicationView } from "./lesson-application/MentoringApplicationView";
 import { LessonApplicationUiModel } from "../../types/lesson-application-ui";
 import { mapApiToLesson } from "../../utils/lesson-application-mapper";
 
