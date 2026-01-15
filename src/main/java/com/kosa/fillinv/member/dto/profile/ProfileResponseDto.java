@@ -4,9 +4,7 @@ import com.kosa.fillinv.category.dto.CategoryResponseDto;
 import com.kosa.fillinv.category.entity.Category;
 import com.kosa.fillinv.member.entity.Member;
 import com.kosa.fillinv.member.entity.Profile;
-import lombok.Builder;
 
-@Builder
 public record ProfileResponseDto(
         String memberId,
         String imageUrl,

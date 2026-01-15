@@ -1,6 +1,5 @@
 package com.kosa.fillinv.member.service;
 
-import com.kosa.fillinv.category.dto.CategoryResponseDto;
 import com.kosa.fillinv.category.entity.Category;
 import com.kosa.fillinv.category.exception.CategoryException;
 import com.kosa.fillinv.category.repository.CategoryRepository;
@@ -59,18 +58,7 @@ public class MemberService {
         Category category = categoryRepository.findById(profile.getCategoryId())
                 .orElseThrow(CategoryException.NotFound::new);
 
-        return ProfileResponseDto.builder()
-                .imageUrl(profile.getImage() != null ? "/resources/files/" + profile.getImage()
-                        : null)
-                .nickname(member.getNickname())
-                .email(member.getEmail())
-                .phoneNum(member.getPhoneNum())
-                .introduction(profile.getIntroduce())
-                .category(new CategoryResponseDto(
-                        category.getId(),
-                        category.getName(),
-                        category.getParentCategory() != null ? category.getParentCategory().getId() : null))
-                .build();
+        return ProfileResponseDto.of(member, profile, category);
     }
 
     public Map<String, ProfileResponseDto> getAllProfilesByMemberIds(Collection<String> memberIds) {
