@@ -212,7 +212,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold">
-                        {service.serviceType === 'oneday' && <span className="text-lg text-gray-500 font-medium mr-1">최저</span>}
+                        {(service.serviceType === 'oneday' || service.serviceType === 'mentoring') && <span className="text-lg text-gray-500 font-medium mr-1">최저</span>}
                         ₩{service.price.toLocaleString()}
                       </span>
                       {service.originalPrice && (

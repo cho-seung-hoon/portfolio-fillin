@@ -180,7 +180,10 @@ export function OneDayClassScheduleView({ service }: OneDayClassScheduleViewProp
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-sm text-[#00C471] font-medium">
+                                    <div className="text-lg font-bold text-[#00C471]">
+                                        ₩{session.price?.toLocaleString() || 0}
+                                    </div>
+                                    <div className="text-sm text-gray-500 font-medium">
                                         잔여 {session.remaining}/{session.maxSeats}석
                                     </div>
                                     {session.remaining <= 3 && (

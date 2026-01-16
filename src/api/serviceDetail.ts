@@ -84,8 +84,9 @@ class DefaultServiceDetailService implements ServiceDetailService {
           return {
             date: startTime.toISOString().split('T')[0], // YYYY-MM-DD
             time: `${formatTime(startTime)}-${formatTime(endTime)}`,
-            maxSeats: 99999, // Mocked as data not in API
-            remaining: 99999  // Mocked as data not in API
+            maxSeats: at.seats ?? 0,
+            remaining: at.remainSeats ?? 0,
+            price: at.price
           };
         })
       };
@@ -98,8 +99,8 @@ class DefaultServiceDetailService implements ServiceDetailService {
       schedules["1-n-study"] = {
         duration: "4주", // MOCKED (Data not in API)
         totalSessions: sortedTimes.length,
-        maxSeats: 99999, // MOCKED (Data not in API)
-        remaining: 99999, // MOCKED (Data not in API)
+        maxSeats: dto.lesson.seats ?? 0,
+        remaining: dto.lesson.remainSeats ?? 0,
         sessions: sortedTimes.map((at, index) => {
           const startTime = new Date(at.startTime);
           const endTime = new Date(at.endTime);
@@ -121,11 +122,17 @@ class DefaultServiceDetailService implements ServiceDetailService {
     // For ONEDAY, if price is 0 (or explicitly dependent on options/times), check availableTimes
     // But user said for STUDY, we use "Lesson's price".
     // For ONEDAY, we previously used min price of times. 
+    // For ONEDAY, if price is 0 (or explicitly dependent on options/times), check availableTimes
     if (type === "oneday" && dto.availableTimes && dto.availableTimes.length > 0) {
-      // If lesson.price is 0 for oneday (as we set in registration), get min from times?
-      // In registration we set top level price to 0. So here we should derive it.
       const minPrice = Math.min(...dto.availableTimes.map(t => t.price));
       if (displayPrice === 0) displayPrice = minPrice;
+    }
+
+    // For MENTORING, calculate min price from options
+    if (type === "mentoring" && dto.options && dto.options.length > 0) {
+      if (displayPrice === 0) {
+        displayPrice = Math.min(...dto.options.map(o => o.price));
+      }
     }
 
     return {

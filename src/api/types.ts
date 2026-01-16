@@ -188,6 +188,8 @@ export interface LessonInfoDTO {
     title: string;
     thumbnailImage: string;
     price: number;
+    seats?: number;
+    remainSeats?: number;
     categoryId: number;
 }
 
@@ -196,6 +198,8 @@ export interface AvailableTimeDTO {
     startTime: string;
     endTime: string;
     price: number;
+    seats?: number;
+    remainSeats?: number;
 }
 
 export interface LessonOptionDTO {
