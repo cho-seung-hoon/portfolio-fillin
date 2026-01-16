@@ -15,6 +15,7 @@ public record CreateLessonCommand(
         Long categoryId,
         Instant closeAt,
         Integer price,
+        Integer seats,
         List<CreateOptionCommand> optionCommandList,
         List<CreateAvailableTimeCommand> availableTimeCommandList
 ) {

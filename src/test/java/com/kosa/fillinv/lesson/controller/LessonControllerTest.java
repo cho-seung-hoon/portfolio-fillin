@@ -62,6 +62,7 @@ class LessonControllerTest {
                 1L,
                 Instant.parse("2026-02-01T23:59:59Z"),
                 30000,
+                5,
                 List.of(),
                 List.of()
         );

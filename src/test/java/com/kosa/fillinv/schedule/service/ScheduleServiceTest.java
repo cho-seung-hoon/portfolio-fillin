@@ -139,7 +139,8 @@ class ScheduleServiceTest {
                         lesson,
                         Instant.parse("2025-02-01T09:00:00Z"),
                         Instant.parse("2025-02-01T12:00:00Z"),
-                        50000
+                        50000,
+                        5
                 )
         );
 
@@ -196,13 +197,15 @@ class ScheduleServiceTest {
                         lesson,
                         Instant.parse("2025-03-01T10:00:00Z"),
                         Instant.parse("2025-03-01T12:00:00Z"),
-                        0),
+                        0,
+                        5),
                 new AvailableTime(
                         "at-2",
                         lesson,
                         Instant.parse("2025-03-08T10:00:00Z"),
                         Instant.parse("2025-03-08T12:00:00Z"),
-                        0)
+                        0,
+                        6)
         ));
 
         ScheduleCreateRequest request = new ScheduleCreateRequest(
