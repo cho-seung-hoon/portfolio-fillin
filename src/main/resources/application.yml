@@ -1,6 +1,10 @@
 spring:
   profiles:
+<<<<<<< HEAD
     active: local   # 디폴트 프로파일을 test로
+=======
+    active: test   # 디폴트 프로파일을 test로
+>>>>>>> feat/#9-schedule-inquiry
     properties:
       hibernate:
         format_sql: true  # SQL을 예쁘게 포맷팅

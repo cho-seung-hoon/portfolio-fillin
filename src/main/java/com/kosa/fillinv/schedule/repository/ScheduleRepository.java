@@ -30,12 +30,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
             "AND NOT EXISTS (SELECT r FROM Review r WHERE r.scheduleId = s.id)")
     Page<UnwrittenReviewVO> findUnwrittenReviews(@Param("menteeId") String menteeId, Pageable pageable);
 
-    // 멘티 스케쥴 + 시간 목록 조회 (N+1 문제 해결용) / JOIN FETCH를 사용해 스케쥴 s와 연결된 시간 목록 scheduleTimeList을 한 번에 가져옴 (근데 s.menteeId = :memberId 즉 멤버 아이디가 일치하는 값만)
-    // JOIN FETCH 하면서 Pageable 사용 시, Spring Data JPA의 한계로 인해 distinct를 사용해야 함
-    @Query("SELECT s FROM Schedule s JOIN FETCH s.scheduleTimeList WHERE s.menteeId = :memberId")
-    Page<Schedule> findByMenteeIdWithTimes(String memberId, Pageable pageable);
+    // 멘티 스케쥴 조회 (Batch Fetch Size가 N+1 문제를 알아서 최적화)
+    Page<Schedule> findByMenteeId(String memberId, Pageable pageable);
 
-    // 멘토 스케쥴 + 시간 목록 조회 (N+1 문제 해결용)
-    @Query("SELECT s FROM Schedule s JOIN FETCH s.scheduleTimeList WHERE s.mentorId = :memberId")
-    Page<Schedule> findByMentorIdWithTimes(String memberId, Pageable pageable);
+    // 멘토 스케쥴 조회 (Batch Fetch Size가 N+1 문제를 알아서 최적화)
+    Page<Schedule> findByMentorId(String memberId, Pageable pageable);
 }

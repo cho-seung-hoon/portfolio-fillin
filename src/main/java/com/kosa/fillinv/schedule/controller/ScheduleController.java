@@ -52,8 +52,10 @@ public class ScheduleController {
                 .body(SuccessResponse.success(HttpStatus.CREATED));
     }
 
+    // 스케쥴 전체 조회 (GET) - 시간순 정렬 (D-day가 적게 남은 순으로 정렬)
+
     // 스케쥴 상세 조회
-    @GetMapping("/{scheduleId}/scheduleTimeId/{scheduleTimeId}")
+    @GetMapping("/{scheduleId}/times/{scheduleTimeId}")
     public ResponseEntity<SuccessResponse<ScheduleDetailResponse>> getScheduleDetails(
             @PathVariable String scheduleId,
             @PathVariable String scheduleTimeId
@@ -76,6 +78,8 @@ public class ScheduleController {
         return ResponseEntity
                 .ok(SuccessResponse.success(HttpStatus.OK, response));
     }
+
+    // 스케쥴 상태 변경 (PATCH)
 
     // 멘티 모드: 내 수강 신청 목록 조회 (페이지네이션)
     // Ex: GET /api/v1/schedules/mentee/MEMBER001?page=0&size=10
