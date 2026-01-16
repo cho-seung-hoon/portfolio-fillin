@@ -15,6 +15,7 @@ public record RegisterLessonCommand(
         Long categoryId,
         Instant closeAt,
         Integer price,
+        Integer seats,
         List<Option> optionList,
         List<AvailableTime> availableTimeList
 ) {
@@ -30,14 +31,15 @@ public record RegisterLessonCommand(
                 this.categoryId,
                 this.closeAt,
                 this.price,
+                this.seats,
                 optionList.stream().map(op -> new CreateOptionCommand(op.name(), op.minute(), op.price())).toList(),
-                availableTimeList.stream().map(at -> new CreateAvailableTimeCommand(at.startTime(), at.endTime(), at.price())).toList()
+                availableTimeList.stream().map(at -> new CreateAvailableTimeCommand(at.startTime(), at.endTime(), at.price(), at.seats())).toList()
         );
     }
 
     public record Option(String name, Integer minute, Integer price) {
     }
 
-    public record AvailableTime(Instant startTime, Instant endTime, Integer price) {
+    public record AvailableTime(Instant startTime, Instant endTime, Integer price, Integer seats) {
     }
 }
