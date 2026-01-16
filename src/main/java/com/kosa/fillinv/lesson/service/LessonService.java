@@ -196,6 +196,9 @@ public class LessonService {
     }
 
     private AvailableTime createAvailableTimeEntity(Lesson lesson, CreateAvailableTimeCommand command) {
+        if (lesson.getLessonType() == LessonType.ONEDAY && (command.seats() == null || command.seats() <= 0)) {
+            throw new ResourceException.InvalidArgument(INVALID_SEAT);
+        }
 
         return AvailableTime.builder()
                 .id(UUID.randomUUID().toString())
@@ -237,6 +240,12 @@ public class LessonService {
             throw new ResourceException.InvalidArgument(CATEGORY_ID_REQUIRED);
         }
 
+        if (command.lessonType() == LessonType.STUDY) {
+            if (command.seats() == null || command.seats() <= 0) {
+                throw new ResourceException.InvalidArgument(INVALID_SEAT);
+            }
+        }
+
         Lesson.LessonBuilder lessonBuilder = Lesson.builder()
                 .id(UUID.randomUUID().toString())
                 .title(command.title())
@@ -246,11 +255,11 @@ public class LessonService {
                 .location(command.location())
                 .mentorId(command.mentorId())
                 .categoryId(command.categoryId())
-                .closeAt(command.closeAt())
-                .seats(command.seats());
+                .closeAt(command.closeAt());
 
         if (command.lessonType() == LessonType.STUDY) {
             lessonBuilder.price(command.price());
+            lessonBuilder.seats(command.seats());
         }
 
         return lessonBuilder.build();
