@@ -10,6 +10,7 @@ public record AvailableTimeDTO(
         Instant startTime,
         Instant endTime,
         Integer price,
+        Integer seats,
         Instant createdAt,
         Instant updatedAt,
         Instant deletedAt
@@ -21,6 +22,7 @@ public record AvailableTimeDTO(
                 availableTime.getStartTime(),
                 availableTime.getEndTime(),
                 availableTime.getPrice(),
+                availableTime.getSeats(),
                 availableTime.getCreatedAt(),
                 availableTime.getUpdatedAt(),
                 availableTime.getDeletedAt()

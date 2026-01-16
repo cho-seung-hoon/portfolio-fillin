@@ -1,14 +1,17 @@
 package com.kosa.fillinv.lesson.service;
 
 import com.kosa.fillinv.global.exception.ResourceException;
+import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.service.client.MentorSummaryDTO;
 import com.kosa.fillinv.lesson.service.client.ProfileClient;
 import com.kosa.fillinv.lesson.service.client.ReviewClient;
+import com.kosa.fillinv.lesson.service.client.StockClient;
 import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,6 +27,8 @@ public class LessonReadService {
     private final ReviewClient reviewClient;
 
     private final ProfileClient profileClient;
+
+    private final StockClient stockClient;
 
     public Page<LessonThumbnail> search() {
         return search(LessonSearchCondition.defaultCondition());
@@ -58,6 +63,34 @@ public class LessonReadService {
 
         MentorSummaryDTO mentorSummaryDTO = profileClient.readMentorById(lessonDTO.mentorId());
 
-        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO);
+        Set<String> keys = Set.of();
+        if (lessonDTO.lessonType() == LessonType.STUDY) {
+            keys = Set.of(lessonDTO.id());
+        } else if (lessonDTO.lessonType() == LessonType.ONEDAY) {
+            keys = lessonDTO.availableTimeDTOList().stream()
+                    .map(AvailableTimeDTO::id)
+                    .collect(Collectors.toSet());
+        }
+
+        Map<String, Integer> stockMap = Map.of();
+        if (!keys.isEmpty()) {
+            stockMap = stockClient.getStock(keys);
+        }
+        stockMap = new HashMap<>(stockMap);
+        for (String key : keys) {
+            // Stock에서 조회되지 않은 남은 좌석 수가 있다면 Exception 대신 0으로 초기화
+            stockMap.putIfAbsent(key, 0);
+        }
+
+        Integer lessonRemainSeats = null;
+        Map<String, Integer> availableTimeRemainSeats = null;
+
+        if (lessonDTO.lessonType() == LessonType.STUDY) {
+            lessonRemainSeats = stockMap.get(lessonDTO.id());
+        } else if (lessonDTO.lessonType() == LessonType.ONEDAY) {
+            availableTimeRemainSeats = stockMap;
+        }
+
+        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO, lessonRemainSeats, availableTimeRemainSeats);
     }
 }
