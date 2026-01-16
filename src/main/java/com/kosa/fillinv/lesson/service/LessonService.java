@@ -18,11 +18,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static com.kosa.fillinv.lesson.error.LessonError.*;
+import static com.kosa.fillinv.lesson.service.dto.LessonSortType.POPULARITY;
+import static java.time.ZoneId.systemDefault;
+import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +36,19 @@ public class LessonService {
     private final OptionRepository optionRepository;
 
     public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
-        Sort sortBy = condition.sortType().toSort();
+        LessonSortType sortType = condition.sortType();
+        Sort sortBy;
+
+        if (sortType == POPULARITY) {
+            // 1시간 전 날짜 사용
+            long epochDay = Instant.now().atZone(systemDefault()).minusHours(1).toLocalDate()
+                    .toEpochDay();
+            String sortProperty = (epochDay % 2 == 0) ? "popularityScoreA" : "popularityScoreB";
+            sortBy = Sort.by(DESC, sortProperty);
+        } else {
+            sortBy = condition.sortType().toSort();
+        }
+
         PageRequest pageRequest = PageRequest.of(condition.page(), condition.size(), sortBy);
         Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId());
 

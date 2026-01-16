@@ -38,4 +38,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
             "JOIN Member m ON l.mentorId = m.id " +
             "WHERE r.writerId = :writerId")
     Page<MyReviewVO> findByWriterId(@Param("writerId") String writerId, Pageable pageable);
+
+    @Query("SELECT r.lessonId, COUNT(r), AVG(r.score) FROM Review r JOIN Lesson l ON r.lessonId = l.id WHERE l.deletedAt IS NULL GROUP BY r.lessonId")
+    List<Object[]> getReviewStatsByLessonId();
 }

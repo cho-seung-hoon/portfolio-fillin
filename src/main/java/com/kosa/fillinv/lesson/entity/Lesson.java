@@ -55,6 +55,12 @@ public class Lesson extends BaseEntity {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<Option> optionList;
 
+    @Column(name = "popularity_score_a")
+    private Double popularityScoreA;
+    
+    @Column(name = "popularity_score_b")
+    private Double popularityScoreB;
+
     @Builder
     public Lesson(String id,
                   String title,
@@ -161,6 +167,14 @@ public class Lesson extends BaseEntity {
         this.optionList.forEach(option -> {
             if (optionIdList.contains(option.getId())) option.delete();
         });
+    }
+
+    public void updatePopularityScoreA(Double score) {
+        this.popularityScoreA = score;
+    }
+
+    public void updatePopularityScoreB(Double score) {
+        this.popularityScoreB = score;
     }
 
     public List<Option> getOptionList() {

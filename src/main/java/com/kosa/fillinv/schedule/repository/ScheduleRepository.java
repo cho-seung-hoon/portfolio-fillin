@@ -10,10 +10,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.util.List;
+
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, String> {
 
-    //Pageable 방식 - return type을 page로 할 경우 pagenation 처리 가능
+    // Pageable 방식 - return type을 page로 할 경우 pagenation 처리 가능
 
     // 스케쥴 상세 조회
     Page<Schedule> findByLessonId(String lessonId, Pageable pageable);
@@ -35,4 +38,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
 
     // 멘토 스케쥴 조회
     Page<Schedule> findByMentorId(String memberId, Pageable pageable);
+
+    @Query("SELECT s.lessonId, COUNT(s) FROM Schedule s JOIN Lesson l ON s.lessonId = l.id WHERE s.createdAt >= :startDate AND l.deletedAt IS NULL GROUP BY s.lessonId")
+    List<Object[]> countByLessonIdAndCreatedAtAfter(@Param("startDate") Instant startDate);
 }
