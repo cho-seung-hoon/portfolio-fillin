@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,5 +26,13 @@ public class CategoryService {
                         category.getName(),
                         category.getParentCategory() != null ? category.getParentCategory().getId() : null))
                 .collect(Collectors.toList());
+    }
+
+    public Map<Long, CategoryResponseDto> getAllCategoriesMap() {
+        return categoryRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        Category::getId,
+                        CategoryResponseDto::of
+                ));
     }
 }

@@ -39,7 +39,12 @@ public enum ErrorCode {
     OPTION_NOT_FOUND(NOT_FOUND, "SCH02", "해당 옵션을 찾을 수 없습니다."),
     AVAILABLE_TIME_NOT_FOUND(NOT_FOUND, "SCH03", "선택한 시간대 정보를 찾을 수 없습니다"),
     INVALID_LESSON_TYPE(NOT_FOUND, "SCH04", "레슨 유형이 올바르지 않습니다."),
-    MENTOR_NOT_FOUND(NOT_FOUND, "SCH05", "해당 멘토를 찾을 수 없습니다.");
+    MENTOR_NOT_FOUND(NOT_FOUND, "SCH05", "해당 멘토를 찾을 수 없습니다."),
+
+    // Review Error
+    REVIEW_NOT_ALLOWED(BAD_REQUEST, "R01", "리뷰를 작성할 수 없는 상태입니다."),
+    REVIEW_ALREADY_EXISTS(BAD_REQUEST, "R02", "이미 리뷰를 작성했습니다."),
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;

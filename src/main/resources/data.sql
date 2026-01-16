@@ -39,3 +39,76 @@ INSERT INTO categories (name, parent_category_id) VALUES ('물류 관리', 18), 
 INSERT INTO categories (name, parent_category_id) VALUES ('재무 회계', 19), ('관리 회계', 19), ('세무사', 19), ('자금 관리', 19), ('내부 감사', 19), ('IR(투자자 관계)', 19), ('원가 관리', 19);
 -- 20. 사무·법무·총무 (T)
 INSERT INTO categories (name, parent_category_id) VALUES ('일반 사무', 20), ('행정 보조', 20), ('법무 사무', 20), ('특허 담당', 20), ('속기사', 20);
+
+-- [3] 회원 (Members) 삽입
+-- 비밀번호: password123 ($2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9)
+INSERT INTO members (member_id, nickname, phone_num, email, password, created_at, updated_at) VALUES
+    ('mentor01', '백엔드장인', '010-1111-1111', 'mentor01@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW()),
+    ('mentor02', '디자인한스푼', '010-2222-2222', 'mentor02@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW()),
+    ('mentor03', '마케팅천재', '010-3333-3333', 'mentor03@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW()),
+    ('mentor04', '데이터분석가', '010-4444-4444', 'mentor04@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW()),
+    ('mentee01', '코딩초보', '010-5555-5555', 'mentee01@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW()),
+    ('mentee02', '취준생A', '010-6666-6666', 'mentee02@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW()),
+    ('mentee03', '이직희망자', '010-7777-7777', 'mentee03@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW()),
+    ('mentee04', '열정가득', '010-8888-8888', 'mentee04@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8q6uyzRnyPBqlZ8mx9X9.f9fT9Yy.f9fT9', NOW(), NOW());
+
+-- [4] 프로필 (Profiles) 삽입
+INSERT INTO profiles (member_id, introduce, category_id, created_at, updated_at) VALUES
+    ('mentor01', '10년차 백엔드 개발자입니다. Java/Spring 전문입니다.', 3, NOW(), NOW()),
+    ('mentor02', '사용자 경험을 중시하는 UI/UX 디자이너입니다.', 4, NOW(), NOW()),
+    ('mentor03', '데이터 기반의 퍼포먼스 마케팅 노하우를 공유합니다.', 6, NOW(), NOW()),
+    ('mentor04', '복잡한 데이터를 인사이트로 바꾸는 분석가입니다.', 5, NOW(), NOW()),
+    ('mentee01', '기초부터 탄탄히 배우고 싶습니다.', 1000, NOW(), NOW()),
+    ('mentee02', '포트폴리오 완성이 목표입니다.', 1000, NOW(), NOW()),
+    ('mentee03', '실무 역량을 키우고 싶습니다.', 1000, NOW(), NOW()),
+    ('mentee04', '다양한 분야에 관심이 많습니다.', 1000, NOW(), NOW());
+
+-- [5] 레슨 (Lessons) 삽입
+INSERT INTO lessons (lesson_id, title, lesson_type, thumbnail_image, description, location, mentor_id, category_id, price, created_at, updated_at) VALUES
+    ('lesson01', '백엔드 실무 아키텍처 가이드', 'MENTORING', '/resources/files/lesson01.png', '대규모 트래픽 처리를 위한 설계를 배웁니다.', '서울 강남구', 'mentor01', 3, 70000, NOW(), NOW()),
+    ('lesson02', 'UI/UX 포트폴리오 1:1 리모델링', 'MENTORING', '/resources/files/lesson02.png', '매력적인 포트폴리오로 취업 성공하기!', '서울 신촌', 'mentor02', 4, 60000, NOW(), NOW()),
+    ('lesson03', '초보자를 위한 GA4 데이터 분석', 'ONEDAY', '/resources/files/lesson03.png', '구글 애널리틱스 기초를 하루만에 마스터하세요.', '온라인', 'mentor04', 5, 40000, NOW(), NOW()),
+    ('lesson04', '인스타그램 광고 전략 4주 스터디', 'STUDY', '/resources/files/lesson04.png', '효율적인 광고 집행을 위한 집중 스터디입니다.', '서울 홍대', 'mentor03', 6, 120000, NOW(), NOW()),
+    ('lesson05', 'Java 멀티쓰레딩 심화 클래스', 'ONEDAY', '/resources/files/lesson05.png', '병렬 프로그래밍의 핵심 개념을 정리합니다.', '서울 역삼', 'mentor01', 3, 50000, NOW(), NOW()),
+    ('lesson06', '파이썬 데이터 시각화 프로젝트', 'STUDY', '/resources/files/lesson06.png', '시각화 라이브러리를 활용한 프로젝트 실습!', '온라인', 'mentor04', 5, 100000, NOW(), NOW());
+
+-- [6] 레슨 옵션 (Options) 삽입
+INSERT INTO options (option_id, name, minute, price, lesson_id, created_at, updated_at) VALUES
+    ('opt01', '기본 상담 (1시간)', 60, 70000, 'lesson01', NOW(), NOW()),
+    ('opt02', '심층 멘토링 (2시간)', 120, 130000, 'lesson01', NOW(), NOW()),
+    ('opt03', '커리어 로드맵 컨설팅', 90, 100000, 'lesson02', NOW(), NOW());
+
+-- [7] 예약 가능 시간 (AvailableTimes) 삽입
+INSERT INTO available_times (available_time_id, lesson_id, start_time, end_time, price, created_at, updated_at) VALUES
+    ('time01', 'lesson03', '2026-03-01 10:00:00', '2026-03-01 13:00:00', 40000, NOW(), NOW()),
+    ('time02', 'lesson03', '2026-03-02 19:00:00', '2026-03-02 22:00:00', 40000, NOW(), NOW()),
+    ('time03', 'lesson05', '2026-03-05 14:00:00', '2026-03-05 18:00:00', 50000, NOW(), NOW());
+
+-- [8] 스케줄/예약 (Schedules) 및 상세 시간 (ScheduleTimes) 삽입
+-- 예시 1: 완료된 멘토링
+INSERT INTO schedules (schedule_id, status, request_content, lesson_title, lesson_type, lesson_description, lesson_location, lesson_category_name, mentor_nickname, price, lesson_id, mentee_id, lesson_mentor_id, option_id, created_at, updated_at) VALUES
+    ('sch01', 'COMPLETED', '포트폴리오 피드백 부탁드려요.', 'UI/UX 포트폴리오 1:1 리모델링', 'MENTORING', '매력적인 포트폴리오로 취업 성공하기!', '서울 신촌', '디자인', '디자인한스푼', 100000, 'lesson02', 'mentee02', 'mentor02', 'opt03', '2026-01-05 14:00:00', NOW());
+
+-- 예시 2: 승인된 원데이 클래스
+INSERT INTO schedules (schedule_id, status, request_content, lesson_title, lesson_type, lesson_description, lesson_location, lesson_category_name, mentor_nickname, price, lesson_id, mentee_id, lesson_mentor_id, available_time_id, created_at, updated_at) VALUES
+    ('sch02', 'APPROVED', '로그 분석 기초가 궁금해요.', '초보자를 위한 GA4 데이터 분석', 'ONEDAY', '구글 애널리틱스 기초를 하루만에 마스터하세요.', '온라인', '데이터·AI', '데이터분석가', 40000, 'lesson03', 'mentee01', 'mentor04', 'time01', '2026-01-14 10:00:00', NOW());
+
+-- 예시 3: 취소된 예약
+INSERT INTO schedules (schedule_id, status, request_content, lesson_title, lesson_type, lesson_description, lesson_location, lesson_category_name, mentor_nickname, price, lesson_id, mentee_id, lesson_mentor_id, created_at, updated_at) VALUES
+    ('sch03', 'CANCELED', '개인 사정으로 취소합니다.', 'Java 멀티쓰레딩 심화 클래스', 'ONEDAY', '병렬 프로그래밍의 핵심 개념을 정리합니다.', '서울 역삼', '개발', '백엔드장인', 50000, 'lesson05', 'mentee03', 'mentor01', '2026-01-12 11:00:00', NOW());
+
+-- 예시 4: 스터디 (다중 시간 지원)
+INSERT INTO schedules (schedule_id, status, request_content, lesson_title, lesson_type, lesson_description, lesson_location, lesson_category_name, mentor_nickname, price, lesson_id, mentee_id, lesson_mentor_id, created_at, updated_at) VALUES
+    ('sch04', 'APPROVED', '마케팅 실무를 배우고 싶습니다.', '인스타그램 광고 전략 4주 스터디', 'STUDY', '효율적인 광고 집행을 위한 집중 스터디입니다.', '서울 홍대', '마케팅·광고', '마케팅천재', 120000, 'lesson04', 'mentee04', 'mentor03', '2026-01-15 09:00:00', NOW());
+
+INSERT INTO schedule_times (schedule_time_id, schedule_id, start_time, end_time) VALUES
+    ('st01', 'sch04', '2026-04-01 19:00:00', '2026-04-01 21:00:00'),
+    ('st02', 'sch04', '2026-04-08 19:00:00', '2026-04-08 21:00:00'),
+    ('st03', 'sch04', '2026-04-15 19:00:00', '2026-04-15 21:00:00'),
+    ('st04', 'sch04', '2026-04-22 19:00:00', '2026-04-22 21:00:00');
+
+-- [9] 리뷰 (Reviews) 삽입
+INSERT INTO reviews (review_id, score, content, writer_id, lesson_id, schedule_id, created_at, updated_at) VALUES
+    ('rev01', 5, '진짜 도움 많이 됐어요! 강추합니다.', 'mentee02', 'lesson02', 'sch01', NOW(), NOW()),
+    ('rev02', 4, '내용이 알차고 설명이 친절하세요.', 'mentee03', 'lesson02', 'sch01', NOW(), NOW()),
+    ('rev03', 5, '백엔드 아키텍처 궁금했는데 시원하게 해결됐습니다.', 'mentee01', 'lesson01', 'sch01', NOW(), NOW());
