@@ -32,16 +32,19 @@ VALUES ('AT-12', 'L12', 25000, '2026-02-20 09:00:00', '2026-02-20 22:00:00', NOW
 -- 6. 스케줄 데이터 삽입
 INSERT INTO schedules (schedule_id, lesson_id, option_id, available_time_id,
                        mentee_id, lesson_mentor_id,
-                       start_time, end_time, status,
+                       mentor_nickname,
+                       status,
                        lesson_title, lesson_type, lesson_description, lesson_location, lesson_category_name,
                        option_name, option_minute, price,
                        created_at, updated_at)
 VALUES ('12', 'L12', 'OPT-12', 'AT-12',
-        '13', '14', -- 멘티 13, 멘토 14 적용
-        '2026-02-20 10:00:00', '2026-02-20 11:00:00', 'APPROVED',
+        '13', '14', '마스터멘토',
+        'APPROVED',
         '예비 백엔드 개발자를 위한 커피챗', 'MENTORING', '백엔드 포트폴리오 첨삭 및 상담', '온라인', '프로그래밍',
         '기본 80분', 80, 30000,
         NOW(), NOW());
+INSERT INTO schedule_times(schedule_time_id, schedule_id, start_time, end_time)
+VALUES (UUID(), '12', '2026-02-20 10:00:00', '2026-02-20 11:00:00');
 
 -- 7. 제약 조건 체크 다시 활성화
 SET FOREIGN_KEY_CHECKS = 1;

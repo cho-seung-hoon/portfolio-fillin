@@ -1,7 +1,15 @@
 spring:
   profiles:
-    active: test   # 디폴트 프로파일을 test로
-
+    active: local   # 디폴트 프로파일을 test로
+    properties:
+      hibernate:
+        format_sql: true  # SQL을 예쁘게 포맷팅
+        default_batch_fetch_size: 100 # 연관된 데이터를 가져올 때, 낱개로 가져오지 말고 100개씩 묶어서 (N+1 문제를 1+1로 줄여주면서, JOIN FETCH가 가진 페이징 불가능 문제까지 깔끔하게 해결해주는 옵션)
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        one-indexed-parameters: false # 페이지 번호를 0부터 시작할지(false) 1부터 시작할지(true)
 server:
   port: 8080
 

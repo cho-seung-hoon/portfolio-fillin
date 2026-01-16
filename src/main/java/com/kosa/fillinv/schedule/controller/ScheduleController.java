@@ -4,12 +4,22 @@ import com.kosa.fillinv.global.response.SuccessResponse;
 import com.kosa.fillinv.global.security.details.CustomMemberDetails;
 import com.kosa.fillinv.schedule.dto.request.ScheduleCreateRequest;
 import com.kosa.fillinv.schedule.dto.response.ScheduleDetailResponse;
+import com.kosa.fillinv.schedule.dto.response.ScheduleListResponse;
+import com.kosa.fillinv.schedule.entity.ScheduleStatus;
 import com.kosa.fillinv.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
@@ -43,7 +53,7 @@ public class ScheduleController {
     }
 
     // 스케쥴 상세 조회
-    @GetMapping("/{scheduleId}/{scheduleTimeId}")
+    @GetMapping("/{scheduleId}/scheduleTimeId/{scheduleTimeId}")
     public ResponseEntity<SuccessResponse<ScheduleDetailResponse>> getScheduleDetails(
             @PathVariable String scheduleId,
             @PathVariable String scheduleTimeId
@@ -55,19 +65,39 @@ public class ScheduleController {
     }
 
     // 상태 일치 스케쥴 조회
-//    @GetMapping("/{id}/status")
-//    public String getScheduleStatus() {
-//        return "";
-//    }
+    // Ex: GET /api/v1/schedules/SCH001/status/PAYMENT_PENDING
+    @GetMapping("/{scheduleId}/status/{status}")
+    public ResponseEntity<SuccessResponse<ScheduleListResponse>> getScheduleStatus(
+            @PathVariable String scheduleId,
+            @PathVariable ScheduleStatus status
+    ) {
+        ScheduleListResponse response = scheduleService.getScheduleStatus(scheduleId, status);
 
-    // 멘토, 멘티 스케쥴 조회
-//    @GetMapping // role=MENTOR or role=MENTEE
-//    public ResponseEntity<Page<ScheduleListResponse>> getSchedules(
-//            @RequestParam String role,
-//            Pageable pageable
-//    ) {
-//        System.out.println("role = " + role);
-//        return ;
-//    }
+        return ResponseEntity
+                .ok(SuccessResponse.success(HttpStatus.OK, response));
+    }
+
+    // 멘티 모드: 내 수강 신청 목록 조회 (페이지네이션)
+    // Ex: GET /api/v1/schedules/mentee/MEMBER001?page=0&size=10
+    @GetMapping("/mentee/{memberId}") // role=MENTOR or role=MENTEE
+    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> getMenteeSchedules(
+            @PathVariable String memberId,
+            // 기본 10개씩, 생성일자 기준 내림차순(최신순)
+            @ParameterObject Pageable pageable
+    ) {
+        Page<ScheduleListResponse> responses = scheduleService.getMenteeSchedules(memberId, pageable);
+        return ResponseEntity.ok(SuccessResponse.success(HttpStatus.OK, responses));
+    }
+
+    // 멘토 모드: 내 수업 일정 목록 조회 (페이지네이션)
+    // Ex: GET /api/v1/schedules/mentor/MEMBER002?page=0&size=10
+    @GetMapping("/mentor/{memberId}") // role=MENTOR or role=MENTEE
+    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> getMentorSchedules(
+            @PathVariable String memberId,
+            @ParameterObject Pageable pageable
+    ) {
+        Page<ScheduleListResponse> responses = scheduleService.getMentorSchedules(memberId, pageable);
+        return ResponseEntity.ok(SuccessResponse.success(HttpStatus.OK, responses));
+    }
 
 }

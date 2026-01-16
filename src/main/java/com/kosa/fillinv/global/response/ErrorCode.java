@@ -1,10 +1,13 @@
 package com.kosa.fillinv.global.response;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-
-import static org.springframework.http.HttpStatus.*;
 
 @Getter
 @RequiredArgsConstructor
@@ -41,7 +44,9 @@ public enum ErrorCode {
     INVALID_LESSON_TYPE(NOT_FOUND, "SCH04", "레슨 유형이 올바르지 않습니다."),
     MENTOR_NOT_FOUND(NOT_FOUND, "SCH05", "해당 멘토를 찾을 수 없습니다."),
     SCHEDULE_NOT_FOUND(NOT_FOUND, "SCH06", "해당 스케쥴을 찾을 수 없습니다."),
-    SCHEDULE_TIME_NOT_FOUND(NOT_FOUND, "SCH07", "해당 스케쥴 시간을 찾을 수 없습니다.");
+    SCHEDULE_TIME_NOT_FOUND(NOT_FOUND, "SCH07", "해당 스케쥴 시간을 찾을 수 없습니다."),
+    SCHEDULE_TIME_MISMATCH(NOT_FOUND, "SCH08", "스케쥴과 스케쥴 시간이 일치하지 않습니다."),
+    INVALID_SCHEDULE_STATUS(NOT_FOUND, "SCH09", "스케쥴 상태가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
