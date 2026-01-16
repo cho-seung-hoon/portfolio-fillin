@@ -72,11 +72,9 @@ public class LessonReadService {
                     .collect(Collectors.toSet());
         }
 
-        Map<String, Integer> stockMap = Map.of();
-        if (!keys.isEmpty()) {
-            stockMap = stockClient.getStock(keys);
-        }
-        stockMap = new HashMap<>(stockMap);
+        Map<String, Integer> stockMap = keys.isEmpty() ?
+                new HashMap<>() :
+                new HashMap<>(stockClient.getStock(keys));
         for (String key : keys) {
             // Stock에서 조회되지 않은 남은 좌석 수가 있다면 Exception 대신 0으로 초기화
             stockMap.putIfAbsent(key, 0);
