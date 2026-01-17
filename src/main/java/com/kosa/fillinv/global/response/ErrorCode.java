@@ -46,7 +46,12 @@ public enum ErrorCode {
     SCHEDULE_NOT_FOUND(NOT_FOUND, "SCH06", "해당 스케쥴을 찾을 수 없습니다."),
     SCHEDULE_TIME_NOT_FOUND(NOT_FOUND, "SCH07", "해당 스케쥴 시간을 찾을 수 없습니다."),
     SCHEDULE_TIME_MISMATCH(NOT_FOUND, "SCH08", "스케쥴과 스케쥴 시간이 일치하지 않습니다."),
-    INVALID_SCHEDULE_STATUS(NOT_FOUND, "SCH09", "스케쥴 상태가 올바르지 않습니다.");
+    INVALID_SCHEDULE_STATUS(NOT_FOUND, "SCH09", "스케쥴 상태가 올바르지 않습니다."),
+
+    // Review Error
+    REVIEW_NOT_ALLOWED(BAD_REQUEST, "R01", "리뷰를 작성할 수 없는 상태입니다."),
+    REVIEW_ALREADY_EXISTS(BAD_REQUEST, "R02", "이미 리뷰를 작성했습니다."),
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;
