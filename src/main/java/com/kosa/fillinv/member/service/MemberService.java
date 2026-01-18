@@ -1,6 +1,5 @@
 package com.kosa.fillinv.member.service;
 
-import com.kosa.fillinv.category.dto.CategoryResponseDto;
 import com.kosa.fillinv.category.entity.Category;
 import com.kosa.fillinv.category.exception.CategoryException;
 import com.kosa.fillinv.category.repository.CategoryRepository;
@@ -22,7 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,18 +58,33 @@ public class MemberService {
         Category category = categoryRepository.findById(profile.getCategoryId())
                 .orElseThrow(CategoryException.NotFound::new);
 
-        return ProfileResponseDto.builder()
-                .imageUrl(profile.getImage() != null ? "/resources/files/" + profile.getImage()
-                        : null)
-                .nickname(member.getNickname())
-                .email(member.getEmail())
-                .phoneNum(member.getPhoneNum())
-                .introduction(profile.getIntroduce())
-                .category(new CategoryResponseDto(
-                        category.getId(),
-                        category.getName(),
-                        category.getParentCategory() != null ? category.getParentCategory().getId() : null))
-                .build();
+        return ProfileResponseDto.of(member, profile, category);
+    }
+
+    public Map<String, ProfileResponseDto> getAllProfilesByMemberIds(Collection<String> memberIds) {
+        Map<String, Member> memberMap = memberRepository.findByIdIn(memberIds).stream()
+                .collect(Collectors.toMap(Member::getId, member -> member));
+
+        Map<String, Profile> profileMap = profileRepository.findByMemberIdIn(memberIds).stream()
+                .collect(Collectors.toMap(Profile::getMemberId, profile -> profile));
+
+        Map<Long, Category> categoryMap = categoryRepository.findAll().stream()
+                .collect(Collectors.toMap(Category::getId, category -> category));
+
+        return memberMap.values().stream()
+                .collect(Collectors.toMap(
+                        Member::getId,
+                        member -> {
+                            Profile profile = profileMap.get(member.getId());
+
+                            Category category = null;
+                            if (profile != null && profile.getCategoryId() != null) {
+                                category = categoryMap.get(profile.getCategoryId());
+                            }
+
+                            return ProfileResponseDto.of(member, profile, category);
+                        }
+                ));
     }
 
     @Transactional

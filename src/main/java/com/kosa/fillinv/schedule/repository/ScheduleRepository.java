@@ -15,7 +15,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
 
     //Pageable 방식 - return type을 page로 할 경우 pagenation 처리 가능
 
-    // 스케쥴 상세 조회
+    // 레슨별 스케쥴 목록 조회
     Page<Schedule> findByLessonId(String lessonId, Pageable pageable);
 
     // 상태 일치 스케쥴 찾기
@@ -30,9 +30,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
             "AND NOT EXISTS (SELECT r FROM Review r WHERE r.scheduleId = s.id)")
     Page<UnwrittenReviewVO> findUnwrittenReviews(@Param("menteeId") String menteeId, Pageable pageable);
 
-    // 멘티 스케쥴 조회
+    // 멘티 스케쥴 조회 (Batch Fetch Size가 N+1 문제를 알아서 최적화)
     Page<Schedule> findByMenteeId(String memberId, Pageable pageable);
 
-    // 멘토 스케쥴 조회
+    // 멘토 스케쥴 조회 (Batch Fetch Size가 N+1 문제를 알아서 최적화)
     Page<Schedule> findByMentorId(String memberId, Pageable pageable);
 }

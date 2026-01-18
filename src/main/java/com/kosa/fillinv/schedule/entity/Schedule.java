@@ -1,11 +1,21 @@
 package com.kosa.fillinv.schedule.entity;
 
 import com.kosa.fillinv.global.entity.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 
 @Entity
@@ -80,7 +90,7 @@ public class Schedule extends BaseEntity {
     private List<ScheduleTime> scheduleTimeList = new ArrayList<>();
 
     public void addScheduleTime(ScheduleTime scheduleTime) {
-        scheduleTime.setSchedule(this);
+        scheduleTime.setSchedule(this); // 양방향 연관관계 설정
         this.scheduleTimeList.add(scheduleTime);
     }
 

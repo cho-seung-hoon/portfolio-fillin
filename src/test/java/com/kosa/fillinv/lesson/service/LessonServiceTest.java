@@ -595,6 +595,7 @@ class LessonServiceTest {
                 1L,
                 Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(7, ChronoUnit.DAYS),
                 null,
+                null,
                 List.of(createOptionCommand("option1", 30, 1000), createOptionCommand("option2", 60, 2000)),
                 List.of(createAvailableTimeCommand())
         );
@@ -605,7 +606,8 @@ class LessonServiceTest {
         return new CreateAvailableTimeCommand(
                 now,
                 now.plus(2, ChronoUnit.HOURS),
-                10000
+                10000,
+                1
         );
     }
 
@@ -616,7 +618,8 @@ class LessonServiceTest {
         return new CreateAvailableTimeCommand(
                 startTime,
                 endTime,
-                price
+                price,
+                2
         );
     }
 
@@ -641,6 +644,7 @@ class LessonServiceTest {
                 categoryId,
                 Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(1, ChronoUnit.DAYS),
                 null,
+                3,
                 optionList,
                 availableTimeList
         );

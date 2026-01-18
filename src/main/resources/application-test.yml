@@ -18,6 +18,15 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # N+1 문제를 1+1로 줄여주는 옵션 (페이징 불가능 문제 해결)
+        default_batch_fetch_size: 100
+
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        one-indexed-parameters: false # 페이지 번호를 0부터 시작
+
   sql:
     init:
       mode: always

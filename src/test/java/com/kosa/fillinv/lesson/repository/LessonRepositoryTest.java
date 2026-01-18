@@ -39,9 +39,9 @@ class LessonRepositoryTest {
         Lesson lesson = createLesson(lessonId);
         List<Option> optionList = List.of(new Option("option-001", "option1", 30, 1000, lesson));
         List<AvailableTime> availableTimeList = List.of(
-                new AvailableTime("at-001", lesson, Instant.now(), Instant.now(), 10000),
-                new AvailableTime("at-002", lesson, Instant.now(), Instant.now(), 20000),
-                new AvailableTime("at-003", lesson, Instant.now(), Instant.now(), 30000)
+                new AvailableTime("at-001", lesson, Instant.now(), Instant.now(), 10000, 1),
+                new AvailableTime("at-002", lesson, Instant.now(), Instant.now(), 20000, 2),
+                new AvailableTime("at-003", lesson, Instant.now(), Instant.now(), 30000, 3)
         );
 
         lesson.addAvailableTime(availableTimeList);
@@ -70,7 +70,8 @@ class LessonRepositoryTest {
                 "mentor-1",
                 1L,
                 Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(7, ChronoUnit.DAYS),
-                10000
+                10000,
+                null
         );
     }
 }

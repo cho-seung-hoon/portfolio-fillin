@@ -49,6 +49,9 @@ public class Lesson extends BaseEntity {
     @Column(name = "price")
     private Integer price;
 
+    @Column(name = "seats")
+    private Integer seats;
+
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<AvailableTime> availableTimeList;
 
@@ -65,7 +68,8 @@ public class Lesson extends BaseEntity {
                   String mentorId,
                   Long categoryId,
                   Instant closeAt,
-                  Integer price) {
+                  Integer price,
+                  Integer seats) {
         this.id = id;
         this.title = title;
         this.lessonType = lessonType;
@@ -76,6 +80,7 @@ public class Lesson extends BaseEntity {
         this.categoryId = categoryId;
         this.closeAt = closeAt;
         this.price = price;
+        this.seats = seats;
         this.availableTimeList = new ArrayList<>();
         this.optionList = new ArrayList<>();
     }

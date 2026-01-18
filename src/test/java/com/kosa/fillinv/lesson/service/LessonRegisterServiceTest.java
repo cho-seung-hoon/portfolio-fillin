@@ -95,6 +95,7 @@ class LessonRegisterServiceTest {
                 1L,
                 Instant.parse("2025-01-31T23:59:59Z"),
                 null,
+                null,
                 List.of(),
                 List.of()
         );
@@ -127,6 +128,7 @@ class LessonRegisterServiceTest {
                 1L,                          // categoryId
                 Instant.parse("2025-01-31T23:59:59Z"), // closeAt
                 null,                        // price (레슨 전체 가격, 필요 없으면 null)
+                null,
                 List.of(
                         new RegisterLessonCommand.Option("30분 멘토링", 30, 30000),
                         new RegisterLessonCommand.Option("60분 멘토링", 60, 55000)
@@ -135,12 +137,14 @@ class LessonRegisterServiceTest {
                         new RegisterLessonCommand.AvailableTime(
                                 Instant.parse("2025-01-10T05:00:00Z"),
                                 Instant.parse("2025-01-10T07:00:00Z"),
-                                50000
+                                50000,
+                                null
                         ),
                         new RegisterLessonCommand.AvailableTime(
                                 Instant.parse("2025-01-17T05:00:00Z"),
                                 Instant.parse("2025-01-17T07:00:00Z"),
-                                50000
+                                50000,
+                                null
                         )
                 )
         );

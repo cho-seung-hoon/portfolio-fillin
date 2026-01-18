@@ -25,6 +25,9 @@ public class AvailableTime extends BaseEntity {
     @Column(name = "price", nullable = false)
     private Integer price;
 
+    @Column(name = "seats")
+    private Integer seats;
+
     @Setter
     @ManyToOne
     @JoinColumn(name = "lesson_id", nullable = false)
@@ -35,11 +38,13 @@ public class AvailableTime extends BaseEntity {
                          Lesson lesson,
                          Instant startTime,
                          Instant endTime,
-                         Integer price) {
+                         Integer price,
+                         Integer seats) {
         this.id = id;
         this.lesson = lesson;
         this.startTime = startTime;
         this.endTime = endTime;
         this.price = price;
+        this.seats = seats;
     }
 }
