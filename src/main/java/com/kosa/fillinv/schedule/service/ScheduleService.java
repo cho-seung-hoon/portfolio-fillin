@@ -167,6 +167,14 @@ public class ScheduleService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
+    @Transactional
+    public void completePayment(String scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        schedule.markPaymentCompleted();
+    }
+
     // 스케쥴 상세 조회
     // 제목, 상태, 페이지, 오늘 기준(true일 경우 오늘 이후 스케쥴), 오름차순
 
