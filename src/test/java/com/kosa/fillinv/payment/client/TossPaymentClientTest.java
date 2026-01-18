@@ -68,7 +68,7 @@ class TossPaymentClientTest {
                 .thenAnswer(invocation -> {
                     throw PSPConfirmationException.builder()
                             .isRetryable(true)
-                            .isFailure(true)
+                            .isUnknown(true)
                             .build();
                 });
 
