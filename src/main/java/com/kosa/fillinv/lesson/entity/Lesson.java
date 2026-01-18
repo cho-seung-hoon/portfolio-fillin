@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -58,11 +59,9 @@ public class Lesson extends BaseEntity {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<Option> optionList;
 
-    @Column(name = "popularity_score_a")
-    private Double popularityScoreA;
-    
-    @Column(name = "popularity_score_b")
-    private Double popularityScoreB;
+    @Column(name = "popularity_score", nullable = false)
+    @ColumnDefault("0.0")
+    private Double popularityScore = 0.0;
 
     @Builder
     public Lesson(String id,
@@ -174,12 +173,8 @@ public class Lesson extends BaseEntity {
         });
     }
 
-    public void updatePopularityScoreA(Double score) {
-        this.popularityScoreA = score;
-    }
-
-    public void updatePopularityScoreB(Double score) {
-        this.popularityScoreB = score;
+    public void updatePopularityScore(Double score) {
+        this.popularityScore = (score == null) ? 0.0 : score;
     }
 
     public List<Option> getOptionList() {

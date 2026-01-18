@@ -39,6 +39,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
     // 멘토 스케쥴 조회 (Batch Fetch Size가 N+1 문제를 알아서 최적화)
     Page<Schedule> findByMentorId(String memberId, Pageable pageable);
 
-    @Query("SELECT s.lessonId, COUNT(s) FROM Schedule s JOIN Lesson l ON s.lessonId = l.id WHERE s.createdAt >= :startDate AND l.deletedAt IS NULL GROUP BY s.lessonId")
+    @Query("SELECT s.lessonId, COUNT(s) FROM Schedule s JOIN Lesson l ON s.lessonId = l.id WHERE s.createdAt >= :startDate AND s.deletedAt IS NULL AND l.deletedAt IS NULL GROUP BY s.lessonId")
     List<Object[]> countByLessonIdAndCreatedAtAfter(@Param("startDate") Instant startDate);
 }

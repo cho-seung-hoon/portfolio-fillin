@@ -41,6 +41,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
 
     boolean existsByScheduleId(String scheduleId);
 
-    @Query("SELECT r.lessonId, COUNT(r), AVG(r.score) FROM Review r JOIN Lesson l ON r.lessonId = l.id WHERE l.deletedAt IS NULL GROUP BY r.lessonId")
-    List<Object[]> getReviewStatsByLessonId();
+    @Query("SELECT r.lessonId, COUNT(r), AVG(r.score) FROM Review r JOIN Lesson l ON r.lessonId = l.id WHERE r.deletedAt IS NULL AND l.deletedAt IS NULL GROUP BY r.lessonId")
+    List<Object[]> findReviewStatsByLessonId();
+
 }
