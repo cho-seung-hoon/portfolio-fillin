@@ -7,18 +7,21 @@ import com.kosa.fillinv.lesson.repository.LessonTempRepository;
 import com.kosa.fillinv.review.repository.ReviewRepository;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -32,6 +35,7 @@ public class LessonPopularityScheduler {
     private final ReviewRepository reviewRepository;
     private final LessonTempRepository lessonTempRepository;
     private final TransactionTemplate transactionTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Scheduled(cron = "0 0 1 * * *")
     public void updateLessonPopularity() {
@@ -46,6 +50,11 @@ public class LessonPopularityScheduler {
         transactionTemplate.executeWithoutResult(status -> updateLessonsFromTemp());
 
     }
+
+//    @EventListener(ApplicationReadyEvent.class)
+//    public void init() {
+//        updateLessonPopularity();
+//    }
 
     private void resetAllScores() {
         lessonRepository.resetAllPopularityScores();
@@ -114,25 +123,31 @@ public class LessonPopularityScheduler {
     }
 
     private void updateLessonsFromTemp() {
-
         List<LessonTemp> temps = lessonTempRepository.findAll();
         if (temps.isEmpty()) {
             return;
         }
 
-        List<String> lessonIds = temps.stream()
-                .map(LessonTemp::getLessonId)
-                .toList();
-        
-        List<Lesson> lessons = lessonRepository.findAllById(lessonIds);
-        Map<String, Lesson> lessonMap = lessons.stream()
-                .collect(Collectors.toMap(Lesson::getId, Function.identity()));
+        int BATCH_SIZE = 500;
+        String sql = "UPDATE lessons SET popularity_score = ? WHERE lesson_id = ?";
 
-        for (LessonTemp temp : temps) {
-            Lesson lesson = lessonMap.get(temp.getLessonId());
-            if (lesson != null) {
-                lesson.updatePopularityScore(temp.getScore());
-            }
+        for (int i = 0; i < temps.size(); i += BATCH_SIZE) {
+            int end = Math.min(temps.size(), i + BATCH_SIZE);
+            List<LessonTemp> batchList = temps.subList(i, end);
+
+            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+                @Override
+                public void setValues(PreparedStatement ps, int j) throws SQLException {
+                    LessonTemp temp = batchList.get(j);
+                    ps.setDouble(1, temp.getScore());
+                    ps.setString(2, temp.getLessonId());
+                }
+
+                @Override
+                public int getBatchSize() {
+                    return batchList.size();
+                }
+            });
         }
     }
 
