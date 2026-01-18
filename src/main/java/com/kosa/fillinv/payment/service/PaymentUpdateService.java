@@ -31,14 +31,50 @@ public class PaymentUpdateService {
     }
 
     @Transactional
-    public void updateStatus(PaymentStatusUpdateCommand command) {
+    public void execute(PaymentStatusUpdateCommand command) {
         Payment payment = paymentRepository.findByOrderId(command.orderId())
                 .orElseThrow(() -> new ResourceException.NotFound("결제 정보 없음"));
 
-        PaymentHistory paymentHistory = createPaymentHistory(
-                payment, command.status(), command.failure() == null ? null : command.failure().toString());
+        PaymentHistory paymentHistory = createPaymentHistory(payment, PaymentStatus.EXECUTING, "PAYMENT_CONFIRMATION_START");
         paymentHistoryRepository.save(paymentHistory);
 
-        payment.updateStatus(command.status());
+        payment.markExecuting();
+        payment.setPaymentKey(command.paymentKey());
+    }
+
+    @Transactional
+    public void success(PaymentStatusUpdateCommand command) {
+        Payment payment = paymentRepository.findByOrderId(command.orderId())
+                .orElseThrow(() -> new ResourceException.NotFound("결제 정보 없음"));
+
+        PaymentHistory paymentHistory = createPaymentHistory(payment, PaymentStatus.SUCCESS, "PAYMENT_CONFIRM_DONE");
+        paymentHistoryRepository.save(paymentHistory);
+        payment.markSuccess();
+
+        payment.setPaymentKey(payment.getPaymentKey());
+        payment.setApprovedAt(command.extraDetails().approvedAt());
+        payment.setPaymentMethod(command.extraDetails().method());
+        payment.setPspRaw(command.extraDetails().pspRawData());
+    }
+
+    @Transactional
+    public void fail(PaymentStatusUpdateCommand command) {
+        Payment payment = paymentRepository.findByOrderId(command.orderId())
+                .orElseThrow(() -> new ResourceException.NotFound("결제 정보 없음"));
+
+        PaymentHistory paymentHistory = createPaymentHistory(payment, PaymentStatus.FAILURE, command.failure().toString());
+        paymentHistoryRepository.save(paymentHistory);
+
+        payment.markFail();
+    }
+
+    @Transactional
+    public void updateStatus(PaymentStatusUpdateCommand command) {
+        switch (command.status()) {
+            case EXECUTING -> execute(command);
+            case SUCCESS -> success(command);
+            case FAILURE -> fail(command);
+            default -> throw new IllegalArgumentException("Unknown status: " + command.status());
+        }
     }
 }

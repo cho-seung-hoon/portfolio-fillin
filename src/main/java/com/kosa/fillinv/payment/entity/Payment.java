@@ -1,7 +1,7 @@
 package com.kosa.fillinv.payment.entity;
 
 import com.kosa.fillinv.global.entity.BaseEntity;
-import com.kosa.fillinv.payment.domain.PaymentMethod;
+import com.kosa.fillinv.payment.domain.*;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -96,13 +96,5 @@ public class Payment extends BaseEntity {
     // 실제 운영 시에는 전체 raw 데이터를 저장 필수. 테스트를 위해서 길이 제한
     public void setPspRaw(String pspRaw) {
         this.pspRaw = pspRaw.substring(0, Math.min(pspRaw.length(), 50));
-    }
-
-    public void updateStatus(PaymentStatus status) {
-        switch (status) {
-            case EXECUTING -> markExecuting();
-            case SUCCESS -> markSuccess();
-            case FAILURE -> markFail();
-        };
     }
 }
