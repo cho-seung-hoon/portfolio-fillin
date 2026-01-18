@@ -15,4 +15,5 @@ public class LessonError {
     public static String INVALID_LESSON_TYPE(String lessonType) {
         return String.format("레슨 유형( %s )이 유효하지 않습니다.", lessonType);
     }
+    public static String INVALID_SEAT = "좌석 수는 1개 이상이어야 합니다.";
 }

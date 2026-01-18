@@ -13,6 +13,7 @@ public record RegisterLessonRequest(
         Long categoryId,
         Instant closeAt,
         Integer price,
+        Integer seats,
         List<Option> optionList,
         List<AvailableTime> availableTimeList
 ) {
@@ -27,6 +28,7 @@ public record RegisterLessonRequest(
                 this.categoryId,
                 this.closeAt,
                 this.price,
+                this.seats,
                 this.optionList.stream().map(Option::toCommand).toList(),
                 this.availableTimeList.stream().map(AvailableTime::toCommand).toList()
         );
@@ -38,9 +40,9 @@ public record RegisterLessonRequest(
         }
     }
 
-    public record AvailableTime(Instant startTime, Instant endTime, Integer price) {
+    public record AvailableTime(Instant startTime, Instant endTime, Integer price, Integer seats) {
         public static RegisterLessonCommand.AvailableTime toCommand(AvailableTime availableTime) {
-            return new RegisterLessonCommand.AvailableTime(availableTime.startTime, availableTime.endTime, availableTime.price);
+            return new RegisterLessonCommand.AvailableTime(availableTime.startTime, availableTime.endTime, availableTime.price, availableTime.seats);
         }
     }
 }

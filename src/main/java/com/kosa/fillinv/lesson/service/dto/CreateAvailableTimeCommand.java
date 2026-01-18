@@ -5,6 +5,7 @@ import java.time.Instant;
 public record CreateAvailableTimeCommand(
         Instant startTime,
         Instant endTime,
-        Integer price
+        Integer price,
+        Integer seats
 ) {
 }

@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: test   # 디폴트 프로파일을 test로
+    active: test   # 디폴트 프로파일을 test로 설정
 
 server:
   port: 8080

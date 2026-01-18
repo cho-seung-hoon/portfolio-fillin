@@ -10,6 +10,8 @@ import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.repository.LessonSpecifications;
 import com.kosa.fillinv.lesson.repository.OptionRepository;
 import com.kosa.fillinv.lesson.service.dto.*;
+import com.kosa.fillinv.stock.entity.Stock;
+import com.kosa.fillinv.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +36,7 @@ public class LessonService {
     private final LessonRepository lessonRepository;
     private final AvailableTimeRepository availableTimeRepository;
     private final OptionRepository optionRepository;
+    private final StockRepository stockRepository;
 
     public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
         LessonSortType sortType = condition.sortType();
@@ -68,6 +71,12 @@ public class LessonService {
                 .forEach(lesson::addAvailableTime);
 
         Lesson saved = lessonRepository.save(lesson);
+
+        if (saved.getLessonType() == LessonType.ONEDAY) {
+            stockRepository.saveAll(createStockEntityForOnedayLesson(saved));
+        } else if (saved.getLessonType() == LessonType.STUDY) {
+            stockRepository.save(createStockEntityForStudyLesson(saved));
+        }
 
         return CreateLessonResult.of(saved);
     }
@@ -203,6 +212,9 @@ public class LessonService {
     }
 
     private AvailableTime createAvailableTimeEntity(Lesson lesson, CreateAvailableTimeCommand command) {
+        if (lesson.getLessonType() == LessonType.ONEDAY && (command.seats() == null || command.seats() <= 0)) {
+            throw new ResourceException.InvalidArgument(INVALID_SEAT);
+        }
 
         return AvailableTime.builder()
                 .id(UUID.randomUUID().toString())
@@ -210,6 +222,7 @@ public class LessonService {
                 .startTime(command.startTime())
                 .endTime(command.endTime())
                 .price(command.price())
+                .seats(command.seats())
                 .build();
     }
 
@@ -243,6 +256,12 @@ public class LessonService {
             throw new ResourceException.InvalidArgument(CATEGORY_ID_REQUIRED);
         }
 
+        if (command.lessonType() == LessonType.STUDY) {
+            if (command.seats() == null || command.seats() <= 0) {
+                throw new ResourceException.InvalidArgument(INVALID_SEAT);
+            }
+        }
+
         Lesson.LessonBuilder lessonBuilder = Lesson.builder()
                 .id(UUID.randomUUID().toString())
                 .title(command.title())
@@ -256,8 +275,27 @@ public class LessonService {
 
         if (command.lessonType() == LessonType.STUDY) {
             lessonBuilder.price(command.price());
+            lessonBuilder.seats(command.seats());
         }
 
         return lessonBuilder.build();
+    }
+
+    private List<Stock> createStockEntityForOnedayLesson(Lesson lesson) {
+        return lesson.getAvailableTimeList().stream()
+                .map(at -> Stock.builder()
+                        .id(UUID.randomUUID().toString())
+                        .serviceKey(at.getId())
+                        .quantity(at.getSeats())
+                        .build())
+                .toList();
+    }
+
+    private Stock createStockEntityForStudyLesson(Lesson lesson) {
+        return Stock.builder()
+                .id(UUID.randomUUID().toString())
+                .serviceKey(lesson.getId())
+                .quantity(lesson.getSeats())
+                .build();
     }
 }
