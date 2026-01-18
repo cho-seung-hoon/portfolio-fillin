@@ -78,6 +78,7 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("결제 시도 시 Payment가 생성된다")
     void checkout() {
         // given
         String scheduleId = "dummyScheduleId";
@@ -113,7 +114,7 @@ class PaymentServiceTest {
      * Payment History는 NOT_STARTED -> EXECUTING, EXECUTING -> SUCCESS 가 누적된다.
      **/
     @Test
-    @DisplayName("")
+    @DisplayName("결제 승인 성공 시 Payment 상태가 SUCCESS로 변경되고 History가 기록된다")
     public void confirm() {
         // given
         String scheduleId = "dummyScheduleId";
@@ -152,6 +153,7 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("결제 승인 실패 시 Payment 상태가 FAILURE로 변경되고 History가 기록된다")
     void confirmFail() {
         // given
         String scheduleId = "dummyScheduleId";
