@@ -12,6 +12,7 @@ import { LessonApplicationUiModel } from "../../types/lesson-application-ui";
 import { mapApiToLesson } from "../../utils/lesson-application-mapper";
 
 import { applicationService, ScheduleCreateRequest } from "../../api/lesson-application-service";
+import { LessonApplicationSkeleton } from "./LessonApplicationSkeleton";
 
 interface LessonApplicationProps {
   lessonId: string;
@@ -50,7 +51,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
   }, [lessonId]);
 
   if (loading || !lesson) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return <LessonApplicationSkeleton onBack={onBack} />;
   }
 
   const selectedOption = lesson.options?.find(opt => opt.optionId === selectedOptionId);
