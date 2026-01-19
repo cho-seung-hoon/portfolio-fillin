@@ -25,7 +25,7 @@ export function PaymentSuccessPage() {
         // 결제 승인 요청 (axios client 사용)
         client.post("/v1/payments/confirm", {
             paymentKey,
-            scheduleId: orderId, // 서버 규격에 맞춰 orderId를 scheduleId로 전달
+            orderId: orderId, // 서버 규격에 맞춰 orderId를 scheduleId로 전달
             amount: Number(amount), // 숫자로 변환하여 전송
         })
             .then(() => {

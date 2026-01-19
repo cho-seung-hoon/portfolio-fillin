@@ -345,14 +345,14 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
         startTime = selectedSlot.startTime;
       }
 
-      const response = await client.post("/v1/apply", {
+      const response = await client.post("/v1/schedules", {
         lessonId: serviceId,
         optionId: selectedOptionId,
         availableTimeId,
         startTime,
       });
 
-      if (response.data.status === 200) {
+      if (response.data.status === 200 || response.data.status === 201) {
         setScheduleId(response.data.data.scheduleId);
         setIsOrderConfirmDialogOpen(true);
       }
@@ -364,7 +364,7 @@ export function ServiceApplication({ serviceId, onBack }: ServiceApplicationProp
 
   const handleConfirmOrder = async () => {
     try {
-      const response = await client.post("/v1/apply/checkout", {
+      const response = await client.post("/v1/payments/checkout", {
         scheduleId: scheduleId
       });
 
