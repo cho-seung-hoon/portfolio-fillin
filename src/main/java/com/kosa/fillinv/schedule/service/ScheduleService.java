@@ -162,8 +162,9 @@ public class ScheduleService {
     }
 
     private void decreaseStock(String key) {
-        if (stockRepository.decreaseQuantity(key) == 0)
+        if (stockRepository.decreaseQuantity(key) == 0) {
             throw new ScheduleException(ErrorCode.NO_SEAT);
+            }
     }
 
     private Member getMentor(String mentorId) {
