@@ -5,7 +5,7 @@ import { SearchSection } from "./SearchSection";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchFilters } from "./SearchFilters";
 import { SearchResults } from "./SearchResults";
-import { InfLearnFooter } from "./InfLearnFooter";
+import { ProjectFooter } from "./ProjectFooter";
 import { Lesson } from "../../types/lesson";
 import { lessonService } from "../../api/lesson";
 
@@ -166,7 +166,7 @@ export default function Home({ user, onLoginClick, onSignupClick, onLogout, sear
         onPageChange={handlePageChange}
         isLoading={loading}
       />
-      <InfLearnFooter />
+      <ProjectFooter />
     </div>
   );
 }

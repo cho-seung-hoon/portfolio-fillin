@@ -5,7 +5,7 @@ import { MyPageHome } from "./MyPageHome";
 import { ScheduleManagement } from "./ScheduleManagement";
 import { ReviewManagement } from "./ReviewManagement";
 import { ProfileManagement } from "./ProfileManagement";
-import { InfLearnFooter } from "./InfLearnFooter";
+import { ProjectFooter } from "./ProjectFooter";
 
 interface MyPageProps {
   user: { email: string; name: string };
@@ -56,7 +56,7 @@ export function MyPage({ user, onLoginClick, onLogout, onNavigateToMain, onNavig
         </main>
       </div>
 
-      <InfLearnFooter />
+      <ProjectFooter />
     </div>
   );
 }
