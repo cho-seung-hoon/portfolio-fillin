@@ -1,6 +1,7 @@
 import { Heart } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { getImageUrl } from "../../utils/image";
 
 export interface Product {
   id: number;
@@ -26,7 +27,7 @@ export function Gallery({ products }: GalleryProps) {
           >
             <div className="relative aspect-square overflow-hidden bg-gray-100">
               <img
-                src={product.image}
+                src={getImageUrl(product.image)}
                 alt={product.name}
                 className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -45,11 +46,10 @@ export function Gallery({ products }: GalleryProps) {
                   {Array.from({ length: 5 }).map((_, i) => (
                     <span
                       key={i}
-                      className={`text-sm ${
-                        i < Math.floor(product.rating)
-                          ? "text-yellow-400"
-                          : "text-gray-300"
-                      }`}
+                      className={`text-sm ${i < Math.floor(product.rating)
+                        ? "text-yellow-400"
+                        : "text-gray-300"
+                        }`}
                     >
                       ★
                     </span>

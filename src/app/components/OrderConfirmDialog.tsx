@@ -9,6 +9,7 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Calendar, Clock } from "lucide-react";
+import { getImageUrl } from "../../utils/image";
 
 interface OrderConfirmDialogProps {
     open: boolean;
@@ -91,7 +92,7 @@ export function OrderConfirmDialog({
                             <div className="flex gap-4">
                                 <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                                     <img
-                                        src={service.thumbnail}
+                                        src={getImageUrl(service.thumbnail)}
                                         alt={service.title}
                                         className="w-full h-full object-cover"
                                     />

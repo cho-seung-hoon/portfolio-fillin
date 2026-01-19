@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { serviceDetailService } from "../../api/serviceDetail";
 import { LessonDetail } from "../../types/lesson";
+import { getImageUrl } from "../../utils/image";
 
 interface ServiceDetailProps {
   serviceId: string;
@@ -81,9 +82,9 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                 <div className="relative w-full aspect-video md:aspect-[21/9] bg-gray-100">
                   <img
                     src={
-                      service.thumbnail.includes("picsum.photos")
+                      getImageUrl(service.thumbnail.includes("picsum.photos")
                         ? `${service.thumbnail}${service.thumbnail.includes("?") ? "&" : "?"}random=${service.id}`
-                        : service.thumbnail
+                        : service.thumbnail)
                     }
                     alt={service.title}
                     className="size-full object-cover"
@@ -92,7 +93,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                 <div className="p-6">
                   <div className="flex items-start gap-4 mb-6">
                     <img
-                      src={service.mentor.avatar}
+                      src={getImageUrl(service.mentor.avatar)}
                       alt={service.mentor.name}
                       className="size-20 rounded-full object-cover"
                     />

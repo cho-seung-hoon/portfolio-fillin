@@ -1,6 +1,7 @@
 import { MessageSquare, Star } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { LessonDetail } from "../../../types/lesson";
+import { getImageUrl } from "../../../utils/image";
 
 interface ServiceReviewsProps {
     service: LessonDetail;
@@ -30,7 +31,7 @@ export function ServiceReviews({ service }: ServiceReviewsProps) {
                         >
                             <div className="flex items-start gap-3">
                                 <img
-                                    src={review.avatar}
+                                    src={getImageUrl(review.avatar)}
                                     alt={review.userName}
                                     className="size-10 rounded-full object-cover"
                                 />
