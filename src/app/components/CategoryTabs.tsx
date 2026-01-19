@@ -100,6 +100,7 @@ export function CategoryTabs({
   }, [selectedMainId, selectedCategoryId, subCategories, onCategoryChange]);
 
   // 선택된 카테고리 ID가 변경되면 대분류도 업데이트
+  // 단, selectedCategoryId가 null일 때는 대분류를 null로 리셋하지 않음 (사용자가 대분류를 직접 선택한 경우 유지)
   useEffect(() => {
     if (selectedCategoryId) {
       const category = allCategories.find(c => c.categoryId === selectedCategoryId);
@@ -108,9 +109,9 @@ export function CategoryTabs({
       } else if (category) {
         setSelectedMainId(category.categoryId);
       }
-    } else {
-      setSelectedMainId(null);
     }
+    // selectedCategoryId가 null일 때는 setSelectedMainId(null)을 호출하지 않음
+    // 이렇게 하면 대분류를 변경할 때 소분류만 초기화되고 대분류는 유지됨
   }, [selectedCategoryId, allCategories]);
 
   const handleMinorChange = (value: string) => {
@@ -124,6 +125,7 @@ export function CategoryTabs({
   return (
     <div className="border-b bg-white sticky top-16 z-40">
       <div className="container mx-auto px-4">
+        {/* 대분류 탭 영역 - 가로 스크롤 */}
         <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide">
           {/* 전체 */}
           <button
@@ -171,28 +173,34 @@ export function CategoryTabs({
               </button>
             );
           })}
+        </div>
 
-          {/* 소분류 선택 (대분류가 선택된 경우에만 표시) */}
-          {selectedMainId != null && (
-            <div className="ml-3 flex items-center gap-2">
-              <Select
-                value={selectedCategoryId?.toString() || "none"}
-                onValueChange={handleMinorChange}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="소분류 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">소분류 선택</SelectItem>
-                  {subCategories.map((cat) => (
-                    <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        {/* 소분류 선택 - 항상 노출 (대분류 미선택 시 비활성) */}
+        <div className="pb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">소분류</span>
+            <Select
+              value={selectedCategoryId?.toString() || "none"}
+              onValueChange={handleMinorChange}
+              disabled={selectedMainId == null}
+            >
+              <SelectTrigger className="w-full md:w-[240px]">
+                <SelectValue
+                  placeholder={
+                    selectedMainId == null ? "대분류를 먼저 선택하세요" : "소분류를 선택하세요"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">전체 소분류</SelectItem>
+                {subCategories.map((cat) => (
+                  <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
     </div>
