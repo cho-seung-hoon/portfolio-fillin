@@ -110,7 +110,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{service.rating}</span>
+                        <span className="font-medium">{service.rating ? service.rating.toFixed(1) : "신규"}</span>
                         <span className="text-gray-500">({service.reviewCount}개 리뷰)</span>
                       </div>
                       <div className="flex items-center gap-1 text-gray-600">
@@ -241,7 +241,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Star className="size-4" />
-                      <span>만족도 {service.rating}/5.0</span>
+                      <span>만족도 {service.rating ? `${service.rating.toFixed(1)}/5.0` : "신규"}</span>
                     </div>
                   </div>
 

@@ -17,7 +17,7 @@ export function ServiceReviews({ service }: ServiceReviewsProps) {
                     </h3>
                     <div className="flex items-center gap-2">
                         <Star className="size-5 fill-yellow-400 text-yellow-400" />
-                        <span className="text-2xl font-bold">{service.rating}</span>
+                        <span className="text-2xl font-bold">{service.rating ? service.rating.toFixed(1) : "신규"}</span>
                         <span className="text-gray-500">({service.reviewCount}개)</span>
                     </div>
                 </div>
