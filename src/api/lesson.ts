@@ -1,10 +1,11 @@
 import client from "./client";
 import { Lesson, LessonListResult } from "../types/lesson";
 import { SuccessResponse, PageResponse, LessonThumbnail, LessonSortTypeEnum, RegisterLessonRequest } from "./types";
+import { RegisterLessonResponse } from "./dto/lesson-creation-result";
 
 export interface LessonService {
     getLessons(search?: string, page?: number, sort?: string): Promise<LessonListResult>;
-    createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<void>;
+    createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<string>;
 }
 
 class DefaultLessonService implements LessonService {
@@ -65,16 +66,18 @@ class DefaultLessonService implements LessonService {
             serviceType: serviceTypeMap[dto.lessonType] || "mentoring",
         };
     }
-    async createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<void> {
+    async createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<string> {
         const formData = new FormData();
         formData.append("request", new Blob([JSON.stringify(request)], { type: "application/json" }));
         formData.append("thumbnail", thumbnail);
 
-        await client.post("/v1/lessons", formData, {
+        const response = await client.post<SuccessResponse<RegisterLessonResponse>>("/v1/lessons", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
         });
+
+        return response.data.data.lessonId;
     }
 }
 

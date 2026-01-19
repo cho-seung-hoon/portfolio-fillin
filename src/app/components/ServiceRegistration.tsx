@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Card,
   CardContent,
@@ -67,6 +68,8 @@ export function ServiceRegistration({
   const { availableTimeList: oneDayTimeList, reset: resetOneDay } = useOneDayRegistrationStore();
   const { price, seats, availableTimeList: studyTimeList, reset: resetStudy } = useStudyRegistrationStore();
 
+  const navigate = useNavigate();
+
   // Reset stores on mount (Cleanup previous state)
   /* 
    * [Policy Change: Session Persist]
@@ -76,6 +79,9 @@ export function ServiceRegistration({
 
   const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Using explicit state for navigation after success to avoid hook rules issues if any,
+  // but direct navigation in event handler is fine in TanStack Router.
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -207,13 +213,15 @@ export function ServiceRegistration({
       console.log("RegisterLessonRequest:", requestDTO);
 
       // Call API
-      await lessonService.createLesson(requestDTO, thumbnailImage);
+      const lessonId = await lessonService.createLesson(requestDTO, thumbnailImage);
 
       alert("서비스가 성공적으로 등록되었습니다.");
 
       // Success: Clear data and navigate back
-      //resetAllStores();
-      //onBack();
+      resetAllStores();
+
+      // Navigate to detail page using TanStack Router
+      navigate({ to: "/service/$id", params: { id: lessonId }, replace: true });
 
     } catch (error) {
       console.error("Failed to create lesson:", error);
