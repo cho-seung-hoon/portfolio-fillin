@@ -1,6 +1,8 @@
 import { MessageSquare, Star } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { LessonDetail } from "../../../types/lesson";
+import { format } from "date-fns";
+import { ko, enUS, ja } from "date-fns/locale";
 import { getImageUrl } from "../../../utils/image";
 
 interface ServiceReviewsProps {
@@ -52,7 +54,25 @@ export function ServiceReviews({ service }: ServiceReviewsProps) {
                                                     ))}
                                                 </div>
                                                 <span>•</span>
-                                                <span>{review.date}</span>
+                                                <span>
+                                                    {(() => {
+                                                        const date = new Date(review.date);
+                                                        // Simple browser locale detection
+                                                        const browserLang = navigator.language || "ko-KR";
+                                                        // Map common browser locales to date-fns locales
+                                                        const localeMap: Record<string, any> = {
+                                                            "ko-KR": ko,
+                                                            "ko": ko,
+                                                            "en-US": enUS,
+                                                            "en": enUS,
+                                                            "ja-JP": ja,
+                                                            "ja": ja
+                                                        };
+                                                        const selectedLocale = localeMap[browserLang] || ko; // Fallback to ko
+
+                                                        return format(date, "P", { locale: selectedLocale });
+                                                    })()}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
