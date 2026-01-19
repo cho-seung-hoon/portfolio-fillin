@@ -190,6 +190,14 @@ public class ScheduleService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
+    @Transactional
+    public void completePayment(String scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        schedule.markPaymentCompleted();
+    }
+
     // 스케쥴 상세 조회
     public ScheduleDetailResponse getScheduleDetail(String scheduleId, String scheduleTimeId) {
         Schedule schedule = getSchedule(scheduleId);

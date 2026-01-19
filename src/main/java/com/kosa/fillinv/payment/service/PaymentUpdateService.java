@@ -1,0 +1,90 @@
+package com.kosa.fillinv.payment.service;
+
+import com.kosa.fillinv.global.exception.ResourceException;
+import com.kosa.fillinv.payment.entity.Payment;
+import com.kosa.fillinv.payment.entity.PaymentHistory;
+import com.kosa.fillinv.payment.entity.PaymentStatus;
+import com.kosa.fillinv.payment.repository.PaymentHistoryRepository;
+import com.kosa.fillinv.payment.repository.PaymentRepository;
+import com.kosa.fillinv.payment.service.dto.PaymentStatusUpdateCommand;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentUpdateService {
+
+    private final PaymentRepository paymentRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
+
+    private static PaymentHistory createPaymentHistory(Payment payment, PaymentStatus newStatus, String reason) {
+        return PaymentHistory.builder()
+                .id(UUID.randomUUID().toString())
+                .paymentId(payment.getId())
+                .previousStatus(payment.getPaymentStatus())
+                .newStatus(newStatus)
+                .reason(reason)
+                .build();
+    }
+
+    @Transactional
+    public void execute(PaymentStatusUpdateCommand command) {
+        Payment payment = paymentRepository.findByOrderId(command.orderId())
+                .orElseThrow(() -> new ResourceException.NotFound("결제 정보 없음"));
+
+        PaymentHistory paymentHistory = createPaymentHistory(payment, PaymentStatus.EXECUTING, "PAYMENT_CONFIRMATION_START");
+        paymentHistoryRepository.save(paymentHistory);
+
+        payment.markExecuting();
+        payment.setPaymentKey(command.paymentKey());
+    }
+
+    @Transactional
+    public void success(PaymentStatusUpdateCommand command) {
+        Payment payment = paymentRepository.findByOrderId(command.orderId())
+                .orElseThrow(() -> new ResourceException.NotFound("결제 정보 없음"));
+
+        PaymentHistory paymentHistory = createPaymentHistory(payment, PaymentStatus.SUCCESS, "PAYMENT_CONFIRM_DONE");
+        paymentHistoryRepository.save(paymentHistory);
+        payment.markSuccess();
+
+        payment.setApprovedAt(command.extraDetails().approvedAt());
+        payment.setPaymentMethod(command.extraDetails().method());
+        payment.setPspRaw(command.extraDetails().pspRawData());
+    }
+
+    @Transactional
+    public void fail(PaymentStatusUpdateCommand command) {
+        Payment payment = paymentRepository.findByOrderId(command.orderId())
+                .orElseThrow(() -> new ResourceException.NotFound("결제 정보 없음"));
+
+        PaymentHistory paymentHistory = createPaymentHistory(payment, PaymentStatus.FAILURE, command.failure()==null? null : command.failure().toString());
+        paymentHistoryRepository.save(paymentHistory);
+
+        payment.markFail();
+    }
+
+    @Transactional
+    public void updateStatus(PaymentStatusUpdateCommand command) {
+        switch (command.status()) {
+            case EXECUTING -> execute(command);
+            case SUCCESS -> success(command);
+            case FAILURE -> fail(command);
+            case UNKNOWN -> unknown(command);
+            default -> throw new IllegalArgumentException("Unknown status: " + command.status());
+        }
+    }
+
+    private void unknown(PaymentStatusUpdateCommand command) {
+        Payment payment = paymentRepository.findByOrderId(command.orderId())
+                .orElseThrow(() -> new ResourceException.NotFound("결제 정보 없음"));
+
+        PaymentHistory paymentHistory = createPaymentHistory(payment, PaymentStatus.UNKNOWN, command.failure()==null? null : command.failure().toString());
+        paymentHistoryRepository.save(paymentHistory);
+
+        payment.markUnknown();
+    }
+}

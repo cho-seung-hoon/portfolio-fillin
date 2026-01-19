@@ -97,4 +97,9 @@ public class Schedule extends BaseEntity {
     public void addScheduleTime(List<ScheduleTime> scheduleTimeList) {
         scheduleTimeList.forEach(this::addScheduleTime);
     }
+
+    public void markPaymentCompleted() {
+        if (status != ScheduleStatus.PAYMENT_PENDING) return;
+        this.status = ScheduleStatus.APPROVAL_PENDING;
+    }
 }
