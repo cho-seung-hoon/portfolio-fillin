@@ -1,5 +1,6 @@
 export interface LessonApplicationUiModel {
     title: string;
+    thumbnailImage: string;
     lessonType: "mentoring" | "oneday" | "study";
     mentor: UiMentor;
     options: UiOption[];

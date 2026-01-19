@@ -342,7 +342,7 @@ export const handlers = [
     }),
 
     // 3. Lesson Detail Handler
-    http.get("/api/lessons/:id", ({ params }) => {
+    http.get("/api/v1/lessons/:id", ({ params }) => {
         const { id } = params;
         const lesson = lessonsData.find(l => l.lesson_id === Number(id));
 
@@ -424,6 +424,20 @@ export const handlers = [
                     thumbnailImage: lesson.thumbnail_image,
                     price: lesson.price
                 },
+                options: [
+                    {
+                        optionId: "opt-1",
+                        name: "1:1 멘토링 60분",
+                        minute: 60,
+                        price: lesson.price
+                    },
+                    {
+                        optionId: "opt-2",
+                        name: "1:1 멘토링 90분",
+                        minute: 90,
+                        price: Math.floor(lesson.price * 1.5)
+                    }
+                ],
                 availableTimes: availableTimes
             }
         });
@@ -480,7 +494,7 @@ export const handlers = [
         });
     }),
     // 5. Apply Handler
-    http.post("/api/v1/apply", async ({ request }) => {
+    http.post("/api/v1/schedules", async ({ request }) => {
         const body = (await request.json()) as any;
         const { lessonId, optionId, availableTimeId, startTime } = body;
 

@@ -6,6 +6,7 @@ export interface ScheduleCreateRequest {
     optionId: string | null;
     availableTimeId: string | null;
     startTime: string | null; // ISOString
+    message: string;
 }
 
 export const applicationService = {
@@ -25,14 +26,15 @@ export const applicationService = {
 
     /**
      * Create a schedule (Apply for a lesson).
+     * Returns scheduleId on success, null on failure.
      */
-    async createSchedule(request: ScheduleCreateRequest): Promise<boolean> {
+    async createSchedule(request: ScheduleCreateRequest): Promise<string | null> {
         try {
-            await client.post<SuccessResponse<void>>("/v1/schedules", request);
-            return true;
+            const response = await client.post<SuccessResponse<{ scheduleId: string }>>("/v1/schedules", request);
+            return response.data.data.scheduleId;
         } catch (error) {
             console.error("Failed to create schedule:", error);
-            return false;
+            return null;
         }
     }
 };
