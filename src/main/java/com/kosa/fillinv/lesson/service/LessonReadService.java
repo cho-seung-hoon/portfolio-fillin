@@ -1,5 +1,8 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.category.dto.CategoryResponseDto;
+import com.kosa.fillinv.category.entity.Category;
+import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.service.client.MentorSummaryDTO;
@@ -30,6 +33,8 @@ public class LessonReadService {
 
     private final StockClient stockClient;
 
+    private final CategoryService categoryService;
+
     public Page<LessonThumbnail> search() {
         return search(LessonSearchCondition.defaultCondition());
     }
@@ -38,6 +43,8 @@ public class LessonReadService {
         condition = condition == null ? LessonSearchCondition.defaultCondition() : condition;
 
         Page<LessonDTO> lessonPage = lessonService.searchLesson(condition);
+
+        Map<Long, CategoryResponseDto> allCategoriesMap = categoryService.getAllCategoriesMap();
 
         Set<String> mentorIds = lessonPage.stream()
                 .map(LessonDTO::mentorId)
@@ -52,7 +59,7 @@ public class LessonReadService {
         return lessonPage.map(lesson -> {
             MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
             Float rating = averageRating.get(lesson.id());
-            return LessonThumbnail.of(lesson, mentor, rating);
+            return LessonThumbnail.of(lesson, mentor, rating, allCategoriesMap.get(lesson.categoryId()).name());
         });
     }
 
@@ -62,6 +69,8 @@ public class LessonReadService {
                 .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(request.lessonId())));
 
         MentorSummaryDTO mentorSummaryDTO = profileClient.readMentorById(lessonDTO.mentorId());
+
+        Category category = categoryService.getCategoryById(lessonDTO.categoryId());
 
         Set<String> keys = Set.of();
         if (lessonDTO.lessonType() == LessonType.STUDY) {
@@ -89,6 +98,6 @@ public class LessonReadService {
             availableTimeRemainSeats = stockMap;
         }
 
-        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO, lessonRemainSeats, availableTimeRemainSeats);
+        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO, lessonRemainSeats, availableTimeRemainSeats, category.getName());
     }
 }
