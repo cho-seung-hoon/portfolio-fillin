@@ -1,13 +1,10 @@
 package com.kosa.fillinv.global.response;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+
+import static org.springframework.http.HttpStatus.*;
 
 @Getter
 @RequiredArgsConstructor
@@ -47,6 +44,7 @@ public enum ErrorCode {
     SCHEDULE_TIME_NOT_FOUND(NOT_FOUND, "SCH07", "해당 스케쥴 시간을 찾을 수 없습니다."),
     SCHEDULE_TIME_MISMATCH(NOT_FOUND, "SCH08", "스케쥴과 스케쥴 시간이 일치하지 않습니다."),
     INVALID_SCHEDULE_STATUS(NOT_FOUND, "SCH09", "스케쥴 상태가 올바르지 않습니다."),
+    NO_SEAT(BAD_REQUEST, "SCH10", "남은 좌석이 없습니다."),
 
     // Review Error
     REVIEW_NOT_ALLOWED(BAD_REQUEST, "R01", "리뷰를 작성할 수 없는 상태입니다."),
