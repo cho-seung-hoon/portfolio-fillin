@@ -10,7 +10,8 @@ public record LessonThumbnail(
         String mentorNickName,
         Float rating,
         Long categoryId,
-        Double popularityScore) {
+        Double popularityScore
+) {
     public static LessonThumbnail of(LessonDTO lesson, MentorSummaryDTO mentor, Float rating) {
         return new LessonThumbnail(
                 lesson.id(),
@@ -20,6 +21,7 @@ public record LessonThumbnail(
                 mentor.nickname(),
                 rating,
                 lesson.categoryId(),
-                lesson.popularityScore());
+                lesson.popularityScore()
+        );
     }
 }

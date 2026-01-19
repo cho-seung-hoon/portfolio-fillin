@@ -5,6 +5,7 @@ INSERT INTO categories (category_id, name, parent_category_id) VALUES
     (9, '금융·보험', NULL), (10, '연구·R&D', NULL), (11, '교육', NULL), (12, '공공·복지', NULL),
     (13, '건설·건축', NULL), (14, '제조·생산', NULL), (15, '의료·바이오', NULL), (16, '상품기획·MD', NULL),
     (17, '인사·노무·HRD', NULL), (18, '유통·물류·무역', NULL), (19, '회계·세무·재무', NULL), (20, '사무·법무·총무', NULL);
+
 -- [2] 모든 소분류 전수 삽입
 -- 1. 경영·비즈니스 (A)
 INSERT INTO categories (name, parent_category_id) VALUES ('경영지원', 1), ('비서', 1), ('총무', 1), ('법무', 1), ('사업개발', 1), ('전략기획', 1), ('경영기획', 1), ('오피스 매니저', 1), ('CSR', 1);

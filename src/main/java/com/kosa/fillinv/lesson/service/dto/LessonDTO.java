@@ -24,7 +24,8 @@ public record LessonDTO(
         Instant deletedAt,
         Double popularityScore,
         List<AvailableTimeDTO> availableTimeDTOList,
-        List<OptionDTO> optionDTOList) {
+        List<OptionDTO> optionDTOList
+) {
     public static LessonDTO of(Lesson lesson) {
         return new LessonDTO(
                 lesson.getId(),
@@ -42,7 +43,8 @@ public record LessonDTO(
                 lesson.getDeletedAt(),
                 lesson.getPopularityScore(),
                 lesson.getAvailableTimeList().stream().map(AvailableTimeDTO::of).toList(),
-                lesson.getOptionList().stream().map(OptionDTO::of).toList());
+                lesson.getOptionList().stream().map(OptionDTO::of).toList()
+        );
     }
 
     public static LessonDTO of(Lesson lesson, List<AvailableTime> availableTimes, List<Option> options) {
@@ -62,6 +64,7 @@ public record LessonDTO(
                 lesson.getDeletedAt(),
                 lesson.getPopularityScore(),
                 availableTimes.stream().map(AvailableTimeDTO::of).toList(),
-                options.stream().map(OptionDTO::of).toList());
+                options.stream().map(OptionDTO::of).toList()
+        );
     }
 }

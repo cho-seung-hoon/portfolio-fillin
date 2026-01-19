@@ -53,6 +53,7 @@ public class LessonPopularityScheduler {
 
     }
 
+    // 서버 실행 시 시작 (개발 단계)
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         updateLessonPopularity();

@@ -35,13 +35,10 @@ public class LessonService {
     private final StockRepository stockRepository;
 
     public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
-        Sort sortBy;
-
-        sortBy = condition.sortType().toSort();
+        Sort sortBy = condition.sortType().toSort();
 
         PageRequest pageRequest = PageRequest.of(condition.page(), condition.size(), sortBy);
-        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(),
-                condition.categoryId());
+        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId());
 
         return lessonRepository.findAll(search, pageRequest).map(LessonDTO::of);
     }
