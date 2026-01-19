@@ -1,14 +1,14 @@
-import client from "./client";
+import client, { publicClient } from "./client";
 import { Lesson, LessonListResult } from "../types/lesson";
 import { SuccessResponse, PageResponse, LessonThumbnail, LessonSortTypeEnum, RegisterLessonRequest } from "./types";
 
 export interface LessonService {
-    getLessons(search?: string, page?: number, sort?: string): Promise<LessonListResult>;
+    getLessons(search?: string, page?: number, sort?: string, categoryId?: number): Promise<LessonListResult>;
     createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<void>;
 }
 
 class DefaultLessonService implements LessonService {
-    async getLessons(search?: string, page: number = 1, sort?: string): Promise<LessonListResult> {
+    async getLessons(search?: string, page: number = 1, sort?: string, categoryId?: number): Promise<LessonListResult> {
         // Map UI sort to API Enum
         let sortType: LessonSortTypeEnum = "CREATED_AT_DESC";
         switch (sort) {
@@ -22,13 +22,20 @@ class DefaultLessonService implements LessonService {
             default: sortType = "CREATED_AT_DESC"; break;
         }
 
-        const response = await client.get<SuccessResponse<PageResponse<LessonThumbnail>>>("/v1/lessons/search", {
-            params: {
-                keyword: search,
-                page,
-                size: 20,
-                sortType
-            }
+        const params: Record<string, any> = {
+            keyword: search,
+            page,
+            size: 20,
+            sortType
+        };
+
+        if (categoryId !== undefined) {
+            params.categoryId = categoryId;
+        }
+
+        // 목록 조회는 비로그인도 가능하도록 publicClient 사용
+        const response = await publicClient.get<SuccessResponse<PageResponse<LessonThumbnail>>>("/v1/lessons/search", {
+            params
         });
 
         const mappedLessons = response.data.data.content.map(this.mapThumbnailToModel);
