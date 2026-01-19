@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Plus, Trash2, Clock } from "lucide-react";
@@ -15,146 +15,40 @@ import {
 } from "../ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { CalendarModule } from "./CalendarModule";
+import { useMentoringRegistrationStore, AvailableTime } from "../../../store/useMentoringRegistrationStore";
 
-export interface PriceOption {
-    id: string;
-    duration: string;
-    price: string;
-}
+export function MentoringSection() {
+    // Store State & Actions
+    const {
+        mentoringOptions,
+        availableTimeList,
+        addMentoringOption,
+        removeMentoringOption,
+        updateMentoringOptionName,
+        addPriceOption,
+        removePriceOption,
+        updatePriceOption,
+        addAvailableTime,
+        removeAvailableTime
+    } = useMentoringRegistrationStore();
 
-export interface ServiceOption {
-    id: string;
-    name: string;
-    priceOptions: PriceOption[];
-}
-
-export interface AvailableTime {
-    id: string;
-    startTime: string;
-    endTime: string;
-}
-
-export interface DaySchedule {
-    [dateKey: string]: AvailableTime[];
-}
-
-export interface MentoringData {
-    options: ServiceOption[];
-    schedules: DaySchedule;
-}
-
-interface MentoringSectionProps {
-    onChange: (data: MentoringData) => void;
-}
-
-export function MentoringSection({ onChange }: MentoringSectionProps) {
-    // Mentoring Option State
-    const [options, setOptions] = useState<ServiceOption[]>([
-        { id: "1", name: "", priceOptions: [] },
-    ]);
-
-    // Schedule State
+    // Local UI State for interactions
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-    const [daySchedules, setDaySchedules] = useState<DaySchedule>({});
     const [selectingStartHour, setSelectingStartHour] = useState<number | null>(null);
 
-    // Update parent
-    useEffect(() => {
-        onChange({
-            options,
-            schedules: daySchedules
-        });
-    }, [options, daySchedules, onChange]);
-
-
-    // --- Option Logic ---
-    const addOption = () => {
-        setOptions([
-            ...options,
-            { id: Date.now().toString(), name: "", priceOptions: [] },
-        ]);
+    // --- Schedule Logic (Adapted for flat list) ---
+    const getDateFromISO = (isoString: string) => {
+        return format(new Date(isoString), "yyyy-MM-dd");
     };
 
-    const removeOption = (id: string) => {
-        if (options.length > 1) {
-            setOptions(options.filter((option) => option.id !== id));
-        }
-    };
-
-    const updateOptionName = (id: string, name: string) => {
-        setOptions(
-            options.map((option) =>
-                option.id === id ? { ...option, name } : option,
-            ),
-        );
-    };
-
-    const addPriceOption = (optionId: string) => {
-        setOptions(
-            options.map((option) =>
-                option.id === optionId
-                    ? {
-                        ...option,
-                        priceOptions: [
-                            ...option.priceOptions,
-                            {
-                                id: Date.now().toString(),
-                                duration: "",
-                                price: "",
-                            },
-                        ],
-                    }
-                    : option,
-            ),
-        );
-    };
-
-    const removePriceOption = (optionId: string, priceOptionId: string) => {
-        setOptions(
-            options.map((option) =>
-                option.id === optionId
-                    ? {
-                        ...option,
-                        priceOptions: option.priceOptions.filter(
-                            (po) => po.id !== priceOptionId,
-                        ),
-                    }
-                    : option,
-            ),
-        );
-    };
-
-    const updatePriceOption = (
-        optionId: string,
-        priceOptionId: string,
-        field: keyof PriceOption,
-        value: string,
-    ) => {
-        setOptions(
-            options.map((option) =>
-                option.id === optionId
-                    ? {
-                        ...option,
-                        priceOptions: option.priceOptions.map((po) =>
-                            po.id === priceOptionId
-                                ? { ...po, [field]: value }
-                                : po,
-                        ),
-                    }
-                    : option,
-            ),
-        );
-    };
-
-
-    // --- Schedule Logic ---
     const getDateKey = (date: Date) => {
         return format(date, "yyyy-MM-dd");
     };
 
     const getSelectedDateSchedule = () => {
         if (!selectedDate) return [];
-        return daySchedules[getDateKey(selectedDate)] || [];
+        const dateKey = getDateKey(selectedDate);
+        return availableTimeList.filter(slot => getDateFromISO(slot.startTime) === dateKey);
     };
 
     const handleTimeBarClick = (hour: number) => {
@@ -166,37 +60,40 @@ export function MentoringSection({ onChange }: MentoringSectionProps) {
             const startHour = Math.min(selectingStartHour, hour);
             const endHour = Math.max(selectingStartHour, hour) + 1;
 
-            const dateKey = getDateKey(selectedDate);
+            const dateStr = format(selectedDate, "yyyy-MM-dd");
+            const startStr = `${String(startHour).padStart(2, '0')}:00`;
+            const endStr = `${String(endHour).padStart(2, '0')}:00`;
+
+            // Convert to ISO (UTC) using local date + time
+            const startTimeISO = new Date(`${dateStr}T${startStr}`).toISOString();
+            const endTimeISO = new Date(`${dateStr}T${endStr}`).toISOString();
+
             const newTimeSlot: AvailableTime = {
-                id: Date.now().toString(),
-                startTime: `${String(startHour).padStart(2, '0')}:00`,
-                endTime: `${String(endHour).padStart(2, '0')}:00`,
+                startTime: startTimeISO,
+                endTime: endTimeISO,
+                price: 0,
+                seats: 1
             };
 
-            setDaySchedules({
-                ...daySchedules,
-                [dateKey]: [...(daySchedules[dateKey] || []), newTimeSlot],
-            });
-
+            addAvailableTime(newTimeSlot);
             setSelectingStartHour(null);
         }
     };
 
-    const removeTimeSlot = (timeId: string) => {
-        if (!selectedDate) return;
-
-        const dateKey = getDateKey(selectedDate);
-        setDaySchedules({
-            ...daySchedules,
-            [dateKey]: daySchedules[dateKey].filter((t) => t.id !== timeId),
-        });
+    const removeTimeSlot = (slot: AvailableTime) => {
+        const index = availableTimeList.indexOf(slot);
+        if (index !== -1) {
+            removeAvailableTime(index);
+        }
     };
 
     const isHourInSchedule = (hour: number) => {
         const schedule = getSelectedDateSchedule();
         return schedule.some(slot => {
-            const slotStart = parseInt(slot.startTime.split(':')[0]);
-            const slotEnd = parseInt(slot.endTime.split(':')[0]);
+            const slotStart = new Date(slot.startTime).getHours();
+            const slotEnd = new Date(slot.endTime).getHours();
+            // Note: This simple getHours() comparison assumes sessions don't span days 
+            // and sticking to local timezone display.
             return hour >= slotStart && hour < slotEnd;
         });
     };
@@ -208,6 +105,11 @@ export function MentoringSection({ onChange }: MentoringSectionProps) {
         return hour >= min && hour <= max;
     };
 
+    const formatTimeRange = (slot: AvailableTime) => {
+        const start = format(new Date(slot.startTime), "HH:mm");
+        const end = format(new Date(slot.endTime), "HH:mm");
+        return `${start}-${end}`;
+    };
 
     return (
         <div className="space-y-6">
@@ -220,7 +122,7 @@ export function MentoringSection({ onChange }: MentoringSectionProps) {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={addOption}
+                            onClick={addMentoringOption}
                             className="gap-2"
                         >
                             <Plus className="size-4" />
@@ -235,7 +137,7 @@ export function MentoringSection({ onChange }: MentoringSectionProps) {
                         </p>
 
                         <div className="space-y-3">
-                            {options.map((option, index) => (
+                            {mentoringOptions.map((option, index) => (
                                 <div
                                     key={option.id}
                                     className="p-4 bg-gray-50 rounded-md space-y-3"
@@ -246,17 +148,17 @@ export function MentoringSection({ onChange }: MentoringSectionProps) {
                                             type="text"
                                             value={option.name}
                                             onChange={(e) =>
-                                                updateOptionName(option.id, e.target.value)
+                                                updateMentoringOptionName(option.id, e.target.value)
                                             }
                                             placeholder={`옵션 ${index + 1} (예: 기본 상담)`}
                                             className="flex-1 bg-white"
                                         />
-                                        {options.length > 1 && (
+                                        {mentoringOptions.length > 1 && (
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => removeOption(option.id)}
+                                                onClick={() => removeMentoringOption(option.id)}
                                             >
                                                 <Trash2 className="size-4 text-gray-400" />
                                             </Button>
@@ -376,16 +278,18 @@ export function MentoringSection({ onChange }: MentoringSectionProps) {
                             onDateSelect={setSelectedDate}
                             renderDateContent={(date) => {
                                 const dateKey = format(date, "yyyy-MM-dd");
-                                const schedules = daySchedules[dateKey] || [];
+                                // Filter from availableTimeList
+                                const schedules = availableTimeList.filter(s => getDateFromISO(s.startTime) === dateKey);
+
                                 if (schedules.length === 0) return null;
                                 return (
                                     <div className="space-y-1">
-                                        {schedules.slice(0, 2).map((schedule) => (
+                                        {schedules.slice(0, 2).map((schedule, idx) => (
                                             <div
-                                                key={schedule.id}
+                                                key={idx}
                                                 className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
                                             >
-                                                {schedule.startTime}-{schedule.endTime}
+                                                {formatTimeRange(schedule)}
                                             </div>
                                         ))}
                                         {schedules.length > 2 && (
@@ -411,17 +315,17 @@ export function MentoringSection({ onChange }: MentoringSectionProps) {
 
                                 {getSelectedDateSchedule().length > 0 && (
                                     <div className="flex flex-wrap gap-2">
-                                        {getSelectedDateSchedule().map((timeSlot) => (
+                                        {getSelectedDateSchedule().map((timeSlot, idx) => (
                                             <div
-                                                key={timeSlot.id}
+                                                key={idx}
                                                 className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-md"
                                             >
                                                 <span className="text-sm font-medium">
-                                                    {timeSlot.startTime} - {timeSlot.endTime}
+                                                    {formatTimeRange(timeSlot)}
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => removeTimeSlot(timeSlot.id)}
+                                                    onClick={() => removeTimeSlot(timeSlot)}
                                                     className="text-gray-400 hover:text-gray-600"
                                                 >
                                                     <Trash2 className="size-3" />

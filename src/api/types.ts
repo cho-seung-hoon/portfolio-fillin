@@ -188,6 +188,8 @@ export interface LessonInfoDTO {
     title: string;
     thumbnailImage: string;
     price: number;
+    seats?: number;
+    remainSeats?: number;
     categoryId: number;
 }
 
@@ -196,6 +198,8 @@ export interface AvailableTimeDTO {
     startTime: string;
     endTime: string;
     price: number;
+    seats?: number;
+    remainSeats?: number;
 }
 
 export interface LessonOptionDTO {
@@ -271,6 +275,7 @@ export interface AvailableTimeRequest {
     startTime: string; // Instant ISO string
     endTime: string; // Instant ISO string
     price: number;
+    seats: number;
 }
 
 export interface RegisterLessonRequest {
@@ -281,6 +286,7 @@ export interface RegisterLessonRequest {
     location: string;
     closeAt: string; // Instant ISO string
     price?: number; // Top level price for OneDay/Study
+    seats?: number; // Top level seats
     optionList: LessonOptionRequest[];
     availableTimeList: AvailableTimeRequest[];
 }

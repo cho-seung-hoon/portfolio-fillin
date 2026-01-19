@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Plus, Trash2, Calendar, DollarSign, Users } from "lucide-react";
@@ -8,43 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { useStudyRegistrationStore, AvailableTime } from "../../../store/useStudyRegistrationStore";
 
-export interface StudySession {
-    id: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-}
-
-export interface StudySessionData {
-    price: number;
-    seats: number;
-    sessions: StudySession[];
-}
-
-interface StudySessionSectionProps {
-    onChange: (data: StudySessionData) => void;
-}
-
-export function StudySessionSection({ onChange }: StudySessionSectionProps) {
-    const [price, setPrice] = useState("");
-    const [seats, setSeats] = useState("");
-    const [sessions, setSessions] = useState<StudySession[]>([]);
+export function StudySessionSection() {
+    const {
+        price,
+        seats,
+        availableTimeList,
+        setPrice,
+        setSeats,
+        addAvailableTime,
+        removeAvailableTime
+    } = useStudyRegistrationStore();
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [newSessionStartTime, setNewSessionStartTime] = useState("");
     const [newSessionEndTime, setNewSessionEndTime] = useState("");
-
-    useEffect(() => {
-        const numericPrice = Number(price) || 0;
-        const numericSeats = Number(seats) || 0;
-
-        onChange({
-            price: numericPrice,
-            seats: numericSeats,
-            sessions
-        });
-    }, [price, seats, sessions, onChange]);
 
     const addSession = () => {
         if (!selectedDate || !newSessionStartTime || !newSessionEndTime) {
@@ -52,32 +31,52 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
             return;
         }
 
-        const newSession: StudySession = {
-            id: Date.now().toString(),
-            date: format(selectedDate, "yyyy-MM-dd"),
-            startTime: newSessionStartTime,
-            endTime: newSessionEndTime,
+        // ISO 8601 formatting for Instant compatibility logic handled on submit or here?
+        // User requested "align data", DTO expects Instant. 
+        // The Store defines AvailableTime as { startTime: string; endTime: string; ... }
+        // We will store simpler strings here and parent can format, OR we format here.
+        // Let's store "YYYY-MM-DDTHH:mm:00" format which is close to Instant.
+
+        const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+        // Convert Local Date+Time to ISO 8601 (UTC)
+        const startDateTime = new Date(`${dateStr}T${newSessionStartTime}:00`).toISOString();
+        const endDateTime = new Date(`${dateStr}T${newSessionEndTime}:00`).toISOString();
+
+        const newSession: AvailableTime = {
+            startTime: startDateTime,
+            endTime: endDateTime,
+            price: 0,
+            seats: 0,
         };
 
-        setSessions((prev) => [...prev, newSession]);
+        addAvailableTime(newSession);
         setNewSessionStartTime("");
         setNewSessionEndTime("");
     };
 
-    const removeSession = (id: string) => {
-        setSessions((prev) => prev.filter((s) => s.id !== id));
+    // Helper to extract date from ISO string (Local)
+    const getDateFromISO = (isoString: string) => {
+        return format(new Date(isoString), "yyyy-MM-dd");
     };
 
     const getSessionsForDate = (dateKey: string) => {
-        return sessions.filter((s) => s.date === dateKey);
+        return availableTimeList.filter((s: AvailableTime) => getDateFromISO(s.startTime) === dateKey);
     };
 
-    const getSessionNumber = (id: string) => {
-        const sorted = [...sessions].sort((a, b) => {
-            if (a.date !== b.date) return a.date.localeCompare(b.date);
-            return a.startTime.localeCompare(b.startTime);
-        });
-        return sorted.findIndex(s => s.id === id) + 1;
+    const getSessionTimeRange = (session: AvailableTime) => {
+        // Display time in simpler format (HH:mm)
+        const start = format(new Date(session.startTime), "HH:mm");
+        const end = format(new Date(session.endTime), "HH:mm");
+        return `${start} - ${end}`;
+    };
+
+    // Logic to find index for removal
+    const handleRemoveSession = (targetSession: AvailableTime) => {
+        const index = availableTimeList.indexOf(targetSession);
+        if (index !== -1) {
+            removeAvailableTime(index);
+        }
     };
 
     return (
@@ -99,8 +98,8 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                             </Label>
                             <Input
                                 type="number"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
+                                value={price || ''}
+                                onChange={(e) => setPrice(Number(e.target.value))}
                                 placeholder="50000"
                                 min="0"
                                 className="bg-white"
@@ -113,8 +112,8 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                             </Label>
                             <Input
                                 type="number"
-                                value={seats}
-                                onChange={(e) => setSeats(e.target.value)}
+                                value={seats || ''}
+                                onChange={(e) => setSeats(Number(e.target.value))}
                                 placeholder="10"
                                 min="1"
                                 className="bg-white"
@@ -135,12 +134,12 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                             if (dateSessions.length === 0) return null;
                             return (
                                 <div className="space-y-1">
-                                    {dateSessions.slice(0, 2).map((session) => (
+                                    {dateSessions.slice(0, 2).map((session: AvailableTime, idx: number) => (
                                         <div
-                                            key={session.id}
+                                            key={idx}
                                             className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
                                         >
-                                            {session.startTime}-{session.endTime}
+                                            {getSessionTimeRange(session)}
                                         </div>
                                     ))}
                                     {dateSessions.length > 2 && (
@@ -199,24 +198,21 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                                         </span>
                                     </div>
                                     <div className="space-y-2">
-                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session) => (
+                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session: AvailableTime, idx: number) => (
                                             <div
-                                                key={session.id}
+                                                key={idx}
                                                 className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-sm font-medium text-gray-500">
-                                                        {getSessionNumber(session.id)}회차
-                                                    </span>
                                                     <span className="text-sm font-medium">
-                                                        {session.startTime} - {session.endTime}
+                                                        {getSessionTimeRange(session)}
                                                     </span>
                                                 </div>
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removeSession(session.id)}
+                                                    onClick={() => handleRemoveSession(session)}
                                                     className="text-gray-400 hover:text-gray-600"
                                                 >
                                                     <Trash2 className="size-4" />
@@ -229,20 +225,21 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                         </div>
                     )}
 
-                    {sessions.length > 0 && (
+                    {availableTimeList.length > 0 && (
                         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                             <h5 className="font-medium text-blue-900 mb-2">전체 회차 요약</h5>
                             <p className="text-sm text-blue-700 mb-3">
-                                총 {sessions.length}개의 회차가 등록되었습니다
+                                총 {availableTimeList.length}개의 회차가 등록되었습니다
                             </p>
                             <div className="space-y-3">
                                 {(() => {
-                                    const groupedByDate: { [date: string]: StudySession[] } = {};
-                                    sessions.forEach(session => {
-                                        if (!groupedByDate[session.date]) {
-                                            groupedByDate[session.date] = [];
+                                    const groupedByDate: { [date: string]: AvailableTime[] } = {};
+                                    availableTimeList.forEach((session: AvailableTime) => {
+                                        const date = getDateFromISO(session.startTime);
+                                        if (!groupedByDate[date]) {
+                                            groupedByDate[date] = [];
                                         }
-                                        groupedByDate[session.date].push(session);
+                                        groupedByDate[date].push(session);
                                     });
 
                                     const sortedDates = Object.keys(groupedByDate).sort();
@@ -258,14 +255,13 @@ export function StudySessionSection({ onChange }: StudySessionSectionProps) {
                                                     {format(dateObj, "M월 d일 (EEE)", { locale: ko })}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {dateSessions.map((session) => (
+                                                    {dateSessions.map((session: AvailableTime, idx: number) => (
                                                         <div
-                                                            key={session.id}
+                                                            key={idx}
                                                             className="text-xs bg-blue-50 px-3 py-1.5 rounded border border-blue-100"
                                                         >
-                                                            <span className="font-medium text-blue-900">{getSessionNumber(session.id)}회차: </span>
                                                             <span className="text-gray-600">
-                                                                {session.startTime} - {session.endTime}
+                                                                {getSessionTimeRange(session)}
                                                             </span>
                                                         </div>
                                                     ))}

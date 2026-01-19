@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Plus, Trash2, Calendar } from "lucide-react";
@@ -8,36 +8,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { useOneDayRegistrationStore, AvailableTime } from "../../../store/useOneDayRegistrationStore";
 
-export interface OneDayClassSession {
-    id: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    price: number;
-    seats: number;
-}
+export function OneDayClassSection() {
+    // Store State & Actions
+    const {
+        availableTimeList,
+        addAvailableTime,
+        removeAvailableTime
+    } = useOneDayRegistrationStore();
 
-export interface OneDayClassData {
-    sessions: OneDayClassSession[];
-}
-
-interface OneDayClassSectionProps {
-    onChange: (data: OneDayClassData) => void;
-}
-
-export function OneDayClassSection({ onChange }: OneDayClassSectionProps) {
-    const [sessions, setSessions] = useState<OneDayClassSession[]>([]);
-
+    // Local UI State
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [newSessionStartTime, setNewSessionStartTime] = useState("");
     const [newSessionEndTime, setNewSessionEndTime] = useState("");
     const [newSessionPrice, setNewSessionPrice] = useState("");
     const [newSessionSeats, setNewSessionSeats] = useState("");
 
-    useEffect(() => {
-        onChange({ sessions });
-    }, [sessions, onChange]);
+    // Helper functions
+    const getDateFromISO = (isoString: string) => {
+        return format(new Date(isoString), "yyyy-MM-dd");
+    };
+
+    const getSessionsForDate = (dateKey: string) => {
+        return availableTimeList.filter((s) => getDateFromISO(s.startTime) === dateKey);
+    };
+
+    // Formatting for display
+    const formatTimeRange = (startTime: string, endTime: string) => {
+        // e.g. "UTC string" -> "14:00"
+        // We assume local processing
+        const start = format(new Date(startTime), "HH:mm");
+        const end = format(new Date(endTime), "HH:mm");
+        return `${start}-${end}`;
+    };
 
     const addSession = () => {
         if (!selectedDate || !newSessionStartTime || !newSessionEndTime || !newSessionPrice || !newSessionSeats) {
@@ -53,33 +57,33 @@ export function OneDayClassSection({ onChange }: OneDayClassSectionProps) {
             return;
         }
 
-        const newSession: OneDayClassSession = {
-            id: Date.now().toString(),
-            date: format(selectedDate, "yyyy-MM-dd"),
-            startTime: newSessionStartTime,
-            endTime: newSessionEndTime,
+        const dateStr = format(selectedDate, "yyyy-MM-dd");
+        // Convert local input to ISO (UTC)
+        const startDateTime = new Date(`${dateStr}T${newSessionStartTime}:00`).toISOString();
+        const endDateTime = new Date(`${dateStr}T${newSessionEndTime}:00`).toISOString();
+
+        const newSession: AvailableTime = {
+            startTime: startDateTime,
+            endTime: endDateTime,
             price,
             seats,
         };
 
-        setSessions((prev) => [...prev, newSession]);
+        addAvailableTime(newSession);
+
+        // Reset inputs
         setNewSessionStartTime("");
         setNewSessionEndTime("");
         setNewSessionPrice("");
         setNewSessionSeats("");
     };
 
-    const removeSession = (id: string) => {
-        setSessions((prev) => prev.filter((s) => s.id !== id));
+    const handleRemoveSession = (targetSession: AvailableTime) => {
+        const index = availableTimeList.indexOf(targetSession);
+        if (index !== -1) {
+            removeAvailableTime(index);
+        }
     };
-
-    const getSessionsForDate = (dateKey: string) => {
-        return sessions.filter((s) => s.date === dateKey);
-    };
-
-    // OneDay class doesn't necessarily have a sequential "Session Number" concept usually,
-    // but for UI consistency we can keep a simple counter or just list them.
-    // We'll skip the "1st session, 2nd session" for now unless needed, or just list time.
 
     return (
         <Card>
@@ -103,12 +107,12 @@ export function OneDayClassSection({ onChange }: OneDayClassSectionProps) {
                             if (dateSessions.length === 0) return null;
                             return (
                                 <div className="space-y-1">
-                                    {dateSessions.slice(0, 2).map((session) => (
+                                    {dateSessions.slice(0, 2).map((session, idx) => (
                                         <div
-                                            key={session.id}
+                                            key={idx}
                                             className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
                                         >
-                                            {session.startTime}-{session.endTime}
+                                            {formatTimeRange(session.startTime, session.endTime)}
                                         </div>
                                     ))}
                                     {dateSessions.length > 2 && (
@@ -189,14 +193,14 @@ export function OneDayClassSection({ onChange }: OneDayClassSectionProps) {
                                         </span>
                                     </div>
                                     <div className="space-y-2">
-                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session) => (
+                                        {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session, idx) => (
                                             <div
-                                                key={session.id}
+                                                key={idx}
                                                 className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <span className="text-sm font-medium">
-                                                        {session.startTime} - {session.endTime}
+                                                        {formatTimeRange(session.startTime, session.endTime)}
                                                     </span>
                                                     <span className="text-xs px-2 py-0.5 bg-gray-100 rounded text-gray-600">
                                                         {session.price.toLocaleString()}원 / {session.seats}명
@@ -206,7 +210,7 @@ export function OneDayClassSection({ onChange }: OneDayClassSectionProps) {
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removeSession(session.id)}
+                                                    onClick={() => handleRemoveSession(session)}
                                                     className="text-gray-400 hover:text-gray-600"
                                                 >
                                                     <Trash2 className="size-4" />
@@ -220,11 +224,11 @@ export function OneDayClassSection({ onChange }: OneDayClassSectionProps) {
                     )}
 
                     {/* Simple summary for OneDay Class */}
-                    {sessions.length > 0 && (
+                    {availableTimeList.length > 0 && (
                         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
                             <h5 className="font-medium text-blue-900 mb-2">전체 클래스 요약</h5>
                             <p className="text-sm text-blue-700">
-                                총 {sessions.length}개의 클래스가 등록되었습니다
+                                총 {availableTimeList.length}개의 클래스가 등록되었습니다
                             </p>
                         </div>
                     )}

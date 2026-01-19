@@ -16,8 +16,8 @@ import { SignupDialog } from "./components/SignupDialog";
 import { MyPage } from "./components/MyPage";
 import { ServiceRegistration } from "./components/ServiceRegistration";
 import { ServiceDetail } from "./components/ServiceDetail";
-import { ServiceApplication } from "./components/ServiceApplication";
 import { PaymentSuccessPage } from "./components/PaymentSuccessPage";
+import { LessonApplication } from "./components/LessonApplication";
 import Home from "./components/Home";
 
 // 라우터 컨텍스트 타입 정의
@@ -116,8 +116,8 @@ const serviceApplyRoute = createRoute({
     const { id } = useParams({ from: serviceApplyRoute.id });
     const navigate = useNavigate();
     return (
-      <ServiceApplication
-        serviceId={id}
+      <LessonApplication
+        lessonId={id}
         onBack={() => navigate({ to: "/service/$id", params: { id } })}
       />
     );
