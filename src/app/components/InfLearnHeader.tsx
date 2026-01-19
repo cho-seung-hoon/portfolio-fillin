@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuthStore } from "../../stores/authStore";
+import { handleLogout } from "../../utils/auth-actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +44,6 @@ export function InfLearnHeader({
   onNavigateToServiceRegistration,
 }: InfLearnHeaderProps) {
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
   return (
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -127,7 +127,7 @@ export function InfLearnHeader({
                       설정
                     </DropdownMenuItem> */}
                     <DropdownMenuItem
-                      onClick={logout}
+                      onClick={handleLogout}
                       className="text-red-600"
                     >
                       <LogOut className="size-4 mr-2" />
