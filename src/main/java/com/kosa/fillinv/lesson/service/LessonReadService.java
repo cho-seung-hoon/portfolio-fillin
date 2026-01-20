@@ -59,7 +59,8 @@ public class LessonReadService {
         return lessonPage.map(lesson -> {
             MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
             Float rating = averageRating.get(lesson.id());
-            return LessonThumbnail.of(lesson, mentor, rating, allCategoriesMap.get(lesson.categoryId()).name());
+            return LessonThumbnail.of(lesson, mentor, rating,
+                    allCategoriesMap.get(lesson.categoryId()) == null ? null : allCategoriesMap.get(lesson.categoryId()).name());
         });
     }
 
