@@ -156,6 +156,7 @@ export interface LessonThumbnail {
     categoryId: number;
     location: string;
     closeAt: string;
+    createdAt: string;
     category: string;
 }
 

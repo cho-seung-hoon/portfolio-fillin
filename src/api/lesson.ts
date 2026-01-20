@@ -77,6 +77,8 @@ class DefaultLessonService implements LessonService {
             serviceType: serviceTypeMap[dto.lessonType] || "mentoring",
             location: dto.location,
             closeAt: dto.closeAt,
+            status: new Date(dto.closeAt) > new Date() ? "active" : "inactive",
+            createdAt: dto.createdAt,
         };
     }
     async createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<string> {

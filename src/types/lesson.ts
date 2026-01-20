@@ -16,6 +16,8 @@ export interface Lesson {
     serviceType?: "mentoring" | "oneday" | "study";
     location?: string;
     closeAt?: string;
+    status: "active" | "inactive";
+    createdAt: string;
 }
 
 export interface LessonListResult {

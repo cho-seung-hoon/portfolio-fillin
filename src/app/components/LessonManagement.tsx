@@ -12,6 +12,10 @@ import {
     Search,
     Filter,
     MapPin,
+    CheckCircle,
+    TrendingUp,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -31,10 +35,20 @@ import {
     CardHeader,
     CardTitle,
 } from "./ui/card";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "./ui/table";
+import { Badge } from "./ui/badge";
 import { lessonService, Lesson } from "../../api/lesson";
 import { categoryService } from "../../api/category";
 import { CategoryResponseDto } from "../../api/types";
 import { useAuthStore } from "../../stores/authStore";
+import { LessonListSkeleton } from "./LessonListSkeleton";
 
 interface LessonManagementProps {
     onEditLesson?: (lesson: Lesson) => void;
@@ -45,31 +59,31 @@ export function LessonManagement({ onEditLesson }: LessonManagementProps) {
     const [lessons, setLessons] = useState<Lesson[]>([]);
     const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Filtering and Searching State
     const [searchInput, setSearchInput] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState<string>("all");
+
+    // Temporary states for filters
+    const [tempSearchQuery, setTempSearchQuery] = useState("");
+    const [tempFilterType, setTempFilterType] = useState("all");
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
     const user = useAuthStore((state) => state.user);
 
     const fetchLessons = useCallback(async () => {
         setLoading(true);
         try {
-            // Fetch Categories if not loaded
             if (categories.length === 0) {
                 const categoryData = await categoryService.getCategories();
                 setCategories(categoryData);
             }
 
-            // Map UI filter to API Enum
-            const apiLessonTypeMap: Record<string, string> = {
-                "mentoring": "MENTORING",
-                "oneday": "ONEDAY",
-                "study": "STUDY"
-            };
-
-            // Fetch lessons with server-side conditions
             const data = await lessonService.getOwnLessons({
-                keyword: searchQuery || undefined,
-                lessonType: filterType !== "all" ? (apiLessonTypeMap[filterType] as any) : undefined,
                 page: 0,
                 size: 100
             });
@@ -80,20 +94,55 @@ export function LessonManagement({ onEditLesson }: LessonManagementProps) {
         } finally {
             setLoading(false);
         }
-    }, [user, searchQuery, filterType, categories.length]);
+    }, [categories.length]);
 
     useEffect(() => {
         fetchLessons();
     }, [fetchLessons]);
 
+    // Filtering and Sorting logic
+    const filteredAndSortedLessons = useMemo(() => {
+        let filtered = [...lessons];
+
+        // Search by Title
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter((lesson) =>
+                lesson.title.toLowerCase().includes(query)
+            );
+        }
+
+        // Filter by Lesson Type
+        if (filterType !== "all") {
+            filtered = filtered.filter((lesson) => lesson.serviceType === filterType);
+        }
+
+        return filtered;
+    }, [lessons, searchQuery, filterType]);
+
+    // Pagination
+    const totalPages = Math.ceil(filteredAndSortedLessons.length / ITEMS_PER_PAGE);
+    const paginatedLessons = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return filteredAndSortedLessons.slice(startIndex, endIndex);
+    }, [filteredAndSortedLessons, currentPage]);
+
     const handleSearch = () => {
-        setSearchQuery(searchInput);
+        setSearchQuery(tempSearchQuery);
+        setFilterType(tempFilterType);
+        setCurrentPage(1);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             handleSearch();
         }
+    };
+
+
+    const goToPage = (page: number) => {
+        setCurrentPage(page);
     };
 
     const getLessonTypeInfo = (type: string | undefined) => {
@@ -138,7 +187,7 @@ export function LessonManagement({ onEditLesson }: LessonManagementProps) {
             try {
                 await lessonService.deleteLesson(lessonId);
                 alert("레슨이 삭제되었습니다.");
-                fetchLessons(); // Refresh list after deletion
+                fetchLessons();
             } catch (error) {
                 console.error("Failed to delete lesson:", error);
                 alert("레슨 삭제에 실패했습니다. 다시 시도해주세요.");
@@ -146,26 +195,14 @@ export function LessonManagement({ onEditLesson }: LessonManagementProps) {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="p-8 flex items-center justify-center min-h-[400px]">
-                <div className="text-gray-500">데이터를 불러오는 중입니다...</div>
-            </div>
-        );
-    }
-
     return (
         <div className="p-8">
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">내 레슨</h1>
-                <p className="text-gray-600">등록한 레슨을 관리하고 확인하세요</p>
-            </div>
+            <h2 className="text-3xl mb-6">내 레슨</h2>
 
-            {/* Search and Filter Bar */}
-            <Card className="mb-8 p-0 border-gray-200 shadow-sm overflow-hidden">
-                <CardContent className="p-6">
-                    <div className="space-y-4">
+            <Card>
+                <CardContent className="pt-6">
+                    {/* Filters */}
+                    <div className="space-y-4 mb-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Search Input */}
                             <div className="relative">
@@ -173,162 +210,162 @@ export function LessonManagement({ onEditLesson }: LessonManagementProps) {
                                 <Input
                                     type="text"
                                     placeholder="레슨 제목으로 검색..."
-                                    value={searchInput}
-                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    value={tempSearchQuery}
+                                    onChange={(e) => setTempSearchQuery(e.target.value)}
                                     onKeyDown={handleKeyDown}
-                                    className="pl-9 h-11 border-gray-200 focus:border-[#00C471] focus:ring-[#00C471]"
+                                    className="pl-9"
                                 />
                             </div>
 
                             {/* Filter Select */}
-                            <div className="flex gap-2">
-                                <Select value={filterType} onValueChange={setFilterType}>
-                                    <SelectTrigger className="w-full h-11 bg-white border-gray-200 focus:ring-[#00C471]">
-                                        <div className="flex items-center gap-2">
-                                            <Filter className="size-4" />
-                                            <SelectValue placeholder="전체" />
-                                        </div>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">전체</SelectItem>
-                                        <SelectItem value="mentoring">1:1 멘토링</SelectItem>
-                                        <SelectItem value="oneday">1:N 원데이</SelectItem>
-                                        <SelectItem value="study">1:N 스터디</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            <Select value={tempFilterType} onValueChange={setTempFilterType}>
+                                <SelectTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <Filter className="size-4" />
+                                        <SelectValue placeholder="레슨 유형" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">전체 유형</SelectItem>
+                                    <SelectItem value="mentoring">1:1 멘토링</SelectItem>
+                                    <SelectItem value="oneday">1:N 원데이</SelectItem>
+                                    <SelectItem value="study">1:N 스터디</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center justify-between">
                             <div className="text-sm text-gray-600">
-                                총 <span className="font-medium text-[#00C471]">{lessons.length}</span>건의 레슨
+                                총 <span className="font-medium text-[#00C471]">{filteredAndSortedLessons.length}</span>건의 레슨
                             </div>
                             <Button
+                                size="sm"
                                 onClick={handleSearch}
-                                className="h-10 bg-[#00C471] hover:bg-[#00B366] text-white px-8 font-medium"
+                                className="bg-[#00C471] hover:bg-[#00B366]"
                             >
-                                검색
+                                적용
                             </Button>
                         </div>
                     </div>
+
+                    {/* Table */}
+                    {loading ? (
+                        <LessonListSkeleton />
+                    ) : (
+                        <div className="border overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-gray-50">
+                                        <TableHead className="w-20 text-center">순번</TableHead>
+                                        <TableHead className="w-32 text-center">레슨 유형</TableHead>
+                                        <TableHead>레슨 제목</TableHead>
+                                        <TableHead className="w-32 text-center text-ellipsis overflow-hidden whitespace-nowrap">등록일자</TableHead>
+                                        <TableHead className="w-16 text-center">편집</TableHead>
+                                        <TableHead className="w-16 text-center">삭제</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginatedLessons.length > 0 ? (
+                                        paginatedLessons.map((lesson, index) => {
+                                            const typeInfo = getLessonTypeInfo(lesson.serviceType);
+                                            const Icon = typeInfo.icon;
+
+                                            return (
+                                                <TableRow key={lesson.id} className="hover:bg-gray-50">
+                                                    <TableCell className="text-center font-medium">
+                                                        {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`${typeInfo.bgColor} ${typeInfo.color} border-none`}
+                                                        >
+                                                            <Icon className="size-3 mr-1" />
+                                                            {typeInfo.label}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">
+                                                        <div className="line-clamp-1">{lesson.title}</div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-gray-600 text-sm">
+                                                        {lesson.createdAt ? format(new Date(lesson.createdAt), "yyyy-MM-dd", { locale: ko }) : "-"}
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleEdit(lesson.id)}
+                                                            className="h-8 w-8 p-0"
+                                                        >
+                                                            <Edit2 className="size-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleDelete(lesson.id)}
+                                                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="h-32 text-center text-gray-400">
+                                                {searchQuery || filterType !== "all"
+                                                    ? "검색 결과가 없습니다."
+                                                    : "등록된 레슨이 없습니다."}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+
+                    {/* Pagination */}
+                    {!loading && totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 mt-6">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => goToPage(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeft className="size-4" />
+                            </Button>
+
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                    <Button
+                                        key={page}
+                                        variant={currentPage === page ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => goToPage(page)}
+                                        className={currentPage === page ? "bg-[#00C471] hover:bg-[#00B366]" : ""}
+                                    >
+                                        {page}
+                                    </Button>
+                                ))}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => goToPage(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                <ChevronRight className="size-4" />
+                            </Button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
-
-
-
-            {/* Lessons List */}
-            {lessons.length === 0 ? (
-                <Card className="shadow-sm">
-                    <CardContent className="p-12 text-center">
-                        <BookOpen className="size-16 mx-auto mb-4 text-gray-300" />
-                        <h3 className="text-xl font-semibold mb-2 text-gray-600">
-                            {searchQuery || filterType !== "all"
-                                ? "검색 결과가 없습니다"
-                                : "등록된 레슨이 없습니다"}
-                        </h3>
-                        <p className="text-gray-500 mb-6">
-                            {searchQuery || filterType !== "all"
-                                ? "다른 검색어나 필터를 시도해보세요"
-                                : "첫 번째 레슨을 등록하고 멘티들과 연결되세요"}
-                        </p>
-                        {!searchQuery && filterType === "all" && (
-                            <Button
-                                className="bg-[#00C471] hover:bg-[#00B366] h-11 px-8"
-                                onClick={() => navigate({ to: "/service/register" })}
-                            >
-                                <Plus className="size-4 mr-2" />
-                                레슨 등록하기
-                            </Button>
-                        )}
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="space-y-4">
-                    {lessons.map((lesson: Lesson) => {
-                        const typeInfo = getLessonTypeInfo(lesson.serviceType);
-                        const Icon = typeInfo.icon;
-                        const categoryName = categories.find(c => c.categoryId === lesson.categoryId)?.name || lesson.category;
-
-                        return (
-                            <Card key={lesson.id} className="hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                                        {/* Left Section */}
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                {/* Type Badge */}
-                                                <div
-                                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full ${typeInfo.bgColor}`}
-                                                >
-                                                    <Icon className={`size-4 ${typeInfo.color}`} />
-                                                    <span className={`text-sm font-medium ${typeInfo.color}`}>
-                                                        {typeInfo.label}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Title and Description */}
-                                            <h3 className="text-xl font-bold mb-2 group-hover:text-[#00C471] transition-colors">
-                                                {lesson.title}
-                                            </h3>
-                                            <p className="text-gray-600 mb-4 line-clamp-1">{categoryName}</p>
-
-                                            {/* Meta Information */}
-                                            <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Clock className="size-4" />
-                                                    <span>{lesson.level}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <MapPin className="size-4" />
-                                                    <span>{lesson.location || "미지정"}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 border-l pl-4">
-                                                    <Calendar className="size-4" />
-                                                    <span>마감일: {lesson.closeAt ? format(new Date(lesson.closeAt), "yyyy-MM-dd", { locale: ko }) : "미지정"}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 border-l pl-4">
-                                                    <DollarSign className="size-4" />
-                                                    <span className="font-semibold text-gray-900">
-                                                        {lesson.price.toLocaleString()}원
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 border-l pl-4">
-                                                    <Users className="size-4" />
-                                                    <span>수강생 <span className="font-semibold text-[#00C471]">{lesson.studentCount}</span>명</span>
-                                                </div>
-                                                <div className="text-gray-400 border-l pl-4">
-                                                    평점 {lesson.rating || "0.0"}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Right Section - Actions */}
-                                        <div className="flex flex-row md:flex-col gap-2 w-full md:w-28">
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => handleEdit(lesson.id)}
-                                                className="flex-1 h-10 gap-2 hover:bg-[#00C471] hover:text-white hover:border-[#00C471] transition-all"
-                                            >
-                                                <Edit2 className="size-4" />
-                                                편집
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => handleDelete(lesson.id)}
-                                                className="flex-1 h-10 gap-2 text-red-500 hover:text-white hover:bg-red-500 hover:border-red-500 transition-all"
-                                            >
-                                                <Trash2 className="size-4" />
-                                                삭제
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            )}
         </div>
     );
+
 }
