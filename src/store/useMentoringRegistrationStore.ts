@@ -58,6 +58,9 @@ interface ServiceRegistrationState {
     addAvailableTime: (time: AvailableTime) => void;
     removeAvailableTime: (index: number) => void; // Using index for now as primitive identifiers might be duplicated or complex
 
+    selectedDate: Date | undefined;
+    setSelectedDate: (date: Date | undefined) => void;
+
     reset: () => void;
 }
 
@@ -132,13 +135,48 @@ export const useMentoringRegistrationStore = create<ServiceRegistrationState>((s
 
     setAvailableTimeList: (availableTimeList) => set({ availableTimeList }),
 
-    addAvailableTime: (time) => set((state) => ({
-        availableTimeList: [...state.availableTimeList, time]
-    })),
+    addAvailableTime: (time) => set((state) => {
+        // Helper to convert time string to minutes
+        const getMinutes = (iso: string) => new Date(iso).getTime() / 60000;
+
+        // Combine existing and new time
+        const allTimes = [...state.availableTimeList, time];
+
+        // Sort by start time
+        allTimes.sort((a, b) => getMinutes(a.startTime) - getMinutes(b.startTime));
+
+        const merged: AvailableTime[] = [];
+        if (allTimes.length > 0) {
+            let current = allTimes[0];
+
+            for (let i = 1; i < allTimes.length; i++) {
+                const next = allTimes[i];
+
+                // If overlap or contiguous (current.endTime >= next.startTime)
+                if (getMinutes(next.startTime) <= getMinutes(current.endTime)) {
+                    // Merge: Extend current end time if next ends later
+                    if (getMinutes(next.endTime) > getMinutes(current.endTime)) {
+                        current = { ...current, endTime: next.endTime };
+                    }
+                    // If next ends before current, it's fully contained, so stick with current
+                } else {
+                    // No overlap/touch, push and start new
+                    merged.push(current);
+                    current = next;
+                }
+            }
+            merged.push(current);
+        }
+
+        return { availableTimeList: merged };
+    }),
 
     removeAvailableTime: (index) => set((state) => ({
         availableTimeList: state.availableTimeList.filter((_, i) => i !== index)
     })),
+
+    selectedDate: undefined,
+    setSelectedDate: (date) => set({ selectedDate: date }),
 
     reset: () =>
         set({
@@ -150,5 +188,6 @@ export const useMentoringRegistrationStore = create<ServiceRegistrationState>((s
             closeAt: null,
             mentoringOptions: [{ id: "1", name: "", priceOptions: [] }],
             availableTimeList: [],
+            selectedDate: undefined,
         }),
 }));

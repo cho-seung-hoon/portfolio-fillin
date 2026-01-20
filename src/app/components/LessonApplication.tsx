@@ -10,9 +10,14 @@ import { OneDayClassApplicationView } from "./lesson-application/OneDayClassAppl
 import { MentoringApplicationView } from "./lesson-application/MentoringApplicationView";
 import { LessonApplicationUiModel } from "../../types/lesson-application-ui";
 import { mapApiToLesson } from "../../utils/lesson-application-mapper";
+import { getImageUrl } from "../../utils/image";
 
 import { applicationService, ScheduleCreateRequest } from "../../api/lesson-application-service";
 import { LessonApplicationSkeleton } from "./LessonApplicationSkeleton";
+import { OrderConfirmDialog } from "./OrderConfirmDialog";
+import { PaymentDialog } from "./PaymentDialog";
+import client from "../../api/client";
+import { useAuthStore } from "../../stores/authStore";
 
 interface LessonApplicationProps {
   lessonId: string;
@@ -20,6 +25,7 @@ interface LessonApplicationProps {
 }
 
 export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) {
+
   const [lesson, setLesson] = useState<LessonApplicationUiModel | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +34,16 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
 
   const [message, setMessage] = useState("");
+
+  // Payment & Order States
+  const [isOrderConfirmDialogOpen, setIsOrderConfirmDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [scheduleId, setScheduleId] = useState<string>("");
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentOrderName, setPaymentOrderName] = useState<string>("");
+  const [paymentOrderId, setPaymentOrderId] = useState<string>("");
+
+  const user = useAuthStore(state => state.user);
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -82,6 +98,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
       optionId: null,
       availableTimeId: null,
       startTime: null,
+      message: message,
     };
 
     if (lesson.lessonType === "mentoring") {
@@ -90,15 +107,36 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
       request.startTime = selectedSlot.startTime;
     } else if (lesson.lessonType === "oneday") {
       request.availableTimeId = selectedSlot.availableTimeId;
+    } else if (lesson.lessonType === "study") {
+      // Study usually applies to the whole course
     }
 
     // Call API
-    const success = await applicationService.createSchedule(request);
-    if (success) {
-      alert("신청이 완료되었습니다.");
-      onBack();
+    const responseScheduleId = await applicationService.createSchedule(request);
+    if (responseScheduleId) {
+      setScheduleId(responseScheduleId);
+      setIsOrderConfirmDialogOpen(true);
     } else {
       alert("신청에 실패했습니다.");
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    try {
+      const response = await client.post("/v1/payments/checkout", {
+        scheduleId: scheduleId
+      });
+
+      if (response.data.status === 200) {
+        setPaymentAmount(response.data.data.amount);
+        setPaymentOrderName(response.data.data.orderName);
+        setPaymentOrderId(response.data.data.orderId);
+        setIsOrderConfirmDialogOpen(false);
+        setIsPaymentDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      alert("결제 정보를 불러오는 데 실패했습니다.");
     }
   };
 
@@ -110,13 +148,12 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
     if (lesson.lessonType === "study") {
       return lesson.schedules["1-n-study"]?.price || 0;
     }
-    // Mentoring, Study (assuming study typically uses a fixed price or option, but user said keep it conservative so stick to option logic for others)
-    // Actually user said "Study has price in lesson key", but let's stick to "Don't touch other types" instruction.
-    // The current code uses selectedOption.price.
     return selectedOption ? selectedOption.price : 0;
   };
 
   const displayPrice = getDisplayPrice();
+  const formatPrice = (value?: number | null) => Number(value ?? 0).toLocaleString();
+
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
@@ -144,7 +181,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                 <h2 className="text-xl font-bold mb-4">레슨 정보</h2>
                 <div className="flex items-start gap-4">
                   <img
-                    src={lesson.mentor.profileImage}
+                    src={getImageUrl(lesson.mentor.profileImage)}
                     alt={lesson.mentor.nickname}
                     className="size-16 rounded-full object-cover"
                   />
@@ -188,8 +225,8 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
               </CardContent>
             </Card>
 
-            {/* 요청사항 */}
-            {selectedOption && (
+            {/* 요청사항 - Always show once a base selection is made (or always for study) */}
+            {(lesson.lessonType === "study" || selectedOption || (lesson.lessonType === "oneday" && selectedSlot)) && (
               <Card>
                 <CardContent className="p-6">
                   <h2 className="text-xl font-bold mb-4">요청사항</h2>
@@ -215,7 +252,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                     <div className="flex justify-between">
                       <span className="text-gray-600">레슨 금액</span>
                       <span className="font-medium">
-                        ₩{displayPrice.toLocaleString()}
+                        ₩{formatPrice(displayPrice)}
                       </span>
                     </div>
                   </div>
@@ -224,7 +261,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                     <div className="flex justify-between items-center">
                       <span className="font-bold">총 결제 금액</span>
                       <span className="text-xl font-bold text-[#00C471]">
-                        ₩{displayPrice.toLocaleString()}
+                        ₩{formatPrice(displayPrice)}
                       </span>
                     </div>
                   </div>
@@ -233,7 +270,8 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                     className="w-full h-12 text-lg font-bold bg-[#00C471] hover:bg-[#00B066]"
                     disabled={
                       (lesson.lessonType === "mentoring" && (!selectedOption || !selectedSlot)) ||
-                      (lesson.lessonType === "oneday" && !selectedSlot)
+                      (lesson.lessonType === "oneday" && !selectedSlot) ||
+                      (lesson.lessonType === "study" && false) // Study is usually ready if loaded
                     }
                     onClick={handlePayment}
                   >
@@ -249,6 +287,31 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
           </div>
         </div>
       </div>
+
+      <OrderConfirmDialog
+        open={isOrderConfirmDialogOpen}
+        onOpenChange={setIsOrderConfirmDialogOpen}
+        onConfirm={handleConfirmOrder}
+        service={{
+          ...lesson,
+          serviceType: lesson.lessonType,
+          thumbnail: lesson.thumbnailImage,
+        }}
+        selectedOption={selectedOption}
+        selectedSlot={lesson.lessonType === 'mentoring' ? selectedSlot?.time : selectedSlot}
+        selectedDate={lesson.lessonType === 'mentoring' ? (selectedSlot ? new Date(selectedSlot.startTime) : null) : null}
+        totalPrice={displayPrice}
+      />
+
+      <PaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        price={paymentAmount}
+        orderName={paymentOrderName}
+        orderId={paymentOrderId}
+        customerName={user?.name || "사용자"}
+        customerEmail={user?.email || ""}
+      />
     </div>
   );
 }

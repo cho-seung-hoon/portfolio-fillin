@@ -3,7 +3,8 @@ import { membersMap, lessonsData, categoryMap, profileMap } from "./data"; // Im
 import {
     MemberDTO, LessonReviewListResponseDTO,
     LessonDetailResponseDTO,
-    MyReviewResponseDTO
+    MyReviewResponseDTO,
+    ReviewDTO
 } from "../api/types";
 
 
@@ -11,7 +12,20 @@ import {
 const MOCK_TOKEN_HEADER = "eyJhGcioJiuUzI1NiIsInR5cCI6IkpXVCJ9";
 
 export const handlers = [
-    // 1. Auth Handlers
+    // Categories Handler
+    http.get("/api/v1/categories", () => {
+        const categoriesData = Array.from(categoryMap.values()).map(c => ({
+            categoryId: c.category_id,
+            name: c.name,
+            parentCategoryId: c.parent_category_id
+        }));
+        return HttpResponse.json({
+            status: 200,
+            message: "OK",
+            data: categoriesData
+        });
+    }),
+
     // 1. Auth Handlers
     http.post("/api/v1/auth/login", async ({ request }) => {
         const body = (await request.json()) as any;
@@ -118,7 +132,8 @@ export const handlers = [
                     introduction: "안녕하세요! " + member.nickname + "입니다.",
                     category: {
                         categoryId: 1,
-                        name: "IT/Development"
+                        name: "IT/Development",
+                        parentCategoryId: null
                     }
                 }
             });
@@ -159,41 +174,37 @@ export const handlers = [
         }
     }),
 
-
-
-    }),
-
-// 1-3. Update Introduction
-http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return new HttpResponse(null, { status: 401 });
-    }
-
-    const token = authHeader.split(" ")[1];
-    try {
-        const payload = token.split(".")[1];
-        const claims = JSON.parse(window.atob(payload));
-
-        const member = Array.from(membersMap.values()).find(
-            m => m.email === claims.email || String(m.member_id) === claims.memberId
-        );
-
-        if (!member) {
-            return new HttpResponse(null, { status: 404 });
+    // 1-3. Update Introduction
+    http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return new HttpResponse(null, { status: 401 });
         }
 
-        const body = await request.json() as { introduction: string };
-        member.introduction = body.introduction; // Update Mock Data
+        const token = authHeader.split(" ")[1];
+        try {
+            const payload = token.split(".")[1];
+            const claims = JSON.parse(window.atob(payload));
 
-        return HttpResponse.json({
-            status: 200,
-            message: "OK"
-        });
-    } catch (e) {
-        return new HttpResponse(null, { status: 401 });
-    }
-}),
+            const member = Array.from(membersMap.values()).find(
+                m => m.email === claims.email || String(m.member_id) === claims.memberId
+            );
+
+            if (!member) {
+                return new HttpResponse(null, { status: 404 });
+            }
+
+            const body = await request.json() as { introduction: string };
+            (member as any).introduction = body.introduction; // Update Mock Data
+
+            return HttpResponse.json({
+                status: 200,
+                message: "OK"
+            });
+        } catch (e) {
+            return new HttpResponse(null, { status: 401 });
+        }
+    }),
 
     // 2. Lesson Search Handler (New Schema)
     http.get("/api/v1/lessons/search", ({ request }) => {
@@ -260,7 +271,11 @@ http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
                 lessonType: typeMap[lesson.lesson_type] || "MENTORING",
                 mentorNickName: member.nickname,
                 rating: lesson.rating,
-                categoryId: lesson.category_id
+                categoryId: lesson.category_id,
+                location: lesson.location,
+                closeAt: lesson.close_at,
+                category: categoryMap.get(lesson.category_id)?.name || "Unknown",
+                menteeCount: lesson.studentCount
             };
         });
 
@@ -297,6 +312,7 @@ http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
                 score: 5,
                 content: "정말 유익한 멘토링이었습니다!",
                 writerId: "user-1",
+                nickname: "User1",
                 lessonId: String(lesson.lesson_id),
                 createdAt: "2025-01-02T10:00:00",
             },
@@ -305,6 +321,7 @@ http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
                 score: 5,
                 content: "실무에서 바로 쓸 수 있는 팁이 많았어요.",
                 writerId: "user-2",
+                nickname: "User2",
                 lessonId: String(lesson.lesson_id),
                 createdAt: "2024-12-28T14:30:00",
             },
@@ -313,6 +330,7 @@ http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
                 score: 4,
                 content: "커리큘럼이 좋았습니다.",
                 writerId: "user-3",
+                nickname: "User3",
                 lessonId: String(lesson.lesson_id),
                 createdAt: "2024-12-20T09:00:00",
             }
@@ -342,7 +360,7 @@ http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
     }),
 
     // 3. Lesson Detail Handler
-    http.get("/api/lessons/:id", ({ params }) => {
+    http.get("/api/v1/lessons/:id", ({ params }) => {
         const { id } = params;
         const lesson = lessonsData.find(l => l.lesson_id === Number(id));
 
@@ -422,8 +440,29 @@ http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
                     lessonType: lessonType,
                     title: lesson.title,
                     thumbnailImage: lesson.thumbnail_image,
-                    price: lesson.price
+                    price: lesson.price,
+                    location: lesson.location,
+                    closeAt: lesson.close_at,
+                    categoryId: lesson.category_id,
+                    seats: 100, // Default or random
+                    remainSeats: 90,
+                    category: categoryMap.get(lesson.category_id)?.name || "Unknown",
+                    menteeCount: lesson.studentCount
                 },
+                options: [
+                    {
+                        optionId: "opt-1",
+                        name: "1:1 멘토링 60분",
+                        minute: 60,
+                        price: lesson.price
+                    },
+                    {
+                        optionId: "opt-2",
+                        name: "1:1 멘토링 90분",
+                        minute: 90,
+                        price: Math.floor(lesson.price * 1.5)
+                    }
+                ],
                 availableTimes: availableTimes
             }
         });
@@ -476,6 +515,76 @@ http.patch("/api/v1/profile/me/introduction", async ({ request }) => {
                 page,
                 size,
                 totalElements
+            }
+        });
+    }),
+    // 5. Apply Handler
+    http.post("/api/v1/schedules", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const { lessonId, optionId, availableTimeId, startTime } = body;
+
+        if (!lessonId) {
+            return new HttpResponse(
+                JSON.stringify({ message: "Lesson ID is required" }),
+                { status: 400 }
+            );
+        }
+
+        return HttpResponse.json({
+            status: 200,
+            message: "Apply success",
+            data: {
+                scheduleId: `sch_${Math.floor(Math.random() * 1000000)}`
+            }
+        });
+    }),
+
+    // 6. Checkout Handler
+    http.post("/api/v1/apply/checkout", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const { scheduleId } = body;
+
+        if (!scheduleId) {
+            return new HttpResponse(
+                JSON.stringify({ message: "Schedule ID is required" }),
+                { status: 400 }
+            );
+        }
+
+        return HttpResponse.json({
+            status: 200,
+            message: "Checkout data fetched",
+            data: {
+                amount: 50000, // Mock amount
+                orderName: "테스트 주문",
+                orderId: `ORD_${scheduleId.split('_')[1] || Math.floor(Math.random() * 1000000)}`
+            }
+        });
+    }),
+
+    // 7. Payment Confirm Handler
+    http.post("/api/v1/apply/confirm", async ({ request }) => {
+        const body = (await request.json()) as any;
+        const { paymentKey, scheduleId, amount } = body;
+
+        if (!paymentKey || !scheduleId || !amount) {
+            return new HttpResponse(
+                JSON.stringify({ message: "Invalid payment data" }),
+                { status: 400 }
+            );
+        }
+
+        // Simulate processing delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        return HttpResponse.json({
+            status: 200,
+            message: "Payment confirmed successfully",
+            data: {
+                paymentKey,
+                scheduleId,
+                amount,
+                approvedAt: new Date().toISOString()
             }
         });
     }),

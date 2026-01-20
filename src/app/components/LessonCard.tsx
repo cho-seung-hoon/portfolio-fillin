@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
 import { Lesson } from "../../types/lesson";
+import { getImageUrl } from "../../utils/image";
 
 
 interface LessonCardProps {
@@ -26,9 +27,9 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
       <div className="relative aspect-video overflow-hidden bg-gray-100">
         <img
           src={
-            lesson.thumbnail.includes("picsum.photos")
+            getImageUrl(lesson.thumbnail.includes("picsum.photos")
               ? `${lesson.thumbnail}${lesson.thumbnail.includes("?") ? "&" : "?"}random=${lesson.id}`
-              : lesson.thumbnail
+              : lesson.thumbnail)
           }
           alt={lesson.title}
           className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -115,7 +116,7 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
           </div>
           <div className="flex items-center gap-1 text-gray-500">
             <Users className="size-4" />
-            <span>{lesson.studentCount.toLocaleString()}</span>
+            <span>{Number(lesson.studentCount ?? 0).toLocaleString()}</span>
           </div>
           <span className="text-gray-400">·</span>
           <span className="text-gray-500">{lesson.level}</span>
@@ -125,11 +126,11 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
         <div className="flex items-center gap-2">
           {lesson.originalPrice && (
             <span className="text-sm text-gray-400 line-through">
-              ₩{lesson.originalPrice.toLocaleString()}
+              ₩{Number(lesson.originalPrice ?? 0).toLocaleString()}
             </span>
           )}
           <span className="text-xl text-[#00C471]">
-            {lesson.price === 0 ? "무료" : `₩${lesson.price.toLocaleString()}`}
+            {lesson.price === 0 ? "무료" : `₩${Number(lesson.price ?? 0).toLocaleString()}`}
           </span>
         </div>
       </div>

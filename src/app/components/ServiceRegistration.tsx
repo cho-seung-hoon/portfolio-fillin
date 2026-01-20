@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Card,
   CardContent,
@@ -21,7 +22,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
@@ -41,6 +44,11 @@ import { useLessonFormStore } from "../../store/useLessonFormStore";
 import { categoryService } from "../../api/category";
 import { lessonService } from "../../api/lesson"; // Import lessonService
 import { CategoryResponseDto } from "../../api/types";
+
+interface CategoryGroup {
+  parent: CategoryResponseDto;
+  children: CategoryResponseDto[];
+}
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -67,6 +75,8 @@ export function ServiceRegistration({
   const { availableTimeList: oneDayTimeList, reset: resetOneDay } = useOneDayRegistrationStore();
   const { price, seats, availableTimeList: studyTimeList, reset: resetStudy } = useStudyRegistrationStore();
 
+  const navigate = useNavigate();
+
   // Reset stores on mount (Cleanup previous state)
   /* 
    * [Policy Change: Session Persist]
@@ -74,8 +84,11 @@ export function ServiceRegistration({
    * Reset will only happen on explicit "Submit Success" or explicit "Cancel/Discard".
    */
 
-  const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Using explicit state for navigation after success to avoid hook rules issues if any,
+  // but direct navigation in event handler is fine in TanStack Router.
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -88,10 +101,21 @@ export function ServiceRegistration({
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
-        setCategories(data);
-        if (data.length > 0 && categoryId === 1) {
-          // Optional: Auto-select first if currently default(1) [Or keep 1 if it's "General"]
-        }
+
+        // 1. 대분류 추출 (parentCategoryId가 없고 이름이 유효한 것)
+        const parents = data.filter(
+          (cat: CategoryResponseDto) => cat.parentCategoryId == null && cat.name?.trim() !== ""
+        );
+
+        // 2. 그룹화 (대분류별로 소분류 매칭)
+        const groups: CategoryGroup[] = parents.map(parent => ({
+          parent,
+          children: data.filter(
+            (cat: CategoryResponseDto) => cat.parentCategoryId === parent.categoryId && cat.name?.trim() !== ""
+          )
+        })).filter(group => group.children.length > 0); // 소분류가 있는 그룹만 표시 (필요에 따라 조절)
+
+        setCategoryGroups(groups);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
@@ -132,7 +156,6 @@ export function ServiceRegistration({
     setIsSubmitting(true);
 
     try {
-      // Map UI Type to API Enum
       const lessonTypeMap: Record<string, "MENTORING" | "ONEDAY" | "STUDY"> = {
         "1-1-mentoring": "MENTORING",
         "1-n-oneday": "ONEDAY",
@@ -140,6 +163,39 @@ export function ServiceRegistration({
       };
 
       const apiLessonType = lessonTypeMap[lessonType] || "MENTORING";
+
+      // Validation for MENTORING before constructing request
+      if (lessonType === "1-1-mentoring") {
+        const { mentoringOptions, availableTimeList, setSelectedDate } = useMentoringRegistrationStore.getState();
+
+        // 1. Check for options
+        if (mentoringOptions.length === 0) {
+          alert("최소 1개 이상의 멘토링 옵션을 만들어주세요.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 2. Validate Available Times against Minimum Option Duration
+        const allDurations = mentoringOptions
+          .flatMap(opt => opt.priceOptions)
+          .map(po => parseInt(po.duration, 10))
+          .filter(d => !isNaN(d));
+
+        const minOptionMinutes = allDurations.length > 0 ? Math.min(...allDurations) : 30;
+
+        for (const slot of availableTimeList) {
+          const start = new Date(slot.startTime).getTime();
+          const end = new Date(slot.endTime).getTime();
+          const durationMinutes = (end - start) / 60000;
+
+          if (durationMinutes < minOptionMinutes) {
+            alert(`설정된 시간 중 최소 진행 시간(${minOptionMinutes}분)보다 짧은 시간이 포함되어 있습니다. 해당 일자로 이동합니다.`);
+            setSelectedDate(new Date(slot.startTime));
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
 
       // Base DTO
       const requestDTO: any = {
@@ -207,13 +263,15 @@ export function ServiceRegistration({
       console.log("RegisterLessonRequest:", requestDTO);
 
       // Call API
-      await lessonService.createLesson(requestDTO, thumbnailImage);
+      const lessonId = await lessonService.createLesson(requestDTO, thumbnailImage);
 
       alert("서비스가 성공적으로 등록되었습니다.");
 
       // Success: Clear data and navigate back
-      //resetAllStores();
-      //onBack();
+      resetAllStores();
+
+      // Navigate to detail page using TanStack Router
+      navigate({ to: "/service/$id", params: { id: lessonId }, replace: true });
 
     } catch (error) {
       console.error("Failed to create lesson:", error);
@@ -321,10 +379,17 @@ export function ServiceRegistration({
                       <SelectValue placeholder="카테고리 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
-                          {cat.name}
-                        </SelectItem>
+                      {categoryGroups.map((group) => (
+                        <SelectGroup key={group.parent.categoryId}>
+                          <SelectLabel className="bg-green-50 text-green-700 py-1.5 px-3 my-0.5">
+                            {group.parent.name}
+                          </SelectLabel>
+                          {group.children.map((child) => (
+                            <SelectItem key={child.categoryId} value={child.categoryId.toString()} className="pl-8 capitalize">
+                              {child.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>

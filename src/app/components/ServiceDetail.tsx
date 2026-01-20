@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { serviceDetailService } from "../../api/serviceDetail";
 import { LessonDetail } from "../../types/lesson";
+import { getImageUrl } from "../../utils/image";
 
 interface ServiceDetailProps {
   serviceId: string;
@@ -26,6 +27,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
   const [activeTab, setActiveTab] = useState<"description" | "schedule">("description");
   const [service, setService] = useState<LessonDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const formatNumber = (value?: number | null) => Number(value ?? 0).toLocaleString();
 
   useEffect(() => {
     const fetchService = async () => {
@@ -81,9 +83,9 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                 <div className="relative w-full aspect-video md:aspect-[21/9] bg-gray-100">
                   <img
                     src={
-                      service.thumbnail.includes("picsum.photos")
+                      getImageUrl(service.thumbnail.includes("picsum.photos")
                         ? `${service.thumbnail}${service.thumbnail.includes("?") ? "&" : "?"}random=${service.id}`
-                        : service.thumbnail
+                        : service.thumbnail)
                     }
                     alt={service.title}
                     className="size-full object-cover"
@@ -92,7 +94,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                 <div className="p-6">
                   <div className="flex items-start gap-4 mb-6">
                     <img
-                      src={service.mentor.avatar}
+                      src={getImageUrl(service.mentor.avatar)}
                       alt={service.mentor.name}
                       className="size-20 rounded-full object-cover"
                     />
@@ -110,12 +112,12 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{service.rating}</span>
+                        <span className="font-medium">{service.rating ? service.rating.toFixed(1) : "신규"}</span>
                         <span className="text-gray-500">({service.reviewCount}개 리뷰)</span>
                       </div>
                       <div className="flex items-center gap-1 text-gray-600">
                         <Users className="size-4" />
-                        <span>{service.studentCount.toLocaleString()}명 수강</span>
+                        <span>{formatNumber(service.studentCount)}명 수강</span>
                       </div>
                       <div className="px-3 py-1 bg-[#E6F9F2] text-[#00C471] rounded-full text-xs font-medium">
                         {service.serviceType}
@@ -206,14 +208,14 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     <div className="flex items-baseline gap-2 mb-2">
                       {service.originalPrice && (
                         <span className="text-sm text-gray-400 line-through">
-                          ₩{service.originalPrice.toLocaleString()}
+                          ₩{formatNumber(service.originalPrice)}
                         </span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold">
                         {(service.serviceType === 'oneday' || service.serviceType === 'mentoring') && <span className="text-lg text-gray-500 font-medium mr-1">최저</span>}
-                        ₩{service.price.toLocaleString()}
+                        ₩{formatNumber(service.price)}
                       </span>
                       {service.originalPrice && (
                         <span className="text-sm font-medium text-red-500">
@@ -237,11 +239,11 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Users className="size-4" />
-                      <span>현재 {service.studentCount}명 수강 중</span>
+                      <span>현재 {formatNumber(service.studentCount)}명 수강 중</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Star className="size-4" />
-                      <span>만족도 {service.rating}/5.0</span>
+                      <span>만족도 {service.rating ? `${service.rating.toFixed(1)}/5.0` : "신규"}</span>
                     </div>
                   </div>
 

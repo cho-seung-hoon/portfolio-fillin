@@ -58,8 +58,9 @@ export function ProfileManagement() {
         if (data.nickname !== user.name) {
           useAuthStore.getState().updateName(data.nickname);
         }
-        if (data.category && data.category.name.trim() !== "") {
-          setCategory(data.category);
+        if (data.category) {
+          const categoryName = data.category.name?.trim() === "" ? "태그 없음" : data.category.name;
+          setCategory({ ...data.category, name: categoryName });
         }
         setIntroduction(data.introduction ?? "");
         setPhone(data.phoneNum ?? "");
@@ -87,9 +88,21 @@ export function ProfileManagement() {
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
-        console.log("Fetched categories:", data);
-        setCategories(data);
-        syncCategorySelection(data, category);
+        if (!data) return;
+
+        const normalized = data
+          .map((cat: CategoryResponseDto) => ({
+            ...cat,
+            name: (!cat.name || cat.name.trim() === "") ? "태그 없음" : cat.name,
+          }))
+          .sort((a, b) => {
+            if (a.name === "태그 없음") return -1;
+            if (b.name === "태그 없음") return 1;
+            return (a.name || "").localeCompare(b.name || "");
+          });
+
+        setCategories(normalized);
+        syncCategorySelection(normalized, category);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }

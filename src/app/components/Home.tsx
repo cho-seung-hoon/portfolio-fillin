@@ -5,21 +5,19 @@ import { SearchSection } from "./SearchSection";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchFilters } from "./SearchFilters";
 import { SearchResults } from "./SearchResults";
-import { InfLearnFooter } from "./InfLearnFooter";
+import { ProjectFooter } from "./ProjectFooter";
 import { Lesson } from "../../types/lesson";
 import { lessonService } from "../../api/lesson";
 
 interface HomeProps {
-  user: { email: string; name: string } | null;
   onLoginClick: () => void;
   onSignupClick: () => void;
-  onLogout: () => void;
   searchQuery?: string;
   page?: number;
   sort?: string;
 }
 
-export default function Home({ user, onLoginClick, onSignupClick, onLogout, searchQuery: initialSearchQuery = "", page = 1, sort: initialSort = "popular" }: HomeProps) {
+export default function Home({ onLoginClick, onSignupClick, searchQuery: initialSearchQuery = "", page = 1, sort: initialSort = "popular" }: HomeProps) {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -164,7 +162,7 @@ export default function Home({ user, onLoginClick, onSignupClick, onLogout, sear
         onPageChange={handlePageChange}
         isLoading={loading}
       />
-      <InfLearnFooter />
+      <ProjectFooter />
     </div>
   );
 }

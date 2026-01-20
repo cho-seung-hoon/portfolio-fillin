@@ -84,6 +84,7 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
 
     return {
         title: lesson.title,
+        thumbnailImage: lesson.thumbnailImage,
         lessonType: lessonType as "mentoring" | "oneday" | "study",
         mentor: {
             nickname: mentor.nickname,

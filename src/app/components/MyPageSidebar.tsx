@@ -5,6 +5,7 @@ import {
   CreditCard,
   Star,
   User,
+  BookOpen,
 } from "lucide-react";
 
 interface MyPageSidebarProps {
@@ -14,6 +15,7 @@ interface MyPageSidebarProps {
 
 const menuItems = [
   { id: "home", label: "마이 홈", icon: Home },
+  { id: "lessons", label: "내 레슨", icon: BookOpen },
   // { id: "coupons", label: "내 쿠폰", icon: FileText },
   { id: "schedule", label: "스케줄 관리", icon: Calendar },
   // { id: "payment", label: "결제 내역", icon: CreditCard },
@@ -38,10 +40,9 @@ export function MyPageSidebar({
               onClick={() => onTabChange(item.id)}
               className={`
                 w-full flex items-center gap-3 px-4 py-3 rounded-md transition-colors
-                ${
-                  isActive
-                    ? "bg-[#00C471] text-white"
-                    : "text-gray-600 hover:bg-gray-50"
+                ${isActive
+                  ? "bg-[#00C471] text-white"
+                  : "text-gray-600 hover:bg-gray-50"
                 }
               `}
             >

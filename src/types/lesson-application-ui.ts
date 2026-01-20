@@ -1,5 +1,6 @@
 export interface LessonApplicationUiModel {
     title: string;
+    thumbnailImage: string;
     lessonType: "mentoring" | "oneday" | "study";
     mentor: UiMentor;
     options: UiOption[];
@@ -14,6 +15,7 @@ export interface UiMentor {
 export interface UiOption {
     optionId: string;
     name: string;
+    title?: string;
     price: number;
     duration: string; // e.g., "1시간" or "30분" - Used for display
     minute: number;   // e.g., 60 or 30 - Used for logic

@@ -29,11 +29,12 @@ export function MentoringSection() {
         removePriceOption,
         updatePriceOption,
         addAvailableTime,
-        removeAvailableTime
+        removeAvailableTime,
+        selectedDate,
+        setSelectedDate
     } = useMentoringRegistrationStore();
 
     // Local UI State for interactions
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [selectingStartHour, setSelectingStartHour] = useState<number | null>(null);
 
     // --- Schedule Logic (Adapted for flat list) ---
@@ -47,8 +48,35 @@ export function MentoringSection() {
 
     const getSelectedDateSchedule = () => {
         if (!selectedDate) return [];
+
+        // Define range for the selected day in UTC
         const dateKey = getDateKey(selectedDate);
-        return availableTimeList.filter(slot => getDateFromISO(slot.startTime) === dateKey);
+        const dayStart = new Date(`${dateKey}T00:00:00`).getTime();
+        const dayEnd = new Date(`${dateKey}T23:59:59.999`).getTime();
+
+        return availableTimeList.filter(slot => {
+            // Using local time string construction to match how dateKey is made, 
+            // but for comparison we need effective timestamps.
+            // Since we store ISO (UTC), let's compare timestamps.
+
+            // Wait, dateKey is local YYYY-MM-DD.
+            // effectively we want slots where (start < dayEnd) AND (end > dayStart)
+            // But we need to be careful about timezones.
+            // Currently everything is local-time based for display logic. A proper way is:
+
+            const slotStart = new Date(slot.startTime).getTime();
+            const slotEnd = new Date(slot.endTime).getTime();
+
+            // We need selectedDate in effective local timestamp range
+            // selectedDate is a Date object (usually 00:00 local).
+            const selectedStart = new Date(selectedDate);
+            selectedStart.setHours(0, 0, 0, 0);
+
+            const selectedEnd = new Date(selectedDate);
+            selectedEnd.setHours(23, 59, 59, 999);
+
+            return slotStart < selectedEnd.getTime() && slotEnd > selectedStart.getTime();
+        });
     };
 
     const handleTimeBarClick = (hour: number) => {
@@ -64,8 +92,12 @@ export function MentoringSection() {
             const startStr = `${String(startHour).padStart(2, '0')}:00`;
             const endStr = `${String(endHour).padStart(2, '0')}:00`;
 
-            // Convert to ISO (UTC) using local date + time
             const startTimeISO = new Date(`${dateStr}T${startStr}`).toISOString();
+
+            // Adjust for spanning to next day if needed (though handleTimeBarClick 
+            // is restricted to 0-24 of a single day visually, 
+            // dragging logic implies single day unless we specifically handle 24:00/next-Day 00:00 logic here more complexly.
+            // current logic: endStr "24:00" works in Date constructor as next day 00:00
             const endTimeISO = new Date(`${dateStr}T${endStr}`).toISOString();
 
             const newTimeSlot: AvailableTime = {
@@ -88,13 +120,21 @@ export function MentoringSection() {
     };
 
     const isHourInSchedule = (hour: number) => {
+        if (!selectedDate) return false;
         const schedule = getSelectedDateSchedule();
+
+        // Define the specific hour range for the selected day
+        const dayStart = new Date(selectedDate);
+        dayStart.setHours(hour, 0, 0, 0);
+        const dayEnd = new Date(selectedDate);
+        dayEnd.setHours(hour + 1, 0, 0, 0);
+
         return schedule.some(slot => {
-            const slotStart = new Date(slot.startTime).getHours();
-            const slotEnd = new Date(slot.endTime).getHours();
-            // Note: This simple getHours() comparison assumes sessions don't span days 
-            // and sticking to local timezone display.
-            return hour >= slotStart && hour < slotEnd;
+            const slotStart = new Date(slot.startTime).getTime();
+            const slotEnd = new Date(slot.endTime).getTime();
+
+            // Check overlaps
+            return slotStart < dayEnd.getTime() && slotEnd > dayStart.getTime();
         });
     };
 

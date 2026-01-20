@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, Clock, Check } from "lucide-react";
 import { format, addDays, startOfWeek, addWeeks } from "date-fns";
@@ -10,6 +10,210 @@ interface Slot {
     time: string;
     availableTimeId: string;
     startTime: string; // ISO string for the specific slot start
+}
+
+interface ScrollableTimelineProps {
+    date: Date;
+    timelineMinWidth: string;
+    availableTimes: string[];
+    bookedSlots: { time: string }[];
+    selectedSlot: Slot | null;
+    onBarClick: (clickX: number, barWidth: number, date: Date) => void;
+    getBarStyle: (timeRange: string) => { left: string; width: string };
+}
+
+function ScrollableTimeline({
+    date,
+    timelineMinWidth,
+    availableTimes,
+    bookedSlots,
+    selectedSlot,
+    onBarClick,
+    getBarStyle,
+}: ScrollableTimelineProps) {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+    const [hasDragged, setHasDragged] = useState(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!scrollContainerRef.current) return;
+        setIsDragging(true);
+        setHasDragged(false);
+        setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+        setScrollLeft(scrollContainerRef.current.scrollLeft);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging || !scrollContainerRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - scrollContainerRef.current.offsetLeft;
+        const walk = (x - startX) * 2;
+        if (Math.abs(walk) > 5) setHasDragged(true);
+        scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+    };
+
+    const handleMouseUp = () => setIsDragging(false);
+    const handleMouseLeave = () => setIsDragging(false);
+
+    const isSelectedDay = selectedSlot?.date === format(date, "yyyy-MM-dd");
+
+    // 첫 번째 이용 가능한 시간대로 자동 스크롤
+    useEffect(() => {
+        if (scrollContainerRef.current && availableTimes.length > 0) {
+            const firstTime = availableTimes[0].split("-")[0];
+            const [hours, minutes] = firstTime.split(":").map(Number);
+            const totalMinutes = hours * 60 + minutes;
+            const percentage = totalMinutes / (24 * 60);
+
+            const container = scrollContainerRef.current;
+            const scrollWidth = container.scrollWidth;
+            const clientWidth = container.clientWidth;
+
+            // 중앙에 오도록 스크롤 위치 계산
+            const targetScroll = (percentage * scrollWidth) - (clientWidth / 2);
+            container.scrollLeft = targetScroll;
+        }
+    }, [JSON.stringify(availableTimes), timelineMinWidth]); // 데이터 내용이 실제로 바뀔 때만 실행
+
+    return (
+        <div className="space-y-4">
+            <div
+                ref={scrollContainerRef}
+                className={`w-full overflow-x-auto pb-4 scrollbar-hide touch-pan-x ${isDragging ? "cursor-grabbing" : "cursor-grab"
+                    }`}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+            >
+                <div className="space-y-2" style={{ minWidth: timelineMinWidth }}>
+                    {/* 24시간 타임라인 레이블 - 1시간 단위 */}
+                    <div className="relative h-6 text-[10px] text-gray-400">
+                        {Array.from({ length: 25 }, (_, i) => i).map((hour) => (
+                            <span
+                                key={hour}
+                                className="absolute transform -translate-x-1/2 whitespace-nowrap"
+                                style={{ left: `${(hour / 24) * 100}%` }}
+                            >
+                                {hour}:00
+                            </span>
+                        ))}
+                    </div>
+
+                    {/* 선택된 시간 표시 (레이블과 그래프 사이) */}
+                    <div className="h-6 relative">
+                        {isSelectedDay && selectedSlot.time && (() => {
+                            const style = getBarStyle(selectedSlot.time);
+                            return (
+                                <div
+                                    className="absolute transform -translate-x-1/2 whitespace-nowrap text-[11px] font-bold text-[#00C471] bg-[#E6F9F2] px-2 py-0.5 rounded-full border border-[#00C471]/20 shadow-sm"
+                                    style={{
+                                        left: `calc(${style.left} + (${style.width} / 2))`,
+                                        top: "0"
+                                    }}
+                                >
+                                    {selectedSlot.time.replace("-", " ~ ")}
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    {/* 타임라인 바 컨테이너 */}
+                    <div
+                        className="relative h-10 bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
+                        onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const clickX = e.clientX - rect.left;
+                            if (!hasDragged) {
+                                onBarClick(clickX, rect.width, date);
+                            }
+                        }}
+                    >
+                        {/* 시간 구분선 - 10분 단위 (중요: 모든 바 위에 보이도록 z-index 조정) */}
+                        <div className="absolute inset-0 flex pointer-events-none z-20">
+                            {Array.from({ length: 144 }, (_, i) => i).map((tenMin) => {
+                                const isHour = tenMin % 6 === 0;
+                                const isThreeHour = tenMin % 18 === 0;
+
+                                return (
+                                    <div
+                                        key={tenMin}
+                                        className={`absolute h-full border-l ${isThreeHour
+                                            ? "border-gray-400"
+                                            : isHour
+                                                ? "border-gray-300"
+                                                : "border-gray-200"
+                                            }`}
+                                        style={{
+                                            left: `${(tenMin / 144) * 100}%`,
+                                        }}
+                                    />
+                                );
+                            })}
+                        </div>
+
+                        {/* 가능한 시간대 바 */}
+                        {availableTimes.map((timeRange: string, timeIdx: number) => {
+                            const barStyle = getBarStyle(timeRange);
+                            return (
+                                <div
+                                    key={timeIdx}
+                                    className="absolute h-full bg-[#E0F7ED] border-x border-[#A7F3D0] rounded pointer-events-none"
+                                    style={{
+                                        left: barStyle.left,
+                                        width: barStyle.width,
+                                    }}
+                                />
+                            );
+                        })}
+
+                        {/* 예약된 시간 슬롯 바 */}
+                        {bookedSlots.map((bookedSlot: any, bookedIdx: number) => {
+                            const barStyle = getBarStyle(bookedSlot.time);
+                            return (
+                                <div
+                                    key={bookedIdx}
+                                    className="absolute h-full bg-red-100 border border-red-300 rounded pointer-events-none z-[5]"
+                                    style={{
+                                        left: barStyle.left,
+                                        width: barStyle.width,
+                                    }}
+                                    title={`예약됨: ${bookedSlot.time}`}
+                                >
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-[10px] text-red-600 font-medium">예약</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {/* 선택된 시간 슬롯 바 */}
+                        {isSelectedDay && selectedSlot.time && (() => {
+                            const barStyle = getBarStyle(selectedSlot.time);
+                            return (
+                                <div
+                                    className="absolute h-full bg-[#00C471] rounded pointer-events-none z-10"
+                                    style={{
+                                        left: barStyle.left,
+                                        width: barStyle.width,
+                                    }}
+                                />
+                            );
+                        })()}
+                    </div>
+                </div>
+            </div>
+            {/* 날짜별 선택 정보 알림 - 가로 스크롤 영역 밖 (정적) */}
+            {isSelectedDay && selectedSlot.time && (
+                <div className="flex items-center gap-2 text-sm text-[#00C471] bg-[#E6F9F2] px-3 py-2 rounded-lg w-full">
+                    <Clock className="size-4" />
+                    <span className="font-medium">선택된 시간: {selectedSlot.time}</span>
+                </div>
+            )}
+        </div>
+    );
 }
 
 interface MentoringApplicationViewProps {
@@ -30,6 +234,17 @@ export function MentoringApplicationView({
     const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
 
     const selectedOption = lesson.options?.find((opt) => opt.optionId === selectedOptionId);
+
+    // 멘토링 시간에 따른 타임라인 너비 동적 계산
+    const getDynamicMinWidth = () => {
+        if (!selectedOption) return "1600px";
+        const duration = selectedOption.minute;
+        // 30분 기준 2400px, 시간이 짧아지면 더 확대, 길어지면 축소 (최소 1000px, 최대 5000px)
+        const calculatedWidth = Math.max(1000, Math.min(5000, (2400 * 30) / duration));
+        return `${calculatedWidth}px`;
+    };
+
+    const timelineMinWidth = getDynamicMinWidth();
 
     // 현재 주의 월요일 계산
     const getWeekStart = (offset: number) => {
@@ -77,14 +292,10 @@ export function MentoringApplicationView({
         return start1 < end2 && end1 > start2;
     };
 
-    // duration 문자열을 분으로 변환
-    const parseDuration = (duration: string): number => {
-        if (duration.includes("시간")) {
-            const hours = parseFloat(duration);
-            const minutes = duration.includes("30분") ? 30 : 0;
-            return Math.floor(hours) * 60 + minutes;
-        }
-        return parseInt(duration);
+    // 시간 문자열을 분으로 변환
+    const timeToMinutes = (time: string) => {
+        const [hours, minutes] = time.split(":").map(Number);
+        return hours * 60 + minutes;
     };
 
     // 분을 시간 문자열로 변환
@@ -92,12 +303,6 @@ export function MentoringApplicationView({
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
-    };
-
-    // 시간 문자열을 분으로 변환
-    const timeToMinutes = (time: string) => {
-        const [hours, minutes] = time.split(":").map(Number);
-        return hours * 60 + minutes;
     };
 
     // 특정 시간이 가능한 시간 범위 내에 있는지 확인
@@ -157,10 +362,9 @@ export function MentoringApplicationView({
             if (format(rawDate, "yyyy-MM-dd") !== format(date, "yyyy-MM-dd")) continue;
 
             const startMinutes = new Date(raw.startTime).getHours() * 60 + new Date(raw.startTime).getMinutes();
-            const endMinutes = new Date(raw.endTime).getHours() * 60 + new Date(raw.endTime).getMinutes();
+            const rawEndMinutes = new Date(raw.endTime).getHours() * 60 + new Date(raw.endTime).getMinutes();
 
-            if (roundedMinutes >= startMinutes && endMinutes <= endMinutes) {
-                // Check overlap with OTHER slots (handled by isTimeOverlapping calls later, but this checks if it fits in the block)
+            if (roundedMinutes >= startMinutes && endMinutes <= rawEndMinutes) {
                 matchedRawTime = raw;
                 break;
             }
@@ -199,72 +403,67 @@ export function MentoringApplicationView({
 
         const startTime = minutesToTime(roundedMinutes);
         const endTime = minutesToTime(endMinutes);
-        const slotDate = format(date, "yyyy-MM-dd");
+        const timeStr = `${startTime}-${endTime}`;
 
         // Construct ISO startTime for the specific selected slot
         const slotStartDate = new Date(date);
-        const [startH, startM] = startTime.split(":").map(Number);
-        slotStartDate.setHours(startH, startM, 0, 0);
+        slotStartDate.setHours(Math.floor(roundedMinutes / 60), roundedMinutes % 60, 0, 0);
 
         onSelectSlot({
-            date: slotDate,
-            time: `${startTime}-${endTime}`,
+            date: format(date, "yyyy-MM-dd"),
+            time: timeStr,
             availableTimeId: matchedRawTime.availableTimeId,
             startTime: slotStartDate.toISOString()
         });
     };
 
-    const weekDates = getWeekDates(currentWeekOffset);
     const weekStart = getWeekStart(currentWeekOffset);
 
-    // 지난 날짜 제외 - 오늘 이후 날짜만 필터링
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const futureDates = weekDates.filter((date) => {
-        const compareDate = new Date(date);
-        compareDate.setHours(0, 0, 0, 0);
-        return compareDate >= today;
-    });
+    // 날짜 연산 결과를 useMemo로 메모이제이션하여 참조 안정화
+    const weekDates = useMemo(() => getWeekDates(currentWeekOffset), [currentWeekOffset]);
+    const futureDates = useMemo(() => {
+        const todayStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+        return weekDates.filter((d: Date) => d >= addDays(todayStart, 0));
+    }, [weekDates]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* 옵션 선택 */}
             <div>
-                <h3 className="font-medium mb-3">시간 옵션 선택</h3>
+                <h3 className="font-medium mb-4">멘토링 옵션 선택</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {lesson.options?.map((option: UiOption) => (
+                    {lesson.options?.map((option) => (
                         <button
                             key={option.optionId}
                             onClick={() => {
                                 onSelectOptionId(option.optionId);
-                                onSelectSlot(null);
+                                onSelectSlot(null); // 옵션 변경 시 선택 초기화
                             }}
-                            className={`p-4 rounded-lg border-2 transition-all text-left ${selectedOptionId === option.optionId
-                                ? "border-[#00C471] bg-[#E6F9F2]"
-                                : "border-gray-200 hover:border-gray-300"
+                            className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${selectedOptionId === option.optionId
+                                ? "border-[#00C471] bg-[#F0FDF4]"
+                                : "border-gray-100 hover:border-gray-200 bg-white"
                                 }`}
                         >
-                            <div className="flex items-start justify-between mb-2">
-                                <h4 className="font-bold">{option.name}</h4>
-                                {selectedOptionId === option.optionId && (
-                                    <div className="size-5 rounded-full bg-[#00C471] flex items-center justify-center">
-                                        <Check className="size-3 text-white" />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                <Clock className="size-4" />
-                                <span>{option.duration}</span>
+                            <div className="flex flex-col items-start gap-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-gray-900">{option.title || option.name}</span>
+                                    {selectedOptionId === option.optionId && (
+                                        <div className="bg-[#00C471] text-white p-0.5 rounded-full">
+                                            <Check className="size-3" />
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-sm text-gray-500">{option.duration}</span>
                             </div>
                             <div className="text-lg font-bold text-[#00C471]">
-                                ₩{option.price.toLocaleString()}
+                                ₩{Number(option.price ?? 0).toLocaleString()}
                             </div>
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* 선택된 옵션에 대한 날짜/시간대 선택 */}
+            {/* 날짜/시간 선택 */}
             {selectedOption && (
                 <div>
                     <h3 className="font-medium mb-4">날짜 및 시간 선택</h3>
@@ -301,184 +500,55 @@ export function MentoringApplicationView({
                     </div>
 
                     {/* 일주일 일정 세로 표시 */}
-                    <div className="space-y-2">
-                        {futureDates.map((date, idx) => {
+                    <div className="space-y-4">
+                        {futureDates.map((date: Date, idx: number) => {
                             const availableTimes = getAvailableTimesForDate(date);
-                            const isToday =
-                                format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                            const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
                             const isPast = date < new Date() && !isToday;
 
                             return (
                                 <div
                                     key={idx}
-                                    className={`border rounded-lg p-4 transition-colors ${isPast
+                                    className={`border rounded-xl p-5 transition-colors ${isPast
                                         ? "bg-gray-50 border-gray-200"
                                         : availableTimes.length > 0
-                                            ? "border-gray-200 hover:border-[#00C471] bg-white"
+                                            ? "border-gray-200 hover:border-[#00C471] bg-white shadow-sm"
                                             : "bg-gray-50 border-gray-200"
                                         }`}
                                 >
-                                    <div className="flex items-start gap-4">
+                                    <div className="flex items-start gap-6">
                                         {/* 날짜 표시 */}
-                                        <div
-                                            className={`text-center min-w-[60px] ${isToday
-                                                ? "text-[#00C471]"
-                                                : isPast
-                                                    ? "text-gray-400"
-                                                    : "text-gray-900"
-                                                }`}
-                                        >
-                                            <div
-                                                className={`text-xs mb-1 ${isToday ? "font-medium" : ""
-                                                    }`}
-                                            >
+                                        <div className={`text-center min-w-[64px] ${isToday ? "text-[#00C471]" : isPast ? "text-gray-400" : "text-gray-900"}`}>
+                                            <div className={`text-xs mb-1 uppercase tracking-wider ${isToday ? "font-bold" : "font-medium text-gray-400"}`}>
                                                 {format(date, "EEE", { locale: ko })}
                                             </div>
-                                            <div
-                                                className={`text-2xl font-bold ${isToday
-                                                    ? "bg-[#00C471] text-white rounded-full size-12 flex items-center justify-center mx-auto"
-                                                    : ""
-                                                    }`}
-                                            >
+                                            <div className={`text-2xl font-bold ${isToday ? "bg-[#00C471] text-white rounded-full size-12 flex items-center justify-center mx-auto shadow-md shadow-[#00C471]/20" : ""}`}>
                                                 {format(date, "d")}
                                             </div>
-                                            <div className="text-xs text-gray-500 mt-1">
+                                            <div className="text-[10px] text-gray-400 mt-2 font-medium">
                                                 {format(date, "M월", { locale: ko })}
                                             </div>
                                         </div>
 
                                         {/* 시간대 표시 */}
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-0">
                                             {isPast ? (
-                                                <div className="text-sm text-gray-400 py-2">
-                                                    지난 날짜
+                                                <div className="text-sm text-gray-400 py-4 flex items-center gap-2">
+                                                    <Clock className="size-4 opacity-50" />
+                                                    지난 날짜는 선택할 수 없습니다.
                                                 </div>
                                             ) : availableTimes.length > 0 ? (
-                                                <div className="space-y-3">
-                                                    {/* 24시간 타임라인 레이블 */}
-                                                    <div className="flex justify-between text-xs text-gray-400 px-1">
-                                                        <span>0:00</span>
-                                                        <span>6:00</span>
-                                                        <span>12:00</span>
-                                                        <span>18:00</span>
-                                                        <span>24:00</span>
-                                                    </div>
-
-                                                    {/* 타임라인 바 컨테이너 */}
-                                                    <div
-                                                        className="relative h-10 bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
-                                                        onClick={(e) => {
-                                                            const rect = e.currentTarget.getBoundingClientRect();
-                                                            const clickX = e.clientX - rect.left;
-                                                            handleBarClick(clickX, rect.width, date);
-                                                        }}
-                                                    >
-                                                        {/* 시간 구분선 - 10분 단위 */}
-                                                        <div className="absolute inset-0 flex pointer-events-none">
-                                                            {Array.from({ length: 144 }, (_, i) => i).map(
-                                                                (tenMin) => {
-                                                                    const isHour = tenMin % 6 === 0;
-                                                                    const isThreeHour = tenMin % 18 === 0;
-
-                                                                    return (
-                                                                        <div
-                                                                            key={tenMin}
-                                                                            className={`absolute h-full border-l ${isThreeHour
-                                                                                ? "border-gray-400"
-                                                                                : isHour
-                                                                                    ? "border-gray-300"
-                                                                                    : "border-gray-200"
-                                                                                }`}
-                                                                            style={{
-                                                                                left: `${(tenMin / 144) * 100}%`,
-                                                                            }}
-                                                                        />
-                                                                    );
-                                                                }
-                                                            )}
-                                                        </div>
-
-                                                        {/* 가능한 시간대 바 */}
-                                                        {availableTimes.map((timeRange: string, timeIdx: number) => {
-                                                            const barStyle = getBarStyle(timeRange);
-
-                                                            return (
-                                                                <div
-                                                                    key={timeIdx}
-                                                                    className="absolute h-full bg-[#E0F7ED] rounded pointer-events-none"
-                                                                    style={{
-                                                                        left: barStyle.left,
-                                                                        width: barStyle.width,
-                                                                    }}
-                                                                />
-                                                            );
-                                                        })}
-
-                                                        {/* 예약된 시간 슬롯 바 */}
-                                                        {getBookedSlotsForDate(date).map(
-                                                            (bookedSlot: any, bookedIdx: number) => {
-                                                                const barStyle = getBarStyle(bookedSlot.time);
-
-                                                                return (
-                                                                    <div
-                                                                        key={bookedIdx}
-                                                                        className="absolute h-full bg-red-100 border border-red-300 rounded pointer-events-none z-[5]"
-                                                                        style={{
-                                                                            left: barStyle.left,
-                                                                            width: barStyle.width,
-                                                                        }}
-                                                                        title={`예약됨: ${bookedSlot.time}`}
-                                                                    >
-                                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                                            <span className="text-[10px] text-red-600 font-medium">
-                                                                                예약
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            }
-                                                        )}
-
-                                                        {/* 선택된 시간 슬롯 바 */}
-                                                        {selectedSlot?.date ===
-                                                            format(date, "yyyy-MM-dd") &&
-                                                            selectedSlot?.time &&
-                                                            (() => {
-                                                                const barStyle = getBarStyle(selectedSlot.time);
-                                                                return (
-                                                                    <div
-                                                                        className="absolute h-full bg-[#00C471] rounded pointer-events-none z-10"
-                                                                        style={{
-                                                                            left: barStyle.left,
-                                                                            width: barStyle.width,
-                                                                        }}
-                                                                    >
-                                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                                            <span className="text-xs text-white font-medium">
-                                                                                {selectedSlot.time}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })()}
-                                                    </div>
-
-                                                    {/* 선택된 시간 표시 */}
-                                                    {selectedSlot?.date ===
-                                                        format(date, "yyyy-MM-dd") &&
-                                                        selectedSlot?.time && (
-                                                            <div className="flex items-center gap-2 text-sm text-[#00C471] bg-[#E6F9F2] px-3 py-2 rounded-lg">
-                                                                <Clock className="size-4" />
-                                                                <span className="font-medium">
-                                                                    선택된 시간: {selectedSlot.time}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                </div>
+                                                <ScrollableTimeline
+                                                    date={date}
+                                                    timelineMinWidth={timelineMinWidth}
+                                                    availableTimes={availableTimes}
+                                                    bookedSlots={getBookedSlotsForDate(date)}
+                                                    selectedSlot={selectedSlot}
+                                                    onBarClick={handleBarClick}
+                                                    getBarStyle={getBarStyle}
+                                                />
                                             ) : (
-                                                <div className="text-sm text-gray-400 py-2">
-                                                    멘토링 불가
-                                                </div>
+                                                <div className="text-sm text-gray-400 py-4">예약 가능한 시간이 없습니다.</div>
                                             )}
                                         </div>
                                     </div>
@@ -486,7 +556,6 @@ export function MentoringApplicationView({
                             );
                         })}
                     </div>
-
                     <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                         <p className="text-sm text-blue-900">
                             💡 <strong>신청 방법:</strong> 원하는 날짜와 시간을 선택하여 1:1
