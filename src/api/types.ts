@@ -154,6 +154,8 @@ export interface LessonThumbnail {
     mentorNickName: string;
     rating: number;
     categoryId: number;
+    category: string;
+    menteeCount: number;
 }
 
 export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC";

@@ -257,7 +257,9 @@ export const handlers = [
                 lessonType: typeMap[lesson.lesson_type] || "MENTORING",
                 mentorNickName: member.nickname,
                 rating: lesson.rating,
-                categoryId: lesson.category_id
+                categoryId: lesson.category_id,
+                category: categoryMap.get(lesson.category_id)?.name || "Unknown",
+                menteeCount: lesson.studentCount
             };
         });
 

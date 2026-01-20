@@ -55,9 +55,9 @@ class DefaultLessonService implements LessonService {
             price: 999999, // Hardcoded as requested
             originalPrice: undefined,
             rating: dto.rating,
-            studentCount: 999, // Hardcoded as requested
+            studentCount: dto.menteeCount, // Updated from hardcoded 999
             thumbnail: dto.thumbnailImage,
-            category: "카테고리 " + dto.categoryId, // Placeholder as Name is missing
+            category: dto.category, // Updated from placeholder string
             categoryId: dto.categoryId,
             level: "초급", // Default
             tags: ["신규"],
