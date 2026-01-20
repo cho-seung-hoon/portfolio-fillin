@@ -4,6 +4,7 @@ import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.LessonTemp;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.repository.LessonTempRepository;
+import com.kosa.fillinv.review.dto.ReviewStatsDTO;
 import com.kosa.fillinv.review.repository.ReviewRepository;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
@@ -79,16 +80,16 @@ public class LessonPopularityScheduler {
                         row -> (Long) row[1]));
 
         // 리뷰 관련 계산
-        List<Object[]> reviewStatsList = reviewRepository.findReviewStatsByLessonId();
+        List<ReviewStatsDTO> reviewStatsList = reviewRepository.findReviewStatsByLessonId();
         Map<String, ReviewStat> reviewStatsMap = new HashMap<>();
 
         long totalReviewCount = 0;
         double totalReviewScoreSum = 0.0;
 
-        for (Object[] row : reviewStatsList) {
-            String lessonId = (String) row[0];
-            Long count = (Long) row[1];
-            Double avgScore = (Double) row[2];
+        for (ReviewStatsDTO row : reviewStatsList) {
+            String lessonId = row.lessonId();
+            Long count = row.count();
+            Double avgScore = row.averageScore();
 
             reviewStatsMap.put(lessonId, new ReviewStat(count, avgScore));
 
