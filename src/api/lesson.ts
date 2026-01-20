@@ -6,7 +6,7 @@ import { RegisterLessonResponse } from "./dto/lesson-creation-result";
 export interface LessonService {
     getLessons(search?: string, page?: number, sort?: string): Promise<LessonListResult>;
     getOwnLessons(condition?: Partial<LessonSearchCondition>): Promise<Lesson[]>;
-    createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<void>;
+    createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<string>;
     updateLesson(lessonId: string, request: RegisterLessonRequest, thumbnail?: File): Promise<void>;
     deleteLesson(lessonId: string): Promise<void>;
 }
