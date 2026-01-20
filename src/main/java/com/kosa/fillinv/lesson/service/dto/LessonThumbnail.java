@@ -9,9 +9,15 @@ public record LessonThumbnail(
         String lessonType,
         String mentorNickName,
         Float rating,
-        Long categoryId
+        Long categoryId,
+        Integer menteeCount
 ) {
-    public static LessonThumbnail of(LessonDTO lesson, MentorSummaryDTO mentor, Float rating) {
+    public static LessonThumbnail of(
+            LessonDTO lesson,
+            MentorSummaryDTO mentor,
+            Float rating,
+            Integer menteeCount
+    ) {
         return new LessonThumbnail(
                 lesson.id(),
                 lesson.thumbnailImage(),
@@ -19,7 +25,8 @@ public record LessonThumbnail(
                 lesson.lessonType().name(),
                 mentor.nickname(),
                 rating,
-                lesson.categoryId()
+                lesson.categoryId(),
+                menteeCount
         );
     }
 }

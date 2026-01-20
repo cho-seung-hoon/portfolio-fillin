@@ -15,11 +15,12 @@ public record LessonDetailResult(
             MentorSummaryDTO mentorSummaryDTO,
             LessonDTO lessonDTO,
             Integer lessonRemainSeats,
-            Map<String, Integer> availableTimeRemainSeats
+            Map<String, Integer> availableTimeRemainSeats,
+            Integer menteeCount
     ) {
         return new LessonDetailResult(
                 Mentor.of(mentorSummaryDTO),
-                Lesson.of(lessonDTO, lessonRemainSeats),
+                Lesson.of(lessonDTO, lessonRemainSeats, menteeCount),
                 lessonDTO.optionDTOList().stream().map(Option::of).toList(),
                 lessonDTO.availableTimeDTOList().stream()
                         .map(dt -> AvailableTime.of(dt, availableTimeRemainSeats != null ? availableTimeRemainSeats.get(dt.id()) : null))
@@ -51,9 +52,10 @@ public record LessonDetailResult(
             Integer price,
             Integer seats,
             Integer remainSeats,
-            Long categoryId
+            Long categoryId,
+            Integer menteeCount
     ) {
-        public static Lesson of(LessonDTO lessonDTO, Integer remainSeats) {
+        public static Lesson of(LessonDTO lessonDTO, Integer remainSeats, Integer menteeCount) {
             return new Lesson(
                     lessonDTO.id(),
                     lessonDTO.description(),
@@ -63,7 +65,9 @@ public record LessonDetailResult(
                     lessonDTO.price(),
                     lessonDTO.seats(),
                     remainSeats,
-                    lessonDTO.categoryId());
+                    lessonDTO.categoryId(),
+                    menteeCount
+            );
         }
     }
 
