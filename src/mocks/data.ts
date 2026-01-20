@@ -8,6 +8,7 @@ export const categories: CategoryDTO[] = [
     { category_id: 4, name: "Marketing", parent_category_id: null },
     { category_id: 5, name: "AI", parent_category_id: null },
     { category_id: 6, name: "Business", parent_category_id: null },
+    { category_id: 7, name: " ", parent_category_id: null },
 ];
 
 export const categoryMap = new Map<number, CategoryDTO>(

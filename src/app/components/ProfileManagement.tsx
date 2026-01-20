@@ -56,8 +56,9 @@ export function ProfileManagement() {
         if (data.nickname !== user.name) {
           useAuthStore.getState().updateName(data.nickname);
         }
-        if (data.category && data.category.name.trim() !== "") {
-          setCategory(data.category);
+        if (data.category) {
+          const categoryName = data.category.name?.trim() === "" ? "태그 없음" : data.category.name;
+          setCategory({ ...data.category, name: categoryName });
         }
         setIntroduction(data.introduction ?? "");
         setPhone(data.phoneNum ?? "");
@@ -71,8 +72,21 @@ export function ProfileManagement() {
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
-        console.log("Fetched categories:", data);
-        setCategories(data);
+        if (!data) return;
+
+        const filtered = data
+          .filter((cat: CategoryResponseDto) => cat.parentId == null)
+          .map((cat: CategoryResponseDto) => ({
+            ...cat,
+            name: (!cat.name || cat.name.trim() === "") ? "태그 없음" : cat.name,
+          }))
+          .sort((a, b) => {
+            if (a.name === "태그 없음") return -1;
+            if (b.name === "태그 없음") return 1;
+            return (a.name || "").localeCompare(b.name || "");
+          });
+        console.log("Sorted and filtered categories:", filtered);
+        setCategories(filtered);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
@@ -255,9 +269,9 @@ export function ProfileManagement() {
                 <div className="flex flex-col gap-2">
                   <select
                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={category?.name || ""}
+                    value={category?.categoryId || ""}
                     onChange={(e) => {
-                      const selected = categories.find((c) => c.name === e.target.value);
+                      const selected = categories.find((c) => String(c.categoryId) === e.target.value);
                       if (selected) {
                         setCategory(selected);
                         console.log("Category selected:", selected);
@@ -268,7 +282,7 @@ export function ProfileManagement() {
                       카테고리를 선택하세요
                     </option>
                     {categories.map((cat) => (
-                      <option key={cat.categoryId} value={cat.name}>
+                      <option key={cat.categoryId} value={cat.categoryId}>
                         {cat.name}
                       </option>
                     ))}
