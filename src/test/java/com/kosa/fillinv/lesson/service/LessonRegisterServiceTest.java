@@ -1,5 +1,7 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.category.entity.Category;
+import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.global.util.FileStorage;
 import com.kosa.fillinv.global.util.UploadFileResult;
 import com.kosa.fillinv.lesson.service.dto.*;
@@ -41,8 +43,10 @@ class LessonRegisterServiceTest {
     private LessonRegisterService lessonRegisterService;
     @MockitoSpyBean
     private FileStorage fileStorage;
-    @MockitoBean
+    @MockitoSpyBean
     private LessonService lessonService;
+    @MockitoBean
+    private CategoryService categoryService;
 
     private EditLessonCommand defaultCommand() {
         return new EditLessonCommand(
@@ -61,6 +65,9 @@ class LessonRegisterServiceTest {
         RegisterLessonCommand command = createSampleCommand();
         MultipartFile file = createSampleFile();
 
+        given(categoryService.getCategoryById(1L))
+                .willReturn(new Category(1L, "name", new Category(), "0:1"));
+
         // when
         CreateLessonResult createLessonResult = lessonRegisterService.registerLesson(command, file);
 
@@ -76,6 +83,7 @@ class LessonRegisterServiceTest {
         assertThat(createLessonResult.location()).isEqualTo(command.location());
         assertThat(createLessonResult.mentorId()).isEqualTo(command.mentorId());
         assertThat(createLessonResult.categoryId()).isEqualTo(command.categoryId());
+        assertThat(createLessonResult.categoryPath()).isEqualTo("0:1");
         assertThat(createLessonResult.closeAt()).isEqualTo(command.closeAt());
         assertThat(createLessonResult.price()).isEqualTo(command.price());
         assertThat(createLessonResult.optionResultList().size()).isEqualTo(command.optionList().size());

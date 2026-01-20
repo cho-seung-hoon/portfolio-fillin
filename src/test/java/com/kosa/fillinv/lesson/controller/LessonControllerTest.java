@@ -194,6 +194,7 @@ class LessonControllerTest {
                 "ONLINE",
                 mentorId,
                 1L,
+                "",
                 Instant.parse("2026-01-01T10:00:00Z"),
                 Instant.parse("2026-01-31T23:59:59Z"),
                 50000,

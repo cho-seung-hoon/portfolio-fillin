@@ -1,5 +1,7 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.category.entity.Category;
+import com.kosa.fillinv.category.repository.CategoryRepository;
 import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,6 +49,8 @@ class LessonServiceTest {
     private OptionRepository optionRepository;
     @Autowired
     private AvailableTimeRepository availableTimeRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
 
     @Autowired
@@ -497,24 +502,40 @@ class LessonServiceTest {
     }
 
     @Test
-    @DisplayName("카테고리id로 검색이 가능하다.")
+    @DisplayName("카테고리 경로로 검색이 가능하다.")
     void searchCategoryId() {
         // given
-        Long categoryId = 4L;
-        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, categoryId, null, LessonSortType.CREATED_AT_DESC, 1, 30);
+        Category parent = categoryRepository.save(
+                new Category(null, "개발", null, "9999")
+        );
+
+        Category child = categoryRepository.save(
+                new Category(null, "백엔드 개발자", parent, "9999:15")
+        );
+
+        Category other = categoryRepository.save(
+                new Category(null, "디자인", null, "9998")
+        );
+
+        lessonService.createLesson(createCommand(parent.getId(), parent.getCategoryPath()));
+        lessonService.createLesson(createCommand(child.getId(), child.getCategoryPath()));
+        lessonService.createLesson(createCommand(other.getId(), other.getCategoryPath()));
+        entityManager.flush(); entityManager.clear();
+
+        LessonSearchCondition condition = new LessonSearchCondition(null, null, "9999", null, null, 0, 5);
 
         // when
-        Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
+        Page<LessonDTO> result = lessonService.searchLesson(condition);
 
         // then
-        List<Lesson> allByTitleContaining = lessonRepository.findAllByCategoryIdAndDeletedAtIsNull(categoryId);
-        assertFalse(allByTitleContaining.isEmpty());
-        assertEquals(allByTitleContaining.size(), lessonDTOS.getTotalElements());
-        assertFalse(
-                lessonDTOS.stream().anyMatch(
-                        l -> !l.categoryId().equals(categoryId)
-                )
-        );
+        assertThat(result.getTotalElements()).isEqualTo(2);
+
+        assertThat(result.getContent())
+                .extracting(LessonDTO::categoryId)
+                .containsExactlyInAnyOrder(
+                        parent.getId(),
+                        child.getId()
+                );
     }
 
     @Test
@@ -752,6 +773,25 @@ class LessonServiceTest {
                 "서울",
                 "mentor-1",
                 1L,
+                "",
+                Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(7, ChronoUnit.DAYS),
+                null,
+                null,
+                List.of(createOptionCommand("option1", 30, 1000), createOptionCommand("option2", 60, 2000)),
+                List.of(createAvailableTimeCommand())
+        );
+    }
+
+    private CreateLessonCommand createCommand(Long categoryId, String categoryPath) {
+        return new CreateLessonCommand(
+                "title",
+                LessonType.ONEDAY,
+                "thumbnail.png",
+                "테스트 레슨 설명",
+                "서울",
+                "mentor-1",
+                categoryId,
+                categoryPath,
                 Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(7, ChronoUnit.DAYS),
                 null,
                 null,
@@ -801,6 +841,7 @@ class LessonServiceTest {
                 location,
                 mentorId,
                 categoryId,
+                "",
                 Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(1, ChronoUnit.DAYS),
                 null,
                 3,
