@@ -19,6 +19,7 @@ import { ServiceDetail } from "./components/ServiceDetail";
 import { PaymentSuccessPage } from "./components/PaymentSuccessPage";
 import { LessonApplication } from "./components/LessonApplication";
 import Home from "./components/Home";
+import { LegalDocs } from "./components/LegalDocs";
 
 // 라우터 컨텍스트 타입 정의
 interface RouterContext {
@@ -135,6 +136,18 @@ const paymentSuccessRoute = createRoute({
   component: PaymentSuccessPage,
 });
 
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/terms",
+  component: () => <LegalDocs type="terms" />,
+});
+
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacy",
+  component: () => <LegalDocs type="privacy" />,
+});
+
 // 라우트 트리 구성
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -143,6 +156,8 @@ const routeTree = rootRoute.addChildren([
   serviceDetailRoute,
   serviceApplyRoute,
   paymentSuccessRoute,
+  termsRoute,
+  privacyRoute,
 ]);
 
 // 라우터 생성
