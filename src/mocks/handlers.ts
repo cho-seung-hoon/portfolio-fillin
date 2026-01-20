@@ -12,7 +12,20 @@ import {
 const MOCK_TOKEN_HEADER = "eyJhGcioJiuUzI1NiIsInR5cCI6IkpXVCJ9";
 
 export const handlers = [
-    // 1. Auth Handlers
+    // Categories Handler
+    http.get("/api/v1/categories", () => {
+        const categoriesData = Array.from(categoryMap.values()).map(c => ({
+            categoryId: c.category_id,
+            name: c.name,
+            parentId: c.parent_category_id
+        }));
+        return HttpResponse.json({
+            status: 200,
+            message: "OK",
+            data: categoriesData
+        });
+    }),
+
     // 1. Auth Handlers
     http.post("/api/v1/auth/login", async ({ request }) => {
         const body = (await request.json()) as any;
@@ -119,7 +132,8 @@ export const handlers = [
                     introduction: "안녕하세요! " + member.nickname + "입니다.",
                     category: {
                         categoryId: 1,
-                        name: "IT/Development"
+                        name: "IT/Development",
+                        parentId: null
                     }
                 }
             });
@@ -258,6 +272,8 @@ export const handlers = [
                 mentorNickName: member.nickname,
                 rating: lesson.rating,
                 categoryId: lesson.category_id,
+                location: lesson.location,
+                closeAt: lesson.close_at,
                 category: categoryMap.get(lesson.category_id)?.name || "Unknown",
                 menteeCount: lesson.studentCount
             };
@@ -424,7 +440,12 @@ export const handlers = [
                     lessonType: lessonType,
                     title: lesson.title,
                     thumbnailImage: lesson.thumbnail_image,
-                    price: lesson.price
+                    price: lesson.price,
+                    location: lesson.location,
+                    closeAt: lesson.close_at,
+                    categoryId: lesson.category_id,
+                    seats: 100, // Default or random
+                    remainSeats: 90
                 },
                 options: [
                     {

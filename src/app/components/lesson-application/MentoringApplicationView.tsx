@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, Clock, Check } from "lucide-react";
 import { format, addDays, startOfWeek, addWeeks } from "date-fns";
@@ -75,7 +75,7 @@ function ScrollableTimeline({
             const targetScroll = (percentage * scrollWidth) - (clientWidth / 2);
             container.scrollLeft = targetScroll;
         }
-    }, [availableTimes, timelineMinWidth]); // 이용 가능한 시간이나 너비가 변경될 때마다 실행
+    }, [JSON.stringify(availableTimes), timelineMinWidth]); // 데이터 내용이 실제로 바뀔 때만 실행
 
     return (
         <div className="space-y-4">
@@ -418,8 +418,13 @@ export function MentoringApplicationView({
     };
 
     const weekStart = getWeekStart(currentWeekOffset);
-    const weekDates = getWeekDates(currentWeekOffset);
-    const futureDates = weekDates.filter((d) => d >= addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 0));
+
+    // 날짜 연산 결과를 useMemo로 메모이제이션하여 참조 안정화
+    const weekDates = useMemo(() => getWeekDates(currentWeekOffset), [currentWeekOffset]);
+    const futureDates = useMemo(() => {
+        const todayStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+        return weekDates.filter((d: Date) => d >= addDays(todayStart, 0));
+    }, [weekDates]);
 
     return (
         <div className="space-y-8">
@@ -496,7 +501,7 @@ export function MentoringApplicationView({
 
                     {/* 일주일 일정 세로 표시 */}
                     <div className="space-y-4">
-                        {futureDates.map((date, idx) => {
+                        {futureDates.map((date: Date, idx: number) => {
                             const availableTimes = getAvailableTimesForDate(date);
                             const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
                             const isPast = date < new Date() && !isToday;

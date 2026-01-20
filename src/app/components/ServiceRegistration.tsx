@@ -22,7 +22,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
@@ -42,6 +44,11 @@ import { useLessonFormStore } from "../../store/useLessonFormStore";
 import { categoryService } from "../../api/category";
 import { lessonService } from "../../api/lesson"; // Import lessonService
 import { CategoryResponseDto } from "../../api/types";
+
+interface CategoryGroup {
+  parent: CategoryResponseDto;
+  children: CategoryResponseDto[];
+}
 
 interface ServiceRegistrationProps {
   onBack: () => void;
@@ -77,7 +84,7 @@ export function ServiceRegistration({
    * Reset will only happen on explicit "Submit Success" or explicit "Cancel/Discard".
    */
 
-  const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Using explicit state for navigation after success to avoid hook rules issues if any,
@@ -94,10 +101,21 @@ export function ServiceRegistration({
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
-        setCategories(data);
-        if (data.length > 0 && categoryId === 1) {
-          // Optional: Auto-select first if currently default(1) [Or keep 1 if it's "General"]
-        }
+
+        // 1. 대분류 추출 (parentId가 없고 이름이 유효한 것)
+        const parents = data.filter(
+          (cat: CategoryResponseDto) => cat.parentId == null && cat.name?.trim() !== ""
+        );
+
+        // 2. 그룹화 (대분류별로 소분류 매칭)
+        const groups: CategoryGroup[] = parents.map(parent => ({
+          parent,
+          children: data.filter(
+            (cat: CategoryResponseDto) => cat.parentId === parent.categoryId && cat.name?.trim() !== ""
+          )
+        })).filter(group => group.children.length > 0); // 소분류가 있는 그룹만 표시 (필요에 따라 조절)
+
+        setCategoryGroups(groups);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
@@ -361,10 +379,17 @@ export function ServiceRegistration({
                       <SelectValue placeholder="카테고리 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
-                          {cat.name}
-                        </SelectItem>
+                      {categoryGroups.map((group) => (
+                        <SelectGroup key={group.parent.categoryId}>
+                          <SelectLabel className="bg-green-50 text-green-700 py-1.5 px-3 my-0.5">
+                            {group.parent.name}
+                          </SelectLabel>
+                          {group.children.map((child) => (
+                            <SelectItem key={child.categoryId} value={child.categoryId.toString()} className="pl-8 capitalize">
+                              {child.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>

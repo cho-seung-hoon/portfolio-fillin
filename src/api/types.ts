@@ -155,6 +155,9 @@ export interface LessonThumbnail {
     rating: number;
     categoryId: number;
     category: string;
+    location: string;
+    closeAt: string;
+    createdAt: string;
     menteeCount: number;
 }
 
@@ -193,6 +196,9 @@ export interface LessonInfoDTO {
     seats?: number;
     remainSeats?: number;
     categoryId: number;
+    location: string;
+    closeAt: string;
+    category: string;
 }
 
 export interface AvailableTimeDTO {
@@ -234,6 +240,7 @@ export interface MyReviewResponseDTO {
 export interface CategoryResponseDto {
     categoryId: number;
     name: string;
+    parentId: number | null;
 }
 
 export interface ProfileResponseDto {
@@ -291,4 +298,16 @@ export interface RegisterLessonRequest {
     seats?: number; // Top level seats
     optionList: LessonOptionRequest[];
     availableTimeList: AvailableTimeRequest[];
+}
+
+export interface EditLessonRequest {
+    title: string;
+    description: string;
+    location: string;
+    categoryId: number;
+    closeAt: string; // Instant ISO string
+}
+
+export interface EditLessonResponse {
+    lessonId: string;
 }
