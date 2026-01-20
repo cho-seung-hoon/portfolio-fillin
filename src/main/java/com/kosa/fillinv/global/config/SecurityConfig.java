@@ -1,6 +1,8 @@
 package com.kosa.fillinv.global.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.kosa.fillinv.global.security.filter.JwtAuthenticationFilter;
 import com.kosa.fillinv.global.security.filter.LoginFilter;
 import com.kosa.fillinv.global.security.jwt.JWTUtil;
@@ -44,7 +46,9 @@ public class SecurityConfig {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        return JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
     }
 
     @Bean

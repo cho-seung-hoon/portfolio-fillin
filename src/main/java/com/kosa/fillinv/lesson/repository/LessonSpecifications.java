@@ -12,12 +12,28 @@ public class LessonSpecifications {
     public static Specification<Lesson> search(
             String keyword,
             LessonType lessonType,
-            Long categoryId
+            Long categoryId,
+            String mentorId
     ) {
-        return Specification
-                .where(keywordContains(keyword))
+        return Specification.where(deletedAtIsNull())
+                .and(keywordContains(keyword))
                 .and(lessonTypeEq(lessonType))
-                .and(categoryIdEq(categoryId));
+                .and(categoryIdEq(categoryId))
+                .and(mentorIdEq(mentorId));
+    }
+
+    public static Specification<Lesson> mentorIdEq(String mentorId) {
+        return (root, query, cb) -> {
+            if (mentorId == null || mentorId.isBlank()) {
+                return null;
+            }
+            return cb.equal(root.get("mentorId"), mentorId);
+        };
+    }
+
+    public static Specification<Lesson> deletedAtIsNull() {
+        return (root, query, cb) ->
+                cb.isNull(root.get("deletedAt"));
     }
 
     private static Specification<Lesson> keywordContains(String keyword) {

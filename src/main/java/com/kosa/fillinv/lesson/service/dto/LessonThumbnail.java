@@ -10,12 +10,14 @@ public record LessonThumbnail(
         String mentorNickName,
         Float rating,
         Long categoryId,
+        String category,
         Integer menteeCount
 ) {
     public static LessonThumbnail of(
             LessonDTO lesson,
             MentorSummaryDTO mentor,
             Float rating,
+            String category,
             Integer menteeCount
     ) {
         return new LessonThumbnail(
@@ -26,6 +28,7 @@ public record LessonThumbnail(
                 mentor.nickname(),
                 rating,
                 lesson.categoryId(),
+                category,
                 menteeCount
         );
     }

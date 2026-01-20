@@ -1,5 +1,8 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.category.dto.CategoryResponseDto;
+import com.kosa.fillinv.category.entity.Category;
+import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.service.client.*;
@@ -28,6 +31,8 @@ public class LessonReadService {
 
     private final StockClient stockClient;
 
+    private final CategoryService categoryService;
+
     private final ScheduleClient scheduleClient;
 
     private static final Set<ScheduleStatus> PARTICIPATED_STATUSES = Set.of(ScheduleStatus.APPROVED, ScheduleStatus.COMPLETED);
@@ -37,30 +42,28 @@ public class LessonReadService {
     }
 
     public Page<LessonThumbnail> search(LessonSearchCondition condition) {
-        condition = condition == null ? LessonSearchCondition.defaultCondition() : condition;
+        LessonSearchCondition resolved =
+                condition == null ? LessonSearchCondition.defaultCondition() : condition;
 
-        Page<LessonDTO> lessonPage = lessonService.searchLesson(condition);
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
+        return assembleLessonThumbnail(lessonPage);
+    }
 
-        Set<String> mentorIds = lessonPage.stream()
-                .map(LessonDTO::mentorId)
-                .collect(Collectors.toSet());
-        Set<String> lessonIds = lessonPage.stream()
-                .map(LessonDTO::id)
-                .collect(Collectors.toSet());
+    public Page<LessonThumbnail> searchOwnedBy(
+            LessonSearchCondition condition,
+            String mentorId
+    ) {
+        if (mentorId == null) {
+            throw new ResourceException.InvalidArgument(MENTOR_ID_REQUIRED);
+        }
 
-        Map<String, MentorSummaryDTO> mentorMap = profileClient.getMentors(mentorIds);
-        Map<String, Float> averageRating = reviewClient.getAverageRating(lessonIds);
-        Map<String, Integer> menteeCountMap = scheduleClient.countByLessonIdInAndStatusIn(
-                lessonIds,
-                PARTICIPATED_STATUSES
-        );
+        LessonSearchCondition resolved =
+                condition == null
+                        ? LessonSearchCondition.defaultCondition().ownBy(mentorId)
+                        : condition.ownBy(mentorId);
 
-        return lessonPage.map(lesson -> {
-            MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
-            Float rating = averageRating.get(lesson.id());
-            Integer menteeCount = menteeCountMap.getOrDefault(lesson.id(), 0);
-            return LessonThumbnail.of(lesson, mentor, rating, menteeCount);
-        });
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
+        return assembleLessonThumbnail(lessonPage);
     }
 
     public LessonDetailResult detail(LessonDetailCommand request) {
@@ -69,6 +72,8 @@ public class LessonReadService {
                 .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(request.lessonId())));
 
         MentorSummaryDTO mentorSummaryDTO = profileClient.readMentorById(lessonDTO.mentorId());
+
+        Category category = categoryService.getCategoryById(lessonDTO.categoryId());
 
         Set<String> keys = Set.of();
         if (lessonDTO.lessonType() == LessonType.STUDY) {
@@ -101,6 +106,54 @@ public class LessonReadService {
                 PARTICIPATED_STATUSES
         );
 
-        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO, lessonRemainSeats, availableTimeRemainSeats, menteeCount == null ? 0 : menteeCount);
+        return LessonDetailResult.of(
+                mentorSummaryDTO,
+                lessonDTO,
+                lessonRemainSeats,
+                availableTimeRemainSeats,
+                category.getName(),
+                menteeCount == null ? 0 : menteeCount
+        );
+    }
+
+    private Page<LessonThumbnail> assembleLessonThumbnail(
+            Page<LessonDTO> lessonPage
+    ) {
+        if (lessonPage.isEmpty()) {
+            return Page.empty(lessonPage.getPageable());
+        }
+
+        Map<Long, CategoryResponseDto> allCategoriesMap = categoryService.getAllCategoriesMap();
+
+        Set<String> mentorIds = lessonPage.stream()
+                .map(LessonDTO::mentorId)
+                .collect(Collectors.toSet());
+        Set<String> lessonIds = lessonPage.stream()
+                .map(LessonDTO::id)
+                .collect(Collectors.toSet());
+
+        Map<String, MentorSummaryDTO> mentorMap =
+                profileClient.getMentors(mentorIds);
+
+        Map<String, Float> averageRating =
+                reviewClient.getAverageRating(lessonIds);
+
+        Map<String, Integer> menteeCountMap = scheduleClient.countByLessonIdInAndStatusIn(
+                lessonIds,
+                PARTICIPATED_STATUSES
+        );
+
+        return lessonPage.map(lesson -> {
+            MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
+            Float rating = averageRating.get(lesson.id());
+            Integer menteeCount = menteeCountMap.getOrDefault(lesson.id(), 0);
+            return LessonThumbnail.of(
+                    lesson,
+                    mentor,
+                    rating,
+                    allCategoriesMap.get(lesson.categoryId()) == null ? null : allCategoriesMap.get(lesson.categoryId()).name(),
+                    menteeCount
+            );
+        });
     }
 }

@@ -1,6 +1,7 @@
 package com.kosa.fillinv.lesson.entity;
 
 import com.kosa.fillinv.global.entity.BaseEntity;
+import com.kosa.fillinv.global.exception.ResourceException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -91,7 +92,7 @@ public class Lesson extends BaseEntity {
     }
 
     public void updateThumbnailImage(String thumbnailImageUrl) {
-        if (thumbnailImageUrl.isBlank()) return;
+        if (thumbnailImageUrl == null || thumbnailImageUrl.isBlank()) return;
         this.thumbnailImage = thumbnailImageUrl;
     }
 
@@ -170,5 +171,11 @@ public class Lesson extends BaseEntity {
 
     public List<Option> getOptionList() {
         return optionList.stream().filter(option -> option.getDeletedAt() == null).toList();
+    }
+
+    public void validateOwnership(String ownerId) {
+        if (!this.mentorId.equals(ownerId)) {
+            throw new ResourceException.AccessDenied("해당 레슨에 대한 권한이 없습니다.");
+        }
     }
 }
