@@ -152,6 +152,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
   };
 
   const displayPrice = getDisplayPrice();
+  const formatPrice = (value?: number | null) => Number(value ?? 0).toLocaleString();
 
 
   return (
@@ -251,7 +252,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                     <div className="flex justify-between">
                       <span className="text-gray-600">레슨 금액</span>
                       <span className="font-medium">
-                        ₩{displayPrice.toLocaleString()}
+                        ₩{formatPrice(displayPrice)}
                       </span>
                     </div>
                   </div>
@@ -260,7 +261,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                     <div className="flex justify-between items-center">
                       <span className="font-bold">총 결제 금액</span>
                       <span className="text-xl font-bold text-[#00C471]">
-                        ₩{displayPrice.toLocaleString()}
+                        ₩{formatPrice(displayPrice)}
                       </span>
                     </div>
                   </div>

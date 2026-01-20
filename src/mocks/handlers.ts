@@ -17,7 +17,7 @@ export const handlers = [
         const categoriesData = Array.from(categoryMap.values()).map(c => ({
             categoryId: c.category_id,
             name: c.name,
-            parentId: c.parent_category_id
+            parentCategoryId: c.parent_category_id
         }));
         return HttpResponse.json({
             status: 200,
@@ -133,7 +133,7 @@ export const handlers = [
                     category: {
                         categoryId: 1,
                         name: "IT/Development",
-                        parentId: null
+                        parentCategoryId: null
                     }
                 }
             });
@@ -273,7 +273,9 @@ export const handlers = [
                 rating: lesson.rating,
                 categoryId: lesson.category_id,
                 location: lesson.location,
-                closeAt: lesson.close_at
+                closeAt: lesson.close_at,
+                category: categoryMap.get(lesson.category_id)?.name || "Unknown",
+                menteeCount: lesson.studentCount
             };
         });
 
@@ -443,7 +445,9 @@ export const handlers = [
                     closeAt: lesson.close_at,
                     categoryId: lesson.category_id,
                     seats: 100, // Default or random
-                    remainSeats: 90
+                    remainSeats: 90,
+                    category: categoryMap.get(lesson.category_id)?.name || "Unknown",
+                    menteeCount: lesson.studentCount
                 },
                 options: [
                     {

@@ -70,7 +70,54 @@ export function StudyScheduleView({ service }: StudyScheduleViewProps) {
                 </div>
             </div>
 
-            {/* 스터디 일정 캘린더 (Moved to Top) */}
+            {/* 회차별 일정 */}
+            <div className="mb-8">
+                <h4 className="font-medium mb-3">회차별 일정</h4>
+                <div className="space-y-2">
+                    {service.schedules["1-n-study"]?.sessions.map((session, idx) => {
+                        const [year, month, day] = session.date.split("-").map(Number);
+                        const dateObj = new Date(year, month - 1, day);
+                        const isSelected = selectedDate && isSameDay(dateObj, selectedDate);
+
+                        return (
+                            <div
+                                key={idx}
+                                className={`border rounded-lg py-2 px-4 flex items-center gap-4 transition-all ${isSelected
+                                        ? "border-[#00C471] bg-[#E6F9F2] ring-1 ring-[#00C471]"
+                                        : "border-gray-100 bg-gray-50/50"
+                                    }`}
+                            >
+                                <div className={`flex-shrink-0 size-8 rounded-full border flex items-center justify-center font-bold text-xs transition-colors ${isSelected
+                                        ? "bg-[#00C471] text-white border-[#00C471]"
+                                        : "bg-white border-gray-200 text-gray-400"
+                                    }`}>
+                                    {session.session}
+                                </div>
+                                <div className="flex-1 flex items-center justify-between">
+                                    <div className={`font-medium transition-colors ${isSelected ? "text-[#00C471]" : "text-gray-900"
+                                        }`}>
+                                        {format(dateObj, "M월 d일 (EEE)", { locale: ko })}
+                                    </div>
+                                    <div className={`text-sm flex items-center gap-1.5 transition-colors ${isSelected ? "text-[#00C471]/80" : "text-gray-500"
+                                        }`}>
+                                        <Clock className="size-3.5" />
+                                        {session.time}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-900">
+                        💡 <strong>스터디 과정:</strong> 전체{" "}
+                        {service.schedules["1-n-study"]?.totalSessions}회차를 모두 수강해야 하며,
+                        체계적인 학습을 위해 순차적으로 진행됩니다.
+                    </p>
+                </div>
+            </div>
+
+            {/* 일정 캘린더 */}
             <div className="mb-8">
                 <h4 className="font-medium mb-4">일정 캘린더</h4>
 
@@ -174,85 +221,6 @@ export function StudyScheduleView({ service }: StudyScheduleViewProps) {
                             );
                         })}
                     </div>
-                </div>
-
-                {/* 선택된 날짜의 스터디 세션 정보 */}
-                {selectedDate && (() => {
-                    const selectedStudySessions = getStudySessionsForDate(selectedDate);
-                    return selectedStudySessions.length > 0 ? (
-                        <div>
-                            <h3 className="font-medium mb-3">
-                                {format(selectedDate, "M월 d일 (EEE)", { locale: ko })} 일정
-                            </h3>
-                            <div className="space-y-3">
-                                {selectedStudySessions.map((session, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="border border-[#FF9500] bg-[#FFF4E6] rounded-lg p-4"
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className="flex-shrink-0 size-10 rounded-full bg-[#FF9500] text-white flex items-center justify-center font-bold">
-                                                {session.session}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="font-medium text-[#FF9500] mb-1">{session.topic}</div>
-                                                <div className="flex items-center gap-3 text-sm text-gray-600">
-                                                    <span className="flex items-center gap-1">
-                                                        <Clock className="size-3" />
-                                                        {session.time}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : null;
-                })()}
-            </div>
-
-            {/* 커리큘럼 (Moved to Bottom) */}
-            <div>
-                <h4 className="font-medium mb-3">커리큘럼</h4>
-                <div className="space-y-2">
-                    {service.schedules["1-n-study"]?.sessions.map((session, idx) => {
-                        const [year, month, day] = session.date.split("-").map(Number);
-                        const dateObj = new Date(year, month - 1, day);
-
-                        return (
-                            <div
-                                key={idx}
-                                className="border border-gray-200 rounded-lg p-4 hover:border-[#00C471] transition-colors"
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0 size-10 rounded-full bg-[#E6F9F2] text-[#00C471] flex items-center justify-center font-bold">
-                                        {session.session}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="font-medium mb-1">{session.topic}</div>
-                                        <div className="text-sm text-gray-500 flex items-center gap-3">
-                                            <span className="flex items-center gap-1">
-                                                <Calendar className="size-3" />
-                                                {format(dateObj, "M월 d일 (EEE)", { locale: ko })}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="size-3" />
-                                                {session.time}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-900">
-                        💡 <strong>스터디 과정:</strong> 전체{" "}
-                        {service.schedules["1-n-study"]?.totalSessions}회차를 모두 수강해야 하며,
-                        체계적인 학습을 위해 순차적으로 진행됩니다.
-                    </p>
                 </div>
             </div>
         </div>

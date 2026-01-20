@@ -58,6 +58,9 @@ interface ServiceRegistrationState {
     addAvailableTime: (time: AvailableTime) => void;
     removeAvailableTime: (index: number) => void; // Using index for now as primitive identifiers might be duplicated or complex
 
+    selectedDate: Date | undefined;
+    setSelectedDate: (date: Date | undefined) => void;
+
     reset: () => void;
 }
 
@@ -172,6 +175,9 @@ export const useMentoringRegistrationStore = create<ServiceRegistrationState>((s
         availableTimeList: state.availableTimeList.filter((_, i) => i !== index)
     })),
 
+    selectedDate: undefined,
+    setSelectedDate: (date) => set({ selectedDate: date }),
+
     reset: () =>
         set({
             title: "",
@@ -182,5 +188,6 @@ export const useMentoringRegistrationStore = create<ServiceRegistrationState>((s
             closeAt: null,
             mentoringOptions: [{ id: "1", name: "", priceOptions: [] }],
             availableTimeList: [],
+            selectedDate: undefined,
         }),
 }));

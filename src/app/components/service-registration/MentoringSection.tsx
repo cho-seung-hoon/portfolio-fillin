@@ -29,11 +29,12 @@ export function MentoringSection() {
         removePriceOption,
         updatePriceOption,
         addAvailableTime,
-        removeAvailableTime
+        removeAvailableTime,
+        selectedDate,
+        setSelectedDate
     } = useMentoringRegistrationStore();
 
     // Local UI State for interactions
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [selectingStartHour, setSelectingStartHour] = useState<number | null>(null);
 
     // --- Schedule Logic (Adapted for flat list) ---

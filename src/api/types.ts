@@ -154,10 +154,11 @@ export interface LessonThumbnail {
     mentorNickName: string;
     rating: number;
     categoryId: number;
+    category: string;
     location: string;
     closeAt: string;
     createdAt: string;
-    category: string;
+    menteeCount: number;
 }
 
 export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC";
@@ -198,6 +199,7 @@ export interface LessonInfoDTO {
     location: string;
     closeAt: string;
     category: string;
+    menteeCount: number;
 }
 
 export interface AvailableTimeDTO {
@@ -239,7 +241,7 @@ export interface MyReviewResponseDTO {
 export interface CategoryResponseDto {
     categoryId: number;
     name: string;
-    parentId: number | null;
+    parentCategoryId: number | null;
 }
 
 export interface ProfileResponseDto {

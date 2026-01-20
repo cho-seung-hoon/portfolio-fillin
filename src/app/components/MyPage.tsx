@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router"; // Import useNavigate
+import { useAuthStore } from "../../stores/authStore"; // Import useAuthStore
 import { ProjectHeader } from "./ProjectHeader";
 import { MyPageSidebar } from "./MyPageSidebar";
 import { MyPageHome } from "./MyPageHome";
@@ -8,24 +10,23 @@ import { ProfileManagement } from "./ProfileManagement";
 import { LessonManagement } from "./LessonManagement";
 import { ProjectFooter } from "./ProjectFooter";
 
-interface MyPageProps {
-  user: { email: string; name: string };
-  onLoginClick: () => void;
-  onLogout: () => void;
-  onNavigateToMain: () => void;
-  onNavigateToServiceRegistration?: () => void;
-}
-
-export function MyPage({ user, onLoginClick, onLogout, onNavigateToMain, onNavigateToServiceRegistration }: MyPageProps) {
+export function MyPage() {
+  const user = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
+
+  // RequiredAuth wrapper guarantees user is present, but for TS correctness we can handle it or assume it.
+  // Since we are inside RequiredAuth, user should not be null.
+  if (!user) return null;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <ProjectHeader
-        onLoginClick={onLoginClick}
+        onLoginClick={() => { }} // User is logged in, so this is no-op or we can hide logic inside header
+        onSignupClick={() => { }}
         onNavigateToMyPage={() => { }}
-        onNavigateToMain={onNavigateToMain}
-        onNavigateToServiceRegistration={onNavigateToServiceRegistration}
+        onNavigateToMain={() => navigate({ to: "/" })}
+        onNavigateToServiceRegistration={() => navigate({ to: "/service/register" })}
       />
 
       <div className="flex flex-1">
