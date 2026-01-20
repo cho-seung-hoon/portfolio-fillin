@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -24,6 +24,8 @@ export function ProfileManagement() {
   const [introduction, setIntroduction] = useState("");
   const [category, setCategory] = useState<CategoryResponseDto | null>(null);
   const [categories, setCategories] = useState<CategoryResponseDto[]>([]);
+  const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [phone, setPhone] = useState("");
 
   // UI States
@@ -69,13 +71,26 @@ export function ProfileManagement() {
       }
     };
 
+    const syncCategorySelection = (categoryList: CategoryResponseDto[], selected?: CategoryResponseDto | null) => {
+      const target = selected ?? category;
+      if (!target) return;
+      const found = categoryList.find((c) => c.categoryId === target.categoryId);
+      if (!found) return;
+      if (found.parentCategoryId) {
+        setSelectedParentId(found.parentCategoryId);
+        setSelectedChildId(found.categoryId);
+      } else {
+        setSelectedParentId(found.categoryId);
+        setSelectedChildId(null);
+      }
+    };
+
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
         if (!data) return;
 
-        const filtered = data
-          .filter((cat: CategoryResponseDto) => cat.parentId == null)
+        const normalized = data
           .map((cat: CategoryResponseDto) => ({
             ...cat,
             name: (!cat.name || cat.name.trim() === "") ? "태그 없음" : cat.name,
@@ -85,8 +100,9 @@ export function ProfileManagement() {
             if (b.name === "태그 없음") return 1;
             return (a.name || "").localeCompare(b.name || "");
           });
-        console.log("Sorted and filtered categories:", filtered);
-        setCategories(filtered);
+
+        setCategories(normalized);
+        syncCategorySelection(normalized, category);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
@@ -96,6 +112,48 @@ export function ProfileManagement() {
     fetchCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!categories.length || !category) return;
+    const found = categories.find((c) => c.categoryId === category.categoryId);
+    if (!found) return;
+    if (found.parentCategoryId) {
+      setSelectedParentId(found.parentCategoryId);
+      setSelectedChildId(found.categoryId);
+    } else {
+      setSelectedParentId(found.categoryId);
+      setSelectedChildId(null);
+    }
+  }, [categories, category]);
+
+  const majorCategories = categories.filter(
+    (cat) => cat.parentCategoryId === null && cat.name.trim() !== ""
+  );
+
+  const minorCategories = categories.filter(
+    (cat) => selectedParentId !== null && cat.parentCategoryId === selectedParentId
+  );
+
+  const handleParentChange = (value: string) => {
+    const parentId = Number(value);
+    setSelectedParentId(parentId);
+    const firstChild = categories.find((cat) => cat.parentCategoryId === parentId);
+    if (firstChild) {
+      setSelectedChildId(firstChild.categoryId);
+      setCategory(firstChild);
+    } else {
+      const parent = categories.find((cat) => cat.categoryId === parentId);
+      if (parent) setCategory(parent);
+      setSelectedChildId(null);
+    }
+  };
+
+  const handleChildChange = (value: string) => {
+    const childId = Number(value);
+    setSelectedChildId(childId);
+    const child = categories.find((cat) => cat.categoryId === childId);
+    if (child) setCategory(child);
+  };
 
   const handleUpdateNickname = async () => {
     try {
@@ -266,31 +324,46 @@ export function ProfileManagement() {
               {/* Category */}
               <div className="space-y-3">
                 <label className="text-gray-600">카테고리</label>
-                <div className="flex flex-col gap-2">
-                  <select
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={category?.categoryId || ""}
-                    onChange={(e) => {
-                      const selected = categories.find((c) => String(c.categoryId) === e.target.value);
-                      if (selected) {
-                        setCategory(selected);
-                        console.log("Category selected:", selected);
-                      }
-                    }}
-                  >
-                    <option value="" disabled>
-                      카테고리를 선택하세요
-                    </option>
-                    {categories.map((cat) => (
-                      <option key={cat.categoryId} value={cat.categoryId}>
-                        {cat.name}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-600">대분류</label>
+                    <select
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={selectedParentId ?? ""}
+                      onChange={(e) => handleParentChange(e.target.value)}
+                    >
+                      <option value="" disabled>
+                        대분류를 선택하세요
                       </option>
-                    ))}
-                  </select>
-                  <p className="text-sm text-gray-500">
-                    * 전문 분야를 선택해주세요.
-                  </p>
+                      {majorCategories.map((cat) => (
+                        <option key={cat.categoryId} value={cat.categoryId}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-600">소분류</label>
+                    <select
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={selectedChildId ?? ""}
+                      onChange={(e) => handleChildChange(e.target.value)}
+                      disabled={!minorCategories.length}
+                    >
+                      <option value="" disabled>
+                        {minorCategories.length ? "소분류를 선택하세요" : "대분류를 먼저 선택"}
+                      </option>
+                      {minorCategories.map((cat) => (
+                        <option key={cat.categoryId} value={cat.categoryId}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+                <p className="text-sm text-gray-500">
+                  * 전문 분야를 선택해주세요.
+                </p>
               </div>
 
               {/* Introduction */}

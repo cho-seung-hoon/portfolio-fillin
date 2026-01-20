@@ -456,7 +456,7 @@ export function MentoringApplicationView({
                                 <span className="text-sm text-gray-500">{option.duration}</span>
                             </div>
                             <div className="text-lg font-bold text-[#00C471]">
-                                ₩{option.price.toLocaleString()}
+                                ₩{Number(option.price ?? 0).toLocaleString()}
                             </div>
                         </button>
                     ))}

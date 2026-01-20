@@ -1,10 +1,10 @@
-import client from "./client";
+import client, { publicClient } from "./client";
 import { Lesson, LessonListResult } from "../types/lesson";
 import { SuccessResponse, PageResponse, LessonThumbnail, LessonSortTypeEnum, RegisterLessonRequest, LessonSearchCondition } from "./types";
 import { RegisterLessonResponse } from "./dto/lesson-creation-result";
 
 export interface LessonService {
-    getLessons(search?: string, page?: number, sort?: string): Promise<LessonListResult>;
+    getLessons(search?: string, page?: number, sort?: string, categoryId?: number): Promise<LessonListResult>;
     getOwnLessons(condition?: Partial<LessonSearchCondition>): Promise<Lesson[]>;
     createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<string>;
     updateLesson(lessonId: string, request: RegisterLessonRequest, thumbnail?: File): Promise<void>;
@@ -13,7 +13,7 @@ export interface LessonService {
 
 
 class DefaultLessonService implements LessonService {
-    async getLessons(search?: string, page: number = 1, sort?: string): Promise<LessonListResult> {
+    async getLessons(search?: string, page: number = 1, sort?: string, categoryId?: number): Promise<LessonListResult> {
         // Map UI sort to API Enum
         let sortType: LessonSortTypeEnum = "CREATED_AT_DESC";
         switch (sort) {
@@ -27,13 +27,20 @@ class DefaultLessonService implements LessonService {
             default: sortType = "CREATED_AT_DESC"; break;
         }
 
-        const response = await client.get<SuccessResponse<PageResponse<LessonThumbnail>>>("/v1/lessons/search", {
-            params: {
-                keyword: search,
-                page,
-                size: 20,
-                sortType
-            }
+        const params: Record<string, any> = {
+            keyword: search,
+            page,
+            size: 20,
+            sortType
+        };
+
+        if (categoryId !== undefined) {
+            params.categoryId = categoryId;
+        }
+
+        // 목록 조회는 비로그인도 가능하도록 publicClient 사용
+        const response = await publicClient.get<SuccessResponse<PageResponse<LessonThumbnail>>>("/v1/lessons/search", {
+            params
         });
 
         const mappedLessons = response.data.data.content.map(this.mapThumbnailToModel);
@@ -66,7 +73,7 @@ class DefaultLessonService implements LessonService {
             price: 999999, // Hardcoded as requested
             originalPrice: undefined,
             rating: dto.rating,
-            studentCount: dto.menteeCount, // Updated from hardcoded 999
+            studentCount: dto.menteeCount ?? 0, // Guard against undefined
             thumbnail: dto.thumbnailImage,
             category: dto.category, // Updated from placeholder string
             categoryId: dto.categoryId,

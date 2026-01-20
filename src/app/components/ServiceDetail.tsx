@@ -27,6 +27,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
   const [activeTab, setActiveTab] = useState<"description" | "schedule">("description");
   const [service, setService] = useState<LessonDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const formatNumber = (value?: number | null) => Number(value ?? 0).toLocaleString();
 
   useEffect(() => {
     const fetchService = async () => {
@@ -116,7 +117,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                       </div>
                       <div className="flex items-center gap-1 text-gray-600">
                         <Users className="size-4" />
-                        <span>{service.studentCount.toLocaleString()}명 수강</span>
+                        <span>{formatNumber(service.studentCount)}명 수강</span>
                       </div>
                       <div className="px-3 py-1 bg-[#E6F9F2] text-[#00C471] rounded-full text-xs font-medium">
                         {service.serviceType}
@@ -207,14 +208,14 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     <div className="flex items-baseline gap-2 mb-2">
                       {service.originalPrice && (
                         <span className="text-sm text-gray-400 line-through">
-                          ₩{service.originalPrice.toLocaleString()}
+                          ₩{formatNumber(service.originalPrice)}
                         </span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold">
                         {(service.serviceType === 'oneday' || service.serviceType === 'mentoring') && <span className="text-lg text-gray-500 font-medium mr-1">최저</span>}
-                        ₩{service.price.toLocaleString()}
+                        ₩{formatNumber(service.price)}
                       </span>
                       {service.originalPrice && (
                         <span className="text-sm font-medium text-red-500">
@@ -238,7 +239,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Users className="size-4" />
-                      <span>현재 {service.studentCount}명 수강 중</span>
+                      <span>현재 {formatNumber(service.studentCount)}명 수강 중</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Star className="size-4" />

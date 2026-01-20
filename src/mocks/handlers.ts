@@ -17,7 +17,7 @@ export const handlers = [
         const categoriesData = Array.from(categoryMap.values()).map(c => ({
             categoryId: c.category_id,
             name: c.name,
-            parentId: c.parent_category_id
+            parentCategoryId: c.parent_category_id
         }));
         return HttpResponse.json({
             status: 200,
@@ -133,7 +133,7 @@ export const handlers = [
                     category: {
                         categoryId: 1,
                         name: "IT/Development",
-                        parentId: null
+                        parentCategoryId: null
                     }
                 }
             });

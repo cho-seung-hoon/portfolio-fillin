@@ -241,7 +241,7 @@ export interface MyReviewResponseDTO {
 export interface CategoryResponseDto {
     categoryId: number;
     name: string;
-    parentId: number | null;
+    parentCategoryId: number | null;
 }
 
 export interface ProfileResponseDto {

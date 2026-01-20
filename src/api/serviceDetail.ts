@@ -88,7 +88,7 @@ class DefaultServiceDetailService implements ServiceDetailService {
             time: `${formatTime(startTime)}-${formatTime(endTime)}`,
             maxSeats: at.seats ?? 0,
             remaining: at.remainSeats ?? 0,
-            price: at.price
+            price: Number.isFinite(at.price) ? at.price : 0,
           };
         })
       };
@@ -119,21 +119,25 @@ class DefaultServiceDetailService implements ServiceDetailService {
     }
 
     // Calculate Price
-    let displayPrice = dto.lesson.price ?? 0;
+    let displayPrice = Number(dto.lesson.price ?? 0);
 
     // For ONEDAY, if price is 0 (or explicitly dependent on options/times), check availableTimes
     // But user said for STUDY, we use "Lesson's price".
     // For ONEDAY, we previously used min price of times. 
     // For ONEDAY, if price is 0 (or explicitly dependent on options/times), check availableTimes
     if (type === "oneday" && dto.availableTimes && dto.availableTimes.length > 0) {
-      const minPrice = Math.min(...dto.availableTimes.map(t => t.price));
-      if (displayPrice === 0) displayPrice = minPrice;
+      const prices = dto.availableTimes.map(t => t.price).filter((p): p is number => typeof p === "number" && !Number.isNaN(p));
+      if (prices.length > 0) {
+        const minPrice = Math.min(...prices);
+        if (displayPrice === 0) displayPrice = minPrice;
+      }
     }
 
     // For MENTORING, calculate min price from options
     if (type === "mentoring" && dto.options && dto.options.length > 0) {
-      if (displayPrice === 0) {
-        displayPrice = Math.min(...dto.options.map(o => o.price));
+      const optionPrices = dto.options.map(o => o.price).filter((p): p is number => typeof p === "number" && !Number.isNaN(p));
+      if (displayPrice === 0 && optionPrices.length > 0) {
+        displayPrice = Math.min(...optionPrices);
       }
     }
 
@@ -144,10 +148,10 @@ class DefaultServiceDetailService implements ServiceDetailService {
       location: dto.lesson.location,
       closeAt: dto.lesson.closeAt,
       instructor: dto.mentor.nickname,
-      price: displayPrice,
+      price: Number.isFinite(displayPrice) ? displayPrice : 0,
       originalPrice: undefined,
       rating: 0, // Placeholder, updated in getServiceDetail
-      studentCount: dto.lesson.menteeCount, // Updated from MOCKED 99999
+      studentCount: Number(dto.lesson.menteeCount ?? 0), // Guard against undefined from API
       thumbnail: dto.lesson.thumbnailImage,
       category: dto.lesson.category,
       categoryId: dto.lesson.categoryId ?? 1, // Use from DTO
@@ -169,7 +173,7 @@ class DefaultServiceDetailService implements ServiceDetailService {
         name: opt.name,
         duration: `${opt.minute}분`,
         minute: opt.minute,
-        price: opt.price
+        price: Number.isFinite(opt.price) ? opt.price : 0,
       })),
       reviewCount: 0,
       schedules: schedules,

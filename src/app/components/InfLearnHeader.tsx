@@ -27,6 +27,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "./ui/avatar";
+import { getImageUrl } from "../../utils/image";
 
 interface InfLearnHeaderProps {
   onLoginClick: () => void;
@@ -50,12 +51,12 @@ export function InfLearnHeader({
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-8">
-            <h1
-              className="text-2xl text-[#00C471] cursor-pointer"
+            <img
+              src={getImageUrl("logo.png")}
+              alt="logo"
+              className="h-8 w-auto cursor-pointer"
               onClick={onNavigateToMain}
-            >
-              로고
-            </h1>
+            />
           </div>
 
           {/* Right Actions */}

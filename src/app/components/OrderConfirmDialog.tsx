@@ -32,6 +32,8 @@ export function OrderConfirmDialog({
     selectedDate,
     totalPrice,
 }: OrderConfirmDialogProps) {
+    const formatPrice = (value?: number | null) => Number(value ?? 0).toLocaleString();
+
     const renderSchedule = () => {
         if (service.serviceType === "mentoring") {
             if (!selectedDate || !selectedSlot) return "-";
@@ -124,7 +126,7 @@ export function OrderConfirmDialog({
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">결제 금액</h3>
                         <div className="bg-[#E6F9F2] p-4 rounded-xl flex items-center justify-between border border-[#00C471]/20">
                             <span className="text-gray-700 font-medium">총 결제금액</span>
-                            <span className="text-xl font-bold text-[#00C471]">₩{totalPrice.toLocaleString()}</span>
+                            <span className="text-xl font-bold text-[#00C471]">₩{formatPrice(totalPrice)}</span>
                         </div>
                     </div>
 

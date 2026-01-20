@@ -22,7 +22,7 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState(initialSort);
   const [priceFilter, setPriceFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
@@ -38,8 +38,13 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
     const fetchLessons = async () => {
       setLoading(true);
       try {
-        // API 호출 시 검색어와 페이지(0-based), 정렬 전달
-        const { lessons: data, totalCount } = await lessonService.getLessons(initialSearchQuery, Math.max(0, page - 1), sortBy);
+        // API 호출 시 검색어, 페이지(0-based), 정렬, 카테고리 ID 전달
+        const { lessons: data, totalCount } = await lessonService.getLessons(
+          initialSearchQuery,
+          Math.max(0, page - 1),
+          sortBy,
+          selectedCategoryId || undefined
+        );
         setLessons(data);
         setTotalCount(totalCount);
       } catch (error) {
@@ -49,23 +54,16 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
       }
     };
     fetchLessons();
-  }, [initialSearchQuery, page, sortBy]);
+  }, [initialSearchQuery, page, sortBy, selectedCategoryId]);
 
   const handleLessonClick = (lessonId: string) => {
     navigate({ to: "/service/$id", params: { id: lessonId.toString() } });
   };
 
   // Client-side filtering/sorting is temporarily applied ONLY to the current page
-  // In a full implementation, these params should also be passed to the API
+  // Category filtering is now handled by API, but other filters remain client-side
   const filteredAndSortedLessons = useMemo(() => {
     let filtered = lessons;
-
-    // Filter by category
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter(
-        (lesson) => lesson.category === selectedCategory
-      );
-    }
 
     // Filter by price
     if (priceFilter === "free") {
@@ -88,7 +86,7 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
 
     // Sorting is now handled by the API, so we just return the filtered list
     return filtered;
-  }, [lessons, selectedCategory, priceFilter, levelFilter, serviceTypeFilter]); // Removed sortBy from dep array as it triggers API fetch now
+  }, [lessons, priceFilter, levelFilter, serviceTypeFilter]); // Removed sortBy and selectedCategory from dep array as they trigger API fetch now
 
   // Pagination logic using server totalCount
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -129,9 +127,9 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
         }}
       />
       <CategoryTabs
-        selectedCategory={selectedCategory}
-        onCategoryChange={(category) => {
-          setSelectedCategory(category);
+        selectedCategoryId={selectedCategoryId}
+        onCategoryChange={(categoryId) => {
+          setSelectedCategoryId(categoryId);
           handlePageChange(1);
         }}
       />

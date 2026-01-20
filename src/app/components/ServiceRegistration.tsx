@@ -102,16 +102,16 @@ export function ServiceRegistration({
       try {
         const data = await categoryService.getCategories();
 
-        // 1. 대분류 추출 (parentId가 없고 이름이 유효한 것)
+        // 1. 대분류 추출 (parentCategoryId가 없고 이름이 유효한 것)
         const parents = data.filter(
-          (cat: CategoryResponseDto) => cat.parentId == null && cat.name?.trim() !== ""
+          (cat: CategoryResponseDto) => cat.parentCategoryId == null && cat.name?.trim() !== ""
         );
 
         // 2. 그룹화 (대분류별로 소분류 매칭)
         const groups: CategoryGroup[] = parents.map(parent => ({
           parent,
           children: data.filter(
-            (cat: CategoryResponseDto) => cat.parentId === parent.categoryId && cat.name?.trim() !== ""
+            (cat: CategoryResponseDto) => cat.parentCategoryId === parent.categoryId && cat.name?.trim() !== ""
           )
         })).filter(group => group.children.length > 0); // 소분류가 있는 그룹만 표시 (필요에 따라 조절)
 
