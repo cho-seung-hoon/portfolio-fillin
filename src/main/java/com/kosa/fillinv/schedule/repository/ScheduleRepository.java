@@ -1,5 +1,6 @@
 package com.kosa.fillinv.schedule.repository;
 
+import com.kosa.fillinv.lesson.service.dto.LessonCountVO;
 import com.kosa.fillinv.review.dto.UnwrittenReviewVO;
 import com.kosa.fillinv.schedule.entity.Schedule;
 import com.kosa.fillinv.schedule.entity.ScheduleStatus;
@@ -9,6 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
+import java.util.List;
 
 import java.time.Instant;
 import java.util.List;
@@ -37,6 +41,14 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
 
     // 멘토 스케쥴 조회 (Batch Fetch Size가 N+1 문제를 알아서 최적화)
     Page<Schedule> findByMentorId(String memberId, Pageable pageable);
+
+    @Query("SELECT new com.kosa.fillinv.lesson.service.dto.LessonCountVO(s.lessonId, COUNT(s)) " +
+            "FROM Schedule s " +
+            "WHERE s.lessonId IN :lessonIds AND s.status IN :statuses " +
+            "GROUP BY s.lessonId")
+    List<LessonCountVO> countByLessonIdInAndStatusIn(@Param("lessonIds") Collection<String> lessonIds, @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    Long countByLessonIdAndStatusIn(String lessonId, Collection<ScheduleStatus> statuses);
 
     @Query("SELECT s.lessonId, COUNT(s) FROM Schedule s JOIN Lesson l ON s.lessonId = l.id WHERE s.createdAt >= :startDate AND s.deletedAt IS NULL AND l.deletedAt IS NULL GROUP BY s.lessonId")
     List<Object[]> countByLessonIdAndCreatedAtAfter(@Param("startDate") Instant startDate);

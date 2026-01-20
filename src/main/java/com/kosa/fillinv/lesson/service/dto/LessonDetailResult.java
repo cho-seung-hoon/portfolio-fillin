@@ -17,11 +17,12 @@ public record LessonDetailResult(
             LessonDTO lessonDTO,
             Integer lessonRemainSeats,
             Map<String, Integer> availableTimeRemainSeats,
-            String categoryName
+            String categoryName,
+            Integer menteeCount
     ) {
         return new LessonDetailResult(
                 Mentor.of(mentorSummaryDTO),
-                Lesson.of(lessonDTO, lessonRemainSeats, categoryName),
+                Lesson.of(lessonDTO, lessonRemainSeats, categoryName, menteeCount),
                 lessonDTO.optionDTOList().stream().map(Option::of).toList(),
                 lessonDTO.availableTimeDTOList().stream()
                         .map(dt -> AvailableTime.of(dt, availableTimeRemainSeats != null ? availableTimeRemainSeats.get(dt.id()) : null))
@@ -56,9 +57,10 @@ public record LessonDetailResult(
             Long categoryId,
             String location,
             Instant closeAt,
-            String category
+            String category,
+            Integer menteeCount
     ) {
-        public static Lesson of(LessonDTO lessonDTO, Integer remainSeats, String categoryName) {
+        public static Lesson of(LessonDTO lessonDTO, Integer remainSeats, String categoryName, Integer menteeCount) {
             return new Lesson(
                     lessonDTO.id(),
                     lessonDTO.description(),
@@ -71,7 +73,8 @@ public record LessonDetailResult(
                     lessonDTO.categoryId(),
                     lessonDTO.location(),
                     lessonDTO.closeAt(),
-                    categoryName
+                    categoryName,
+                    menteeCount
             );
         }
     }
