@@ -1,6 +1,5 @@
 package com.kosa.fillinv.lesson.controller;
 
-import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.global.response.SuccessResponse;
 import com.kosa.fillinv.lesson.controller.dto.*;
 import com.kosa.fillinv.lesson.service.LessonReadService;
@@ -54,9 +53,6 @@ public class LessonController {
             @AuthenticationPrincipal UserDetails principal,
             @ModelAttribute LessonSearchCondition condition
     ) {
-        if (principal == null) {
-            throw new ResourceException.AccessDenied("인증이 필요한 기능입니다.");
-        }
         String mentorId = principal.getUsername();
 
         Page<LessonThumbnail> result = lessonReadService.searchOwnedBy(condition, mentorId);
