@@ -30,6 +30,7 @@ public class DefaultScheduleClient implements ScheduleClient {
 
     @Override
     public Integer countByLessonIdAndStatusIn(String lessonId, Collection<ScheduleStatus> statuses) {
-        return scheduleRepository.countByLessonIdAndStatusIn(lessonId, statuses).intValue();
+        Long count = scheduleRepository.countByLessonIdAndStatusIn(lessonId, statuses);
+        return count != null ? count.intValue() : 0;
     }
 }
