@@ -20,6 +20,7 @@ interface LessonFormState {
     setCategoryId: (id: number) => void;
     setCloseAt: (date: string | null) => void;
     setThumbnail: (file: File | null) => void;
+    setThumbnailPreview: (url: string | null) => void;
 
     reset: () => void;
 }
@@ -48,6 +49,7 @@ export const useLessonFormStore = create<LessonFormState>((set) => ({
             set({ thumbnailImage: null, thumbnailPreview: null });
         }
     },
+    setThumbnailPreview: (thumbnailPreview) => set({ thumbnailPreview }),
 
     reset: () => set({
         title: "",

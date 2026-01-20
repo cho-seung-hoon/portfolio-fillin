@@ -141,13 +141,15 @@ class DefaultServiceDetailService implements ServiceDetailService {
       // Base Lesson fields
       id: dto.lesson.lessonId, // Convert string ID from new API
       title: dto.lesson.title,
+      location: dto.lesson.location,
+      closeAt: dto.lesson.closeAt,
       instructor: dto.mentor.nickname,
       price: displayPrice,
       originalPrice: undefined,
       rating: 0, // Placeholder, updated in getServiceDetail
       studentCount: 99999, // MOCKED
       thumbnail: dto.lesson.thumbnailImage,
-      category: "이거바꿔야함!! (Category)", // MOCKED
+      category: dto.lesson.category,
       categoryId: dto.lesson.categoryId ?? 1, // Use from DTO
       level: "입문", // MOCKED to satisfy type
       tags: ["이거바꿔야함!! (Tags)"], // MOCKED

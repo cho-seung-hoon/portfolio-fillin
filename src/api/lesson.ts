@@ -1,10 +1,13 @@
 import client from "./client";
 import { Lesson, LessonListResult } from "../types/lesson";
-import { SuccessResponse, PageResponse, LessonThumbnail, LessonSortTypeEnum, RegisterLessonRequest } from "./types";
+import { SuccessResponse, PageResponse, LessonThumbnail, LessonSortTypeEnum, RegisterLessonRequest, LessonSearchCondition } from "./types";
 
 export interface LessonService {
     getLessons(search?: string, page?: number, sort?: string): Promise<LessonListResult>;
+    getOwnLessons(condition?: Partial<LessonSearchCondition>): Promise<Lesson[]>;
     createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<void>;
+    updateLesson(lessonId: string, request: RegisterLessonRequest, thumbnail?: File): Promise<void>;
+    deleteLesson(lessonId: string): Promise<void>;
 }
 
 class DefaultLessonService implements LessonService {
@@ -39,6 +42,13 @@ class DefaultLessonService implements LessonService {
         };
     }
 
+    async getOwnLessons(condition?: Partial<LessonSearchCondition>): Promise<Lesson[]> {
+        const response = await client.get<SuccessResponse<PageResponse<LessonThumbnail>>>("/v1/lessons/mine", {
+            params: condition
+        });
+        return response.data.data.content.map(this.mapThumbnailToModel.bind(this));
+    }
+
     // Mapper function
     private mapThumbnailToModel(dto: LessonThumbnail): Lesson {
         const serviceTypeMap: Record<string, "mentoring" | "oneday" | "study"> = {
@@ -56,13 +66,15 @@ class DefaultLessonService implements LessonService {
             rating: dto.rating,
             studentCount: 999, // Hardcoded as requested
             thumbnail: dto.thumbnailImage,
-            category: "카테고리 " + dto.categoryId, // Placeholder as Name is missing
+            category: dto.category,
             categoryId: dto.categoryId,
             level: "초급", // Default
             tags: ["신규"],
             isNew: true, // simplified
             isBest: dto.rating >= 4.5,
             serviceType: serviceTypeMap[dto.lessonType] || "mentoring",
+            location: dto.location,
+            closeAt: dto.closeAt,
         };
     }
     async createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<void> {
@@ -75,6 +87,24 @@ class DefaultLessonService implements LessonService {
                 "Content-Type": "multipart/form-data",
             },
         });
+    }
+
+    async updateLesson(lessonId: string, request: any, thumbnail?: File): Promise<void> {
+        const formData = new FormData();
+        formData.append("request", new Blob([JSON.stringify(request)], { type: "application/json" }));
+        if (thumbnail) {
+            formData.append("thumbnail", thumbnail);
+        }
+
+        await client.patch(`/v1/lessons/${lessonId}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
+
+    async deleteLesson(lessonId: string): Promise<void> {
+        await client.delete(`/v1/lessons/${lessonId}`);
     }
 }
 

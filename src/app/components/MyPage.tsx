@@ -5,6 +5,7 @@ import { MyPageHome } from "./MyPageHome";
 import { ScheduleManagement } from "./ScheduleManagement";
 import { ReviewManagement } from "./ReviewManagement";
 import { ProfileManagement } from "./ProfileManagement";
+import { LessonManagement } from "./LessonManagement";
 import { InfLearnFooter } from "./InfLearnFooter";
 
 interface MyPageProps {
@@ -21,9 +22,7 @@ export function MyPage({ user, onLoginClick, onLogout, onNavigateToMain, onNavig
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <InfLearnHeader
-        user={user}
         onLoginClick={onLoginClick}
-        onLogout={onLogout}
         onNavigateToMyPage={() => { }}
         onNavigateToMain={onNavigateToMain}
         onNavigateToServiceRegistration={onNavigateToServiceRegistration}
@@ -34,6 +33,7 @@ export function MyPage({ user, onLoginClick, onLogout, onNavigateToMain, onNavig
 
         <main className="flex-1 bg-gray-50">
           {activeTab === "home" && <MyPageHome userName={user.name} onTabChange={setActiveTab} />}
+          {activeTab === "lessons" && <LessonManagement />}
           {activeTab === "coupons" && (
             <div className="p-8">
               <h2 className="text-2xl mb-4">내 쿠폰</h2>

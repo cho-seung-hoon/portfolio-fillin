@@ -257,7 +257,9 @@ export const handlers = [
                 lessonType: typeMap[lesson.lesson_type] || "MENTORING",
                 mentorNickName: member.nickname,
                 rating: lesson.rating,
-                categoryId: lesson.category_id
+                categoryId: lesson.category_id,
+                location: lesson.location,
+                closeAt: lesson.close_at
             };
         });
 
@@ -422,7 +424,12 @@ export const handlers = [
                     lessonType: lessonType,
                     title: lesson.title,
                     thumbnailImage: lesson.thumbnail_image,
-                    price: lesson.price
+                    price: lesson.price,
+                    location: lesson.location,
+                    closeAt: lesson.close_at,
+                    categoryId: lesson.category_id,
+                    seats: 100, // Default or random
+                    remainSeats: 90
                 },
                 options: [
                     {

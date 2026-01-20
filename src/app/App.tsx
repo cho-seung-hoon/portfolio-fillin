@@ -15,6 +15,7 @@ import { LoginDialog } from "./components/LoginDialog";
 import { SignupDialog } from "./components/SignupDialog";
 import { MyPage } from "./components/MyPage";
 import { ServiceRegistration } from "./components/ServiceRegistration";
+import { ServiceEdit } from "./components/ServiceEdit";
 import { ServiceDetail } from "./components/ServiceDetail";
 import { PaymentSuccessPage } from "./components/PaymentSuccessPage";
 import { LessonApplication } from "./components/LessonApplication";
@@ -91,6 +92,16 @@ const serviceRegisterRoute = createRoute({
   },
 });
 
+const serviceEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/service/$id/edit",
+  component: () => {
+    const { id } = useParams({ from: serviceEditRoute.id });
+    const navigate = useNavigate();
+    return <ServiceEdit lessonId={id} onBack={() => window.history.back()} />;
+  },
+});
+
 const serviceDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/service/$id",
@@ -140,6 +151,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   myPageRoute,
   serviceRegisterRoute,
+  serviceEditRoute,
   serviceDetailRoute,
   serviceApplyRoute,
   paymentSuccessRoute,

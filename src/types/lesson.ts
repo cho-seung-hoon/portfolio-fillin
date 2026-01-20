@@ -14,6 +14,8 @@ export interface Lesson {
     isNew?: boolean;
     isBest?: boolean;
     serviceType?: "mentoring" | "oneday" | "study";
+    location?: string;
+    closeAt?: string;
 }
 
 export interface LessonListResult {
@@ -49,7 +51,7 @@ export interface Schedule {
         }[];
     };
     "1-n-oneday"?: {
-        sessions: { availableTimeId: string; startTime: string; date: string; time: string; remaining: number; maxSeats: number }[];
+        sessions: { availableTimeId: string; startTime: string; date: string; time: string; remaining: number; maxSeats: number; price: number }[];
     };
     "1-n-study"?: {
         totalSessions: number;
