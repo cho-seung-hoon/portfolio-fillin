@@ -1,5 +1,6 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.service.client.StockClient;
 import com.kosa.fillinv.lesson.service.dto.LessonSearchCondition;
@@ -35,6 +36,7 @@ class LessonReadServiceTest {
     private ProfileClient profileClient;
     private ReviewClient reviewClient;
     private StockClient stockClient;
+    private CategoryService categoryService;
 
     private LessonReadService lessonReadService;
 
@@ -44,9 +46,9 @@ class LessonReadServiceTest {
         profileClient = mock(ProfileClient.class);
         reviewClient = mock(ReviewClient.class);
         stockClient = mock(StockClient.class);
+        categoryService = mock(CategoryService.class);
 
-
-        lessonReadService = new LessonReadService(lessonService, reviewClient, profileClient, stockClient);
+        lessonReadService = new LessonReadService(lessonService, reviewClient, profileClient, stockClient, categoryService);
     }
 
     @Test
