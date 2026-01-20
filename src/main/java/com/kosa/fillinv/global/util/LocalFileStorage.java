@@ -12,7 +12,7 @@ import java.util.UUID;
 @Component
 public class LocalFileStorage implements FileStorage {
 
-    private static final String BASE_PATH = "src/test/resources/files";
+    private static final String BASE_PATH = "src/main/resources/files";
 
     public static String getExtension(String filename) {
         if (filename == null) {

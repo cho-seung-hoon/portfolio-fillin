@@ -3,10 +3,7 @@ package com.kosa.fillinv.lesson.service;
 import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.global.util.FileStorage;
 import com.kosa.fillinv.global.util.UploadFileResult;
-import com.kosa.fillinv.lesson.error.LessonError;
-import com.kosa.fillinv.lesson.service.dto.CreateLessonCommand;
-import com.kosa.fillinv.lesson.service.dto.CreateLessonResult;
-import com.kosa.fillinv.lesson.service.dto.RegisterLessonCommand;
+import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,5 +31,28 @@ public class LessonRegisterService {
             fileStorage.delete(upload.fileKey());
             throw e;
         }
+    }
+
+    public UpdateLessonResult editLesson(
+            String lessonId,
+            EditLessonCommand command,
+            MultipartFile file,
+            String ownerId
+    ) {
+        UploadFileResult upload = null;
+        if (file != null && !file.isEmpty()) {
+            upload = fileStorage.upload(file);
+        }
+
+        try {
+            UpdateLessonCommand updateLessonCommand = command.toUpdateLessonCommand(upload);
+            return lessonService.updateLesson(lessonId, updateLessonCommand, ownerId);
+        } catch (Exception e) {
+            if (upload != null) {
+                fileStorage.delete(upload.fileKey());
+            }
+            throw e;
+        }
+
     }
 }

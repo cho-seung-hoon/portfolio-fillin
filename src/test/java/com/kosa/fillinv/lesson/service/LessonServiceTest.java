@@ -175,7 +175,7 @@ class LessonServiceTest {
 
         // when
         UpdateLessonResult updated =
-                lessonService.updateLesson(created.id(), updateCommand);
+                lessonService.updateLesson(created.id(), updateCommand, created.mentorId());
 
         // then
         assertEquals(updateCommand.title(), updated.title());
@@ -195,7 +195,7 @@ class LessonServiceTest {
         CreateLessonResult created = lessonService.createLesson(createCommand());
 
         // when
-        lessonService.deleteLesson(created.id());
+        lessonService.deleteLesson(created.id(), created.mentorId());
         entityManager.flush();
         entityManager.clear();
 
@@ -458,14 +458,14 @@ class LessonServiceTest {
     @DisplayName("레슨 제목으로 검색이 가능하다.")
     void searchKeyword() {
         // given
-        String keyword = "Spring";
-        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(keyword, null, null, LessonSortType.CREATED_AT_DESC, 1, 30);
+        String keyword = "시니어";
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(keyword, null, null, null, LessonSortType.CREATED_AT_DESC, 1, 30);
 
         // when
         Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
 
         // then
-        List<Lesson> allByTitleContaining = lessonRepository.findAllByTitleContaining(keyword);
+        List<Lesson> allByTitleContaining = lessonRepository.findAllByTitleContainingAndDeletedAtIsNull(keyword);
         assertFalse(allByTitleContaining.isEmpty());
         assertEquals(allByTitleContaining.size(), lessonDTOS.getTotalElements());
         assertFalse(
@@ -480,13 +480,13 @@ class LessonServiceTest {
     void searchLessonType() {
         // given
         LessonType lessonType = LessonType.ONEDAY;
-        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, lessonType, null, LessonSortType.CREATED_AT_DESC, 1, 30);
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, lessonType, null, null, LessonSortType.CREATED_AT_DESC, 1, 30);
 
         // when
         Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
 
         // then
-        List<Lesson> allByTitleContaining = lessonRepository.findAllByLessonType(lessonType);
+        List<Lesson> allByTitleContaining = lessonRepository.findAllByLessonTypeAndDeletedAtIsNull(lessonType);
         assertFalse(allByTitleContaining.isEmpty());
         assertEquals(allByTitleContaining.size(), lessonDTOS.getTotalElements());
         assertFalse(
@@ -500,14 +500,14 @@ class LessonServiceTest {
     @DisplayName("카테고리id로 검색이 가능하다.")
     void searchCategoryId() {
         // given
-        Long categoryId = 1L;
-        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, categoryId, LessonSortType.CREATED_AT_DESC, 1, 30);
+        Long categoryId = 4L;
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, categoryId, null, LessonSortType.CREATED_AT_DESC, 1, 30);
 
         // when
         Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
 
         // then
-        List<Lesson> allByTitleContaining = lessonRepository.findAllByCategoryId(categoryId);
+        List<Lesson> allByTitleContaining = lessonRepository.findAllByCategoryIdAndDeletedAtIsNull(categoryId);
         assertFalse(allByTitleContaining.isEmpty());
         assertEquals(allByTitleContaining.size(), lessonDTOS.getTotalElements());
         assertFalse(
@@ -521,13 +521,13 @@ class LessonServiceTest {
     @DisplayName("최신순 정렬이 가능하다")
     void searchWithSortByCreatedAtDesc() {
         // given
-        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, LessonSortType.CREATED_AT_DESC, 0, 5);
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, null, LessonSortType.CREATED_AT_DESC, 0, 5);
 
         // when
         Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
 
         // then
-        List<Lesson> all = lessonRepository.findAllByOrderByCreatedAtDesc();
+        List<Lesson> all = lessonRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc();
         for (int i = 0; i < lessonDTOS.getContent().size(); i++) {
             assertEquals(all.get(i).getCreatedAt(), lessonDTOS.getContent().get(i).createdAt());
         }
@@ -537,13 +537,13 @@ class LessonServiceTest {
     @DisplayName("가격 비싼 순 정렬이 가능하다")
     void searchWithSortByPriceDesc() {
         // given
-        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, LessonSortType.PRICE_DESC, 0, 5);
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, null, LessonSortType.PRICE_DESC, 0, 5);
 
         // when
         Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
 
         // then
-        List<Lesson> all = lessonRepository.findAllByOrderByPriceDesc();
+        List<Lesson> all = lessonRepository.findAllByDeletedAtIsNullOrderByPriceDesc();
         for (int i = 0; i < lessonDTOS.getContent().size(); i++) {
             assertEquals(all.get(i).getId(), lessonDTOS.getContent().get(i).id());
         }
@@ -553,16 +553,175 @@ class LessonServiceTest {
     @DisplayName("가격 저렴한 순 정렬이 가능하다")
     void searchWithSortByPriceAsc() {
         // given
-        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, LessonSortType.PRICE_ASC, 0, 5);
+        LessonSearchCondition lessonSearchCondition = new LessonSearchCondition(null, null, null, null, LessonSortType.PRICE_ASC, 0, 5);
 
         // when
         Page<LessonDTO> lessonDTOS = lessonService.searchLesson(lessonSearchCondition);
 
         // then
-        List<Lesson> all = lessonRepository.findAllByOrderByPriceAsc();
+        List<Lesson> all = lessonRepository.findAllByDeletedAtIsNullOrderByPriceAsc();
         for (int i = 0; i < lessonDTOS.getContent().size(); i++) {
             assertEquals(all.get(i).getId(), lessonDTOS.getContent().get(i).id());
         }
+    }
+
+    @Test
+    @DisplayName("mentorId로 레슨 검색이 가능하다")
+    void searchByMentorId() {
+        // given
+        String mentorId = "mentor-1";
+        String otherMentorId = "mentor-2";
+
+        // mentor-1 레슨
+        lessonService.createLesson(createCommand(
+                "mentor1 lesson",
+                LessonType.ONEDAY,
+                "thumb.png",
+                "desc",
+                "서울",
+                mentorId,
+                1L,
+                Collections.emptyList(),
+                Collections.emptyList()
+        ));
+
+        // mentor-2 레슨
+        lessonService.createLesson(createCommand(
+                "mentor2 lesson",
+                LessonType.ONEDAY,
+                "thumb.png",
+                "desc",
+                "서울",
+                otherMentorId,
+                1L,
+                Collections.emptyList(),
+                Collections.emptyList()
+        ));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        LessonSearchCondition condition =
+                new LessonSearchCondition(
+                        null,
+                        null,
+                        null,
+                        mentorId,
+                        LessonSortType.CREATED_AT_DESC,
+                        0,
+                        10
+                );
+
+        // when
+        Page<LessonDTO> result = lessonService.searchLesson(condition);
+
+        // then
+        assertFalse(result.isEmpty());
+        assertTrue(
+                result.stream().allMatch(
+                        lesson -> lesson.mentorId().equals(mentorId)
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("mentorId + lessonType 조건으로 검색이 가능하다")
+    void searchByMentorIdAndLessonType() {
+        // given
+        String mentorId = "mentor-1";
+
+        lessonService.createLesson(createCommand(
+                "oneday lesson",
+                LessonType.ONEDAY,
+                "thumb.png",
+                "desc",
+                "서울",
+                mentorId,
+                1L,
+                Collections.emptyList(),
+                Collections.emptyList()
+        ));
+
+        lessonService.createLesson(createCommand(
+                "mentoring lesson",
+                LessonType.MENTORING,
+                "thumb.png",
+                "desc",
+                "서울",
+                mentorId,
+                1L,
+                Collections.emptyList(),
+                Collections.emptyList()
+        ));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        LessonSearchCondition condition =
+                new LessonSearchCondition(
+                        null,
+                        LessonType.ONEDAY,
+                        null,
+                        mentorId,
+                        LessonSortType.CREATED_AT_DESC,
+                        0,
+                        10
+                );
+
+        // when
+        Page<LessonDTO> result = lessonService.searchLesson(condition);
+
+        // then
+        assertFalse(result.isEmpty());
+        assertTrue(
+                result.stream().allMatch(
+                        lesson ->
+                                lesson.mentorId().equals(mentorId) &&
+                                        lesson.lessonType() == LessonType.ONEDAY
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("mentorId 검색 시 삭제된 레슨은 제외된다")
+    void searchByMentorId_excludeDeleted() {
+        // given
+        String mentorId = "mentor-1";
+
+        CreateLessonResult created =
+                lessonService.createLesson(createCommand(
+                        "삭제될 레슨",
+                        LessonType.ONEDAY,
+                        "thumb.png",
+                        "desc",
+                        "서울",
+                        mentorId,
+                        1L,
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                ));
+
+        lessonService.deleteLesson(created.id(), mentorId);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        LessonSearchCondition condition =
+                new LessonSearchCondition(
+                        null,
+                        null,
+                        null,
+                        mentorId,
+                        LessonSortType.CREATED_AT_DESC,
+                        0,
+                        10
+                );
+
+        // when
+        Page<LessonDTO> result = lessonService.searchLesson(condition);
+
+        // then
+        assertTrue(result.isEmpty());
     }
 
     private CreateOptionCommand createOptionCommand() {

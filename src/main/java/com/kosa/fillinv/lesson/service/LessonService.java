@@ -37,7 +37,7 @@ public class LessonService {
     public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
         Sort sortBy = condition.sortType().toSort();
         PageRequest pageRequest = PageRequest.of(condition.page(), condition.size(), sortBy);
-        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId());
+        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId(), condition.mentorId());
 
         return lessonRepository.findAll(search, pageRequest).map(LessonDTO::of);
     }
@@ -80,8 +80,10 @@ public class LessonService {
 
 
     @Transactional
-    public UpdateLessonResult updateLesson(String lessonId, UpdateLessonCommand command) {
+    public UpdateLessonResult updateLesson(String lessonId, UpdateLessonCommand command, String ownerId) {
         Lesson lesson = findActiveLesson(lessonId).orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+
+        lesson.validateOwnership(ownerId);
 
         lesson.updateTitle(command.title());
         lesson.updateThumbnailImage(command.thumbnailImage());
@@ -94,8 +96,13 @@ public class LessonService {
     }
 
     @Transactional
-    public void deleteLesson(String lessonId) {
-        findActiveLesson(lessonId).ifPresent(Lesson::delete);
+    public void deleteLesson(String lessonId, String ownerId) {
+        Lesson lesson = findActiveLesson(lessonId)
+                .orElseThrow(() -> new ResourceException.NotFound(LESSON_NOT_FOUND_MESSAGE_FORMAT(lessonId)));
+
+        lesson.validateOwnership(ownerId);
+
+        lesson.delete();
     }
 
     @Transactional

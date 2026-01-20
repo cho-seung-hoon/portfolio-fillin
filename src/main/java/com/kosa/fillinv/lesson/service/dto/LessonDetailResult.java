@@ -4,6 +4,7 @@ import com.kosa.fillinv.lesson.service.client.MentorSummaryDTO;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public record LessonDetailResult(
         Mentor mentor,
@@ -11,13 +12,20 @@ public record LessonDetailResult(
         List<Option> options,
         List<AvailableTime> availableTimes
 ) {
-    public static LessonDetailResult of(MentorSummaryDTO mentorSummaryDTO, LessonDTO lessonDTO) {
+    public static LessonDetailResult of(
+            MentorSummaryDTO mentorSummaryDTO,
+            LessonDTO lessonDTO,
+            Integer lessonRemainSeats,
+            Map<String, Integer> availableTimeRemainSeats,
+            String categoryName
+    ) {
         return new LessonDetailResult(
                 Mentor.of(mentorSummaryDTO),
-                Lesson.of(lessonDTO),
+                Lesson.of(lessonDTO, lessonRemainSeats, categoryName),
                 lessonDTO.optionDTOList().stream().map(Option::of).toList(),
-                lessonDTO.availableTimeDTOList().stream().map(AvailableTime::of).toList()
-        );
+                lessonDTO.availableTimeDTOList().stream()
+                        .map(dt -> AvailableTime.of(dt, availableTimeRemainSeats != null ? availableTimeRemainSeats.get(dt.id()) : null))
+                        .toList());
     }
 
     public record Mentor(
@@ -43,9 +51,14 @@ public record LessonDetailResult(
             String title,
             String thumbnailImage,
             Integer price,
-            Long categoryId
+            Integer seats,
+            Integer remainSeats,
+            Long categoryId,
+            String location,
+            Instant closeAt,
+            String category
     ) {
-        public static Lesson of(LessonDTO lessonDTO) {
+        public static Lesson of(LessonDTO lessonDTO, Integer remainSeats, String categoryName) {
             return new Lesson(
                     lessonDTO.id(),
                     lessonDTO.description(),
@@ -53,7 +66,12 @@ public record LessonDetailResult(
                     lessonDTO.title(),
                     lessonDTO.thumbnailImage(),
                     lessonDTO.price(),
-                    lessonDTO.categoryId()
+                    lessonDTO.seats(),
+                    remainSeats,
+                    lessonDTO.categoryId(),
+                    lessonDTO.location(),
+                    lessonDTO.closeAt(),
+                    categoryName
             );
         }
     }
@@ -70,8 +88,7 @@ public record LessonDetailResult(
                     optionDTOS.id(),
                     optionDTOS.name(),
                     optionDTOS.minute(),
-                    optionDTOS.price()
-            );
+                    optionDTOS.price());
         }
     }
 
@@ -79,15 +96,18 @@ public record LessonDetailResult(
             String availableTimeId,
             Instant startTime,
             Instant endTime,
-            Integer price
+            Integer price,
+            Integer seats,
+            Integer remainSeats
     ) {
-        public static AvailableTime of(AvailableTimeDTO availableTimeDTO) {
+        public static AvailableTime of(AvailableTimeDTO availableTimeDTO, Integer remainSeats) {
             return new AvailableTime(
                     availableTimeDTO.id(),
                     availableTimeDTO.startTime(),
                     availableTimeDTO.endTime(),
-                    availableTimeDTO.price()
-            );
+                    availableTimeDTO.price(),
+                    availableTimeDTO.seats(),
+                    remainSeats);
         }
     }
 }

@@ -2,7 +2,7 @@ package com.kosa.fillinv.global.exception;
 
 import com.kosa.fillinv.global.response.ErrorCode;
 
-public class ResourceException extends CustomGlobalException{
+public class ResourceException extends CustomGlobalException {
 
     protected ResourceException(ErrorCode errorCode, String message) {
         super(errorCode, message);
@@ -15,6 +15,14 @@ public class ResourceException extends CustomGlobalException{
     }
 
     public static class InvalidArgument extends ResourceException {
-        public InvalidArgument(String message) { super(ErrorCode.INVALID_ARGUMENT, message);}
+        public InvalidArgument(String message) {
+            super(ErrorCode.INVALID_ARGUMENT, message);
+        }
+    }
+
+    public static class AccessDenied extends ResourceException {
+        public AccessDenied(String message) {
+            super(ErrorCode.ACCESS_DENIED, message);
+        }
     }
 }

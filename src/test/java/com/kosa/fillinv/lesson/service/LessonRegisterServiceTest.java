@@ -1,14 +1,17 @@
 package com.kosa.fillinv.lesson.service;
 
 import com.kosa.fillinv.global.util.FileStorage;
-import com.kosa.fillinv.lesson.service.dto.CreateLessonResult;
-import com.kosa.fillinv.lesson.service.dto.RegisterLessonCommand;
+import com.kosa.fillinv.global.util.UploadFileResult;
+import com.kosa.fillinv.lesson.service.dto.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +26,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 
 @SpringBootTest
@@ -32,11 +35,24 @@ import static org.mockito.Mockito.verify;
 @ActiveProfiles("local")
 class LessonRegisterServiceTest {
 
+    private static final String LESSON_ID = "lesson-001";
+    private static final String OWNER_ID = "member-001";
     @Autowired
     private LessonRegisterService lessonRegisterService;
-
     @MockitoSpyBean
     private FileStorage fileStorage;
+    @MockitoBean
+    private LessonService lessonService;
+
+    private EditLessonCommand defaultCommand() {
+        return new EditLessonCommand(
+                "수정된 제목",
+                "수정된 설명",
+                "ONLINE",
+                2L,
+                Instant.parse("2026-03-01T00:00:00Z")
+        );
+    }
 
     @Test
     @DisplayName("썸네일과 함께 강의 등록한다.")
@@ -83,6 +99,102 @@ class LessonRegisterServiceTest {
         // then
         verify(fileStorage, times(1))
                 .delete(anyString());
+    }
+
+    @Test
+    @DisplayName("모든 필드가 주어지면 정상적으로 수정된다")
+    void edit_all_fields() {
+        // given
+        EditLessonCommand command = defaultCommand();
+
+        MockMultipartFile file =
+                new MockMultipartFile(
+                        "thumbnail",
+                        "updated-image.png",
+                        MediaType.IMAGE_PNG_VALUE,
+                        "fake-image".getBytes()
+                );
+        UploadFileResult upload =
+                new UploadFileResult("lesson/thumbnail.png", "thumbnail.png");
+
+        given(fileStorage.upload(file)).willReturn(upload);
+
+        UpdateLessonResult result = mock(UpdateLessonResult.class);
+
+        ArgumentCaptor<UpdateLessonCommand> captor =
+                ArgumentCaptor.forClass(UpdateLessonCommand.class);
+
+        given(lessonService.updateLesson(eq(LESSON_ID), captor.capture(), eq(OWNER_ID)))
+                .willReturn(result);
+
+        // when
+        lessonRegisterService.editLesson(LESSON_ID, command, file, OWNER_ID);
+
+        // then
+        UpdateLessonCommand update = captor.getValue();
+
+        assertThat(update.title()).isEqualTo("수정된 제목");
+        assertThat(update.thumbnailImage()).isEqualTo("thumbnail.png");
+        assertThat(update.description()).isEqualTo("수정된 설명");
+        assertThat(update.location()).isEqualTo("ONLINE");
+        assertThat(update.categoryId()).isEqualTo(2L);
+        assertThat(update.closeAt())
+                .isEqualTo(Instant.parse("2026-03-01T00:00:00Z"));
+    }
+
+    @Test
+    @DisplayName("파일이 없으면 thumbnail은 null로 전달된다")
+    void edit_without_thumbnail() {
+        // given
+        EditLessonCommand command = defaultCommand();
+
+        UpdateLessonResult result = mock(UpdateLessonResult.class);
+
+        ArgumentCaptor<UpdateLessonCommand> captor =
+                ArgumentCaptor.forClass(UpdateLessonCommand.class);
+
+        given(lessonService.updateLesson(eq(LESSON_ID), captor.capture(), eq(OWNER_ID)))
+                .willReturn(result);
+
+        // when
+        lessonRegisterService.editLesson(LESSON_ID, command, null, OWNER_ID);
+
+        // then
+        UpdateLessonCommand update = captor.getValue();
+
+        assertThat(update.thumbnailImage()).isNull();
+        verify(fileStorage, never()).upload(any());
+    }
+
+    @Test
+    @DisplayName("null 필드는 수정되지 않는다")
+    void edit_partial_fields() {
+        // given
+        EditLessonCommand command = new EditLessonCommand(
+                null,                       // title 변경 안 함
+                "설명만 수정",
+                null,                       // location 유지
+                null,                       // category 유지
+                null                        // closeAt 유지
+        );
+
+        ArgumentCaptor<UpdateLessonCommand> captor =
+                ArgumentCaptor.forClass(UpdateLessonCommand.class);
+
+        given(lessonService.updateLesson(eq(LESSON_ID), captor.capture(), eq(OWNER_ID)))
+                .willReturn(mock(UpdateLessonResult.class));
+
+        // when
+        lessonRegisterService.editLesson(LESSON_ID, command, null, OWNER_ID);
+
+        // then
+        UpdateLessonCommand update = captor.getValue();
+
+        assertThat(update.title()).isNull();
+        assertThat(update.description()).isEqualTo("설명만 수정");
+        assertThat(update.location()).isNull();
+        assertThat(update.categoryId()).isNull();
+        assertThat(update.closeAt()).isNull();
     }
 
     private RegisterLessonCommand createInvalidCommand() {

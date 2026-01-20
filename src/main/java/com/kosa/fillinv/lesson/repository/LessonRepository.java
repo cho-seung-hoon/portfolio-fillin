@@ -18,19 +18,19 @@ public interface LessonRepository extends JpaRepository<Lesson, String>, JpaSpec
 
     List<Lesson> findAllByDeletedAtIsNull();
 
+    List<Lesson> findAllByTitleContainingAndDeletedAtIsNull(String keyword);
+
+    List<Lesson> findAllByLessonTypeAndDeletedAtIsNull(LessonType lessonType);
+
+    List<Lesson> findAllByCategoryIdAndDeletedAtIsNull(Long categoryId);
+
+    List<Lesson> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
+
+    List<Lesson> findAllByDeletedAtIsNullOrderByPriceDesc();
+
+    List<Lesson> findAllByDeletedAtIsNullOrderByPriceAsc();
+
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Lesson l SET l.popularityScore = 0.0")
     void resetAllPopularityScores();
-
-    List<Lesson> findAllByTitleContaining(String keyword);
-
-    List<Lesson> findAllByLessonType(LessonType lessonType);
-
-    List<Lesson> findAllByCategoryId(Long categoryId);
-
-    List<Lesson> findAllByOrderByCreatedAtDesc();
-
-    List<Lesson> findAllByOrderByPriceDesc();
-
-    List<Lesson> findAllByOrderByPriceAsc();
 }

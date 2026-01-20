@@ -1,14 +1,20 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.category.dto.CategoryResponseDto;
+import com.kosa.fillinv.category.entity.Category;
+import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.global.exception.ResourceException;
+import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.service.client.MentorSummaryDTO;
 import com.kosa.fillinv.lesson.service.client.ProfileClient;
 import com.kosa.fillinv.lesson.service.client.ReviewClient;
+import com.kosa.fillinv.lesson.service.client.StockClient;
 import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,30 +31,37 @@ public class LessonReadService {
 
     private final ProfileClient profileClient;
 
+    private final StockClient stockClient;
+
+    private final CategoryService categoryService;
+
     public Page<LessonThumbnail> search() {
         return search(LessonSearchCondition.defaultCondition());
     }
 
     public Page<LessonThumbnail> search(LessonSearchCondition condition) {
-        condition = condition == null ? LessonSearchCondition.defaultCondition() : condition;
+        LessonSearchCondition resolved =
+                condition == null ? LessonSearchCondition.defaultCondition() : condition;
 
-        Page<LessonDTO> lessonPage = lessonService.searchLesson(condition);
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
+        return assembleLessonThumbnail(lessonPage);
+    }
 
-        Set<String> mentorIds = lessonPage.stream()
-                .map(LessonDTO::mentorId)
-                .collect(Collectors.toSet());
-        Set<String> lessonIds = lessonPage.stream()
-                .map(LessonDTO::id)
-                .collect(Collectors.toSet());
+    public Page<LessonThumbnail> searchOwnedBy(
+            LessonSearchCondition condition,
+            String mentorId
+    ) {
+        if (mentorId == null) {
+            throw new ResourceException.InvalidArgument(MENTOR_ID_REQUIRED);
+        }
 
-        Map<String, MentorSummaryDTO> mentorMap = profileClient.getMentors(mentorIds);
-        Map<String, Float> averageRating = reviewClient.getAverageRating(lessonIds);
+        LessonSearchCondition resolved =
+                condition == null
+                        ? LessonSearchCondition.defaultCondition().ownBy(mentorId)
+                        : condition.ownBy(mentorId);
 
-        return lessonPage.map(lesson -> {
-            MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
-            Float rating = averageRating.get(lesson.id());
-            return LessonThumbnail.of(lesson, mentor, rating);
-        });
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
+        return assembleLessonThumbnail(lessonPage);
     }
 
     public LessonDetailResult detail(LessonDetailCommand request) {
@@ -58,6 +71,64 @@ public class LessonReadService {
 
         MentorSummaryDTO mentorSummaryDTO = profileClient.readMentorById(lessonDTO.mentorId());
 
-        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO);
+        Category category = categoryService.getCategoryById(lessonDTO.categoryId());
+
+        Set<String> keys = Set.of();
+        if (lessonDTO.lessonType() == LessonType.STUDY) {
+            keys = Set.of(lessonDTO.id());
+        } else if (lessonDTO.lessonType() == LessonType.ONEDAY) {
+            keys = lessonDTO.availableTimeDTOList().stream()
+                    .map(AvailableTimeDTO::id)
+                    .collect(Collectors.toSet());
+        }
+
+        Map<String, Integer> stockMap = keys.isEmpty() ?
+                new HashMap<>() :
+                new HashMap<>(stockClient.getStock(keys));
+        for (String key : keys) {
+            // Stock에서 조회되지 않은 남은 좌석 수가 있다면 Exception 대신 0으로 초기화
+            stockMap.putIfAbsent(key, 0);
+        }
+
+        Integer lessonRemainSeats = null;
+        Map<String, Integer> availableTimeRemainSeats = null;
+
+        if (lessonDTO.lessonType() == LessonType.STUDY) {
+            lessonRemainSeats = stockMap.get(lessonDTO.id());
+        } else if (lessonDTO.lessonType() == LessonType.ONEDAY) {
+            availableTimeRemainSeats = stockMap;
+        }
+
+        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO, lessonRemainSeats, availableTimeRemainSeats, category.getName());
+    }
+
+    private Page<LessonThumbnail> assembleLessonThumbnail(
+            Page<LessonDTO> lessonPage
+    ) {
+        if (lessonPage.isEmpty()) {
+            return Page.empty(lessonPage.getPageable());
+        }
+
+        Map<Long, CategoryResponseDto> allCategoriesMap = categoryService.getAllCategoriesMap();
+
+        Set<String> mentorIds = lessonPage.stream()
+                .map(LessonDTO::mentorId)
+                .collect(Collectors.toSet());
+        Set<String> lessonIds = lessonPage.stream()
+                .map(LessonDTO::id)
+                .collect(Collectors.toSet());
+
+        Map<String, MentorSummaryDTO> mentorMap =
+                profileClient.getMentors(mentorIds);
+
+        Map<String, Float> averageRating =
+                reviewClient.getAverageRating(lessonIds);
+
+        return lessonPage.map(lesson -> {
+            MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
+            Float rating = averageRating.get(lesson.id());
+            return LessonThumbnail.of(lesson, mentor, rating,
+                    allCategoriesMap.get(lesson.categoryId()) == null ? null : allCategoriesMap.get(lesson.categoryId()).name());
+        });
     }
 }

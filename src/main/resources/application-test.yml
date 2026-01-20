@@ -38,3 +38,8 @@ logging:
 jwt:
   secret: vmfhaltkwmdkswkdsigkdfhwldkadrhiqwudyqwiudqdw
   expiration-time: 360000000 # 100H
+
+PSP:
+  toss:
+    secretKey: ${TOSS_SECRET_KEY}
+    url: https://api.tosspayments.com

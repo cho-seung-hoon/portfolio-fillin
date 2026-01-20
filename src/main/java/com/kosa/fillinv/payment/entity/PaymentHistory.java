@@ -1,42 +1,48 @@
 package com.kosa.fillinv.payment.entity;
 
+import com.kosa.fillinv.global.entity.BaseEntity;
 import jakarta.persistence.*;
-
-import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "payment_history")
-public class PaymentHistory {
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class PaymentHistory extends BaseEntity {
 
     @Id
-    @Column(name = "payment_history_id", nullable = false)
-    private Long id;
+    @Column(name = "payment_history_id")
+    private String id;
 
-    @Column(name = "total_price", nullable = false)
-    private Integer totalPrice;
-
-    @Column(name = "use_point", nullable = false)
-    private Integer usePoint;
-
-    @Column(name = "final_price", nullable = false)
-    private Integer finalPrice;
-
-    @Column(name = "paid_at", nullable = false)
-    private LocalDateTime paidAt;
+    @Column(name = "payment_id")
+    private String paymentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    private PaymentHistoryType type; // 결제, 전체환불, 부분환불
+    @Column(name = "previous_status")
+    private PaymentStatus previousStatus;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "new_status")
+    private PaymentStatus newStatus;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "reason")
+    private String reason;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @Builder
+    public PaymentHistory(
+            String id,
+            String paymentId,
+            PaymentStatus previousStatus,
+            PaymentStatus newStatus,
+            String reason) {
+        this.id = id;
+        this.paymentId = paymentId;
+        this.previousStatus = previousStatus;
+        this.newStatus = newStatus;
+        this.reason = reason;
+    }
 
-    @Column(name = "schedule_id", nullable = false)
-    private String scheduleId;
 }
