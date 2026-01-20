@@ -16,15 +16,15 @@ public interface LessonRepository extends JpaRepository<Lesson, String>, JpaSpec
 
     List<Lesson> findAllByDeletedAtIsNull();
 
-    List<Lesson> findAllByTitleContaining(String keyword);
+    List<Lesson> findAllByTitleContainingAndDeletedAtIsNull(String keyword);
 
-    List<Lesson> findAllByLessonType(LessonType lessonType);
+    List<Lesson> findAllByLessonTypeAndDeletedAtIsNull(LessonType lessonType);
 
-    List<Lesson> findAllByCategoryId(Long categoryId);
+    List<Lesson> findAllByCategoryIdAndDeletedAtIsNull(Long categoryId);
 
-    List<Lesson> findAllByOrderByCreatedAtDesc();
+    List<Lesson> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
 
-    List<Lesson> findAllByOrderByPriceDesc();
+    List<Lesson> findAllByDeletedAtIsNullOrderByPriceDesc();
 
-    List<Lesson> findAllByOrderByPriceAsc();
+    List<Lesson> findAllByDeletedAtIsNullOrderByPriceAsc();
 }

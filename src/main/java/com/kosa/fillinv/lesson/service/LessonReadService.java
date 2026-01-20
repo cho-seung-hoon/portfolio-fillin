@@ -40,28 +40,28 @@ public class LessonReadService {
     }
 
     public Page<LessonThumbnail> search(LessonSearchCondition condition) {
-        condition = condition == null ? LessonSearchCondition.defaultCondition() : condition;
+        LessonSearchCondition resolved =
+                condition == null ? LessonSearchCondition.defaultCondition() : condition;
 
-        Page<LessonDTO> lessonPage = lessonService.searchLesson(condition);
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
+        return assembleLessonThumbnail(lessonPage);
+    }
 
-        Map<Long, CategoryResponseDto> allCategoriesMap = categoryService.getAllCategoriesMap();
+    public Page<LessonThumbnail> searchOwnedBy(
+            LessonSearchCondition condition,
+            String mentorId
+    ) {
+        if (mentorId == null) {
+            throw new ResourceException.InvalidArgument(MENTOR_ID_REQUIRED);
+        }
 
-        Set<String> mentorIds = lessonPage.stream()
-                .map(LessonDTO::mentorId)
-                .collect(Collectors.toSet());
-        Set<String> lessonIds = lessonPage.stream()
-                .map(LessonDTO::id)
-                .collect(Collectors.toSet());
+        LessonSearchCondition resolved =
+                condition == null
+                        ? LessonSearchCondition.defaultCondition().ownBy(mentorId)
+                        : condition.ownBy(mentorId);
 
-        Map<String, MentorSummaryDTO> mentorMap = profileClient.getMentors(mentorIds);
-        Map<String, Float> averageRating = reviewClient.getAverageRating(lessonIds);
-
-        return lessonPage.map(lesson -> {
-            MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
-            Float rating = averageRating.get(lesson.id());
-            return LessonThumbnail.of(lesson, mentor, rating,
-                    allCategoriesMap.get(lesson.categoryId()) == null ? null : allCategoriesMap.get(lesson.categoryId()).name());
-        });
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
+        return assembleLessonThumbnail(lessonPage);
     }
 
     public LessonDetailResult detail(LessonDetailCommand request) {
@@ -100,5 +100,35 @@ public class LessonReadService {
         }
 
         return LessonDetailResult.of(mentorSummaryDTO, lessonDTO, lessonRemainSeats, availableTimeRemainSeats, category.getName());
+    }
+
+    private Page<LessonThumbnail> assembleLessonThumbnail(
+            Page<LessonDTO> lessonPage
+    ) {
+        if (lessonPage.isEmpty()) {
+            return Page.empty(lessonPage.getPageable());
+        }
+
+        Map<Long, CategoryResponseDto> allCategoriesMap = categoryService.getAllCategoriesMap();
+
+        Set<String> mentorIds = lessonPage.stream()
+                .map(LessonDTO::mentorId)
+                .collect(Collectors.toSet());
+        Set<String> lessonIds = lessonPage.stream()
+                .map(LessonDTO::id)
+                .collect(Collectors.toSet());
+
+        Map<String, MentorSummaryDTO> mentorMap =
+                profileClient.getMentors(mentorIds);
+
+        Map<String, Float> averageRating =
+                reviewClient.getAverageRating(lessonIds);
+
+        return lessonPage.map(lesson -> {
+            MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
+            Float rating = averageRating.get(lesson.id());
+            return LessonThumbnail.of(lesson, mentor, rating,
+                    allCategoriesMap.get(lesson.categoryId()) == null ? null : allCategoriesMap.get(lesson.categoryId()).name());
+        });
     }
 }

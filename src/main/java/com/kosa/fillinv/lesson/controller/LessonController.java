@@ -1,11 +1,10 @@
 package com.kosa.fillinv.lesson.controller;
 
 import com.kosa.fillinv.global.response.SuccessResponse;
-import com.kosa.fillinv.lesson.controller.dto.PageResponse;
-import com.kosa.fillinv.lesson.controller.dto.RegisterLessonRequest;
-import com.kosa.fillinv.lesson.controller.dto.RegisterLessonResponse;
+import com.kosa.fillinv.lesson.controller.dto.*;
 import com.kosa.fillinv.lesson.service.LessonReadService;
 import com.kosa.fillinv.lesson.service.LessonRegisterService;
+import com.kosa.fillinv.lesson.service.LessonService;
 import com.kosa.fillinv.lesson.service.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +22,7 @@ public class LessonController {
 
     private final LessonRegisterService lessonRegisterService;
     private final LessonReadService lessonReadService;
+    private final LessonService lessonService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SuccessResponse<RegisterLessonResponse> registerLesson(
@@ -48,6 +48,18 @@ public class LessonController {
         return SuccessResponse.success(HttpStatus.OK, PageResponse.from(result));
     }
 
+    @GetMapping("/mine")
+    public SuccessResponse<PageResponse<LessonThumbnail>> mine(
+            @AuthenticationPrincipal UserDetails principal,
+            @ModelAttribute LessonSearchCondition condition
+    ) {
+        String mentorId = principal.getUsername();
+
+        Page<LessonThumbnail> result = lessonReadService.searchOwnedBy(condition, mentorId);
+
+        return SuccessResponse.success(HttpStatus.OK, PageResponse.from(result));
+    }
+
     @GetMapping("/{lessonId}")
     public SuccessResponse<LessonDetailResult> detail(
             @PathVariable String lessonId
@@ -55,5 +67,30 @@ public class LessonController {
         LessonDetailResult detail = lessonReadService.detail(new LessonDetailCommand(lessonId));
 
         return SuccessResponse.success(HttpStatus.OK, detail);
+    }
+
+    @PatchMapping("/{lessonId}")
+    public SuccessResponse<EditLessonResponse> edit(
+            @PathVariable String lessonId,
+            @RequestPart("request") EditLessonRequest request,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+
+        UpdateLessonResult updateLessonResult = lessonRegisterService.editLesson(
+                lessonId, request.toCommand(), thumbnail, principal.getUsername());
+
+        return SuccessResponse.success(HttpStatus.OK, EditLessonResponse.of(updateLessonResult));
+    }
+
+    @DeleteMapping("/{lessonId}")
+    public SuccessResponse<Void> delete(
+            @PathVariable String lessonId,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+
+        lessonService.deleteLesson(lessonId, principal.getUsername());
+
+        return SuccessResponse.success(HttpStatus.OK);
     }
 }
