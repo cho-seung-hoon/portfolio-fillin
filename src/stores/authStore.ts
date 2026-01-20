@@ -9,6 +9,7 @@ interface AuthState {
     login: (user: User, token: string) => void;
     logout: () => void;
     updateName: (name: string) => void;
+    updateProfileImage: (imageUrl: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -32,6 +33,10 @@ export const useAuthStore = create<AuthState>()(
             updateName: (name) =>
                 set((state) => ({
                     user: state.user ? { ...state.user, name } : null,
+                })),
+            updateProfileImage: (profileImageUrl) =>
+                set((state) => ({
+                    user: state.user ? { ...state.user, profileImageUrl } : null,
                 })),
         }),
         {

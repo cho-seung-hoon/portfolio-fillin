@@ -28,7 +28,8 @@ class DefaultAuthService implements AuthService {
             user: {
                 id: Number(memberId),
                 email: profile.email,
-                name: profile.nickname
+                name: profile.nickname,
+                profileImageUrl: profile.imageUrl
             },
             token: accessToken
         };
@@ -44,7 +45,8 @@ class DefaultAuthService implements AuthService {
         return {
             id: Number(memberId),
             email: profile.email,
-            name: profile.nickname
+            name: profile.nickname,
+            profileImageUrl: profile.imageUrl
         };
     }
 

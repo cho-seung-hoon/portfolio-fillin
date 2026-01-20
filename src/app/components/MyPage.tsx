@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { InfLearnHeader } from "./InfLearnHeader";
+import { ProjectHeader } from "./ProjectHeader";
 import { MyPageSidebar } from "./MyPageSidebar";
 import { MyPageHome } from "./MyPageHome";
 import { ScheduleManagement } from "./ScheduleManagement";
@@ -21,7 +21,7 @@ export function MyPage({ user, onLoginClick, onLogout, onNavigateToMain, onNavig
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <InfLearnHeader
+      <ProjectHeader
         onLoginClick={onLoginClick}
         onNavigateToMyPage={() => { }}
         onNavigateToMain={onNavigateToMain}

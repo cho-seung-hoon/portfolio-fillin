@@ -27,8 +27,9 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "./ui/avatar";
+import { getImageUrl } from "../../utils/image";
 
-interface InfLearnHeaderProps {
+interface ProjectHeaderProps {
   onLoginClick: () => void;
   onSignupClick?: () => void;
   onNavigateToMyPage?: () => void;
@@ -36,13 +37,13 @@ interface InfLearnHeaderProps {
   onNavigateToServiceRegistration?: () => void;
 }
 
-export function InfLearnHeader({
+export function ProjectHeader({
   onLoginClick,
   onSignupClick,
   onNavigateToMyPage,
   onNavigateToMain,
   onNavigateToServiceRegistration,
-}: InfLearnHeaderProps) {
+}: ProjectHeaderProps) {
   const user = useAuthStore((state) => state.user);
   return (
     <header className="border-b bg-white sticky top-0 z-50">
@@ -79,7 +80,14 @@ export function InfLearnHeader({
                       className="gap-2 hidden sm:flex items-center hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-9 px-4 py-2 rounded-md text-sm font-medium transition-all outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     >
                       <Avatar className="size-7">
-                        <AvatarImage src="" />
+                        {user.profileImageUrl ? (
+                          <AvatarImage
+                            src={getImageUrl(user.profileImageUrl)}
+                            alt={user.name}
+                          />
+                        ) : (
+                          <AvatarImage src="" />
+                        )}
                         <AvatarFallback className="bg-[#00C471] text-white text-sm">
                           {user.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -109,23 +117,6 @@ export function InfLearnHeader({
                       <User className="size-4 mr-2" />
                       마이페이지
                     </DropdownMenuItem>
-                    {/* <DropdownMenuItem>
-                      <BookOpen className="size-4 mr-2" />
-                      내 강의실
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Heart className="size-4 mr-2" />
-                      관심 강의
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <ShoppingBag className="size-4 mr-2" />
-                      장바구니
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <Settings className="size-4 mr-2" />
-                      설정
-                    </DropdownMenuItem> */}
                     <DropdownMenuItem
                       onClick={handleLogout}
                       className="text-red-600"

@@ -11,6 +11,7 @@ import { profileService } from "../../api/profile";
 import { categoryService } from "../../api/category";
 import { useAuthStore } from "../../stores/authStore";
 import { CategoryResponseDto } from "../../api/types";
+import { getImageUrl } from "../../utils/image";
 
 export function ProfileManagement() {
   const user = useAuthStore((state) => state.user);
@@ -32,6 +33,7 @@ export function ProfileManagement() {
   const [isEditingIntroduction, setIsEditingIntroduction] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
 
 
@@ -60,8 +62,15 @@ export function ProfileManagement() {
           const categoryName = data.category.name?.trim() === "" ? "태그 없음" : data.category.name;
           setCategory({ ...data.category, name: categoryName });
         }
-        setIntroduction(data.introduction ?? "");
-        setPhone(data.phoneNum ?? "");
+        if (data.imageUrl) {
+          const fullImageUrl = getImageUrl(data.imageUrl);
+          setProfileImage(fullImageUrl);
+          // Sync with global store
+          useAuthStore.getState().updateProfileImage(data.imageUrl);
+        } else {
+          setProfileImage(null);
+          useAuthStore.getState().updateProfileImage(null);
+        }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
       } finally {
@@ -119,16 +128,44 @@ export function ProfileManagement() {
       return;
     }
     try {
+      setLoading(true);
       await profileService.updateIntroduction(introduction, category.categoryId);
       setIsEditingIntroduction(false);
       alert("자기소개와 카테고리가 수정되었습니다.");
     } catch (error) {
       console.error("Failed to update profile:", error);
       alert("수정에 실패했습니다.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!user) return null; // Should be handled by parent active/auth check
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      await profileService.updateProfileImage(file);
+
+      // Fetch latest profile to get the new image URL and sync with store
+      const data = await profileService.getMyProfile();
+      if (data.imageUrl) {
+        const fullImageUrl = getImageUrl(data.imageUrl);
+        setProfileImage(fullImageUrl);
+        useAuthStore.getState().updateProfileImage(data.imageUrl);
+      }
+
+      alert("프로필 이미지가 수정되었습니다.");
+    } catch (error) {
+      console.error("Failed to update profile image:", error);
+      alert("이미지 업로드에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) return null;
 
   return (
     <div className="p-8">
@@ -170,10 +207,29 @@ export function ProfileManagement() {
 
               <div className="flex justify-center">
                 <div className="relative">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#00C471] to-[#00B366] flex items-center justify-center">
-                    <UserIcon className="size-16 text-white" />
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#00C471] to-[#00B366] flex items-center justify-center overflow-hidden">
+                    {profileImage ? (
+                      <img
+                        src={profileImage}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon className="size-16 text-white" />
+                    )}
                   </div>
-                  <button className="absolute bottom-0 right-0 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 hover:border-[#00C471] transition-colors">
+                  <input
+                    type="file"
+                    id="profile-image-input"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                  <button
+                    onClick={() => document.getElementById("profile-image-input")?.click()}
+                    disabled={loading}
+                    className="absolute bottom-0 right-0 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-200 hover:border-[#00C471] transition-colors"
+                  >
                     <Camera className="size-5 text-gray-600" />
                   </button>
                 </div>

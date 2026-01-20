@@ -4,8 +4,8 @@ import { SuccessResponse, ProfileResponseDto } from "./types";
 export interface ProfileService {
     getMyProfile(token?: string): Promise<ProfileResponseDto>;
     updateNickname(nickname: string): Promise<void>;
-    updateNickname(nickname: string): Promise<void>;
     updateIntroduction(introduction: string, categoryId: number): Promise<void>;
+    updateProfileImage(image: File): Promise<void>;
 }
 
 class DefaultProfileService implements ProfileService {
@@ -26,6 +26,16 @@ class DefaultProfileService implements ProfileService {
 
     async updateIntroduction(introduction: string, categoryId: number): Promise<void> {
         await client.patch<SuccessResponse<void>>("/v1/profile/me/introduction", { introduction, categoryId });
+    }
+
+    async updateProfileImage(image: File): Promise<void> {
+        const formData = new FormData();
+        formData.append("image", image);
+        await client.patch<SuccessResponse<void>>("/v1/profile/me/image", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
     }
 }
 

@@ -20,6 +20,7 @@ import {
     Upload,
     Users
 } from "lucide-react";
+import { getImageUrl } from "../../utils/image";
 import {
     Select,
     SelectContent,
@@ -382,7 +383,7 @@ export function ServiceEdit({
                                         >
                                             {thumbnailPreview ? (
                                                 <img
-                                                    src={thumbnailPreview}
+                                                    src={getImageUrl(thumbnailPreview)}
                                                     alt="Thumbnail Preview"
                                                     className="w-full h-full object-cover rounded-lg"
                                                 />

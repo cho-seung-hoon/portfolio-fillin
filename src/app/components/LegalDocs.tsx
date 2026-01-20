@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { InfLearnHeader } from "./InfLearnHeader";
+import { ProjectHeader } from "./ProjectHeader";
 import { ProjectFooter } from "./ProjectFooter";
 import { ChevronLeft } from "lucide-react";
 import { legalDocsContent } from "../../data/legalDocsData";
@@ -17,7 +17,7 @@ export function LegalDocs({ type }: LegalDocsProps) {
 
     return (
         <div className="min-h-screen flex flex-col bg-white">
-            <InfLearnHeader
+            <ProjectHeader
                 onLoginClick={() => { }}
                 onSignupClick={() => { }}
                 onNavigateToMyPage={() => navigate({ to: "/mypage" })}

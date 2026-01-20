@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { InfLearnHeader } from "./InfLearnHeader";
+import { ProjectHeader } from "./ProjectHeader";
 import { SearchSection } from "./SearchSection";
 import { CategoryTabs } from "./CategoryTabs";
 import { SearchFilters } from "./SearchFilters";
@@ -110,7 +110,7 @@ export default function Home({ user, onLoginClick, onSignupClick, onLogout, sear
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <InfLearnHeader
+      <ProjectHeader
         onLoginClick={onLoginClick}
         onSignupClick={onSignupClick}
         onNavigateToMyPage={() => navigate({ to: "/mypage" })}
