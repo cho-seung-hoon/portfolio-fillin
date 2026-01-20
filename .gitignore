@@ -106,3 +106,6 @@ application-local-test.yml
 
 # db
 /src/main/resources/test-db/
+
+# static files
+src/main/resources/files/

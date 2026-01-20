@@ -10,16 +10,18 @@ public record LessonDetailResult(
         Mentor mentor,
         Lesson lesson,
         List<Option> options,
-        List<AvailableTime> availableTimes) {
+        List<AvailableTime> availableTimes
+) {
     public static LessonDetailResult of(
             MentorSummaryDTO mentorSummaryDTO,
             LessonDTO lessonDTO,
             Integer lessonRemainSeats,
-            Map<String, Integer> availableTimeRemainSeats
+            Map<String, Integer> availableTimeRemainSeats,
+            String categoryName
     ) {
         return new LessonDetailResult(
                 Mentor.of(mentorSummaryDTO),
-                Lesson.of(lessonDTO, lessonRemainSeats),
+                Lesson.of(lessonDTO, lessonRemainSeats, categoryName),
                 lessonDTO.optionDTOList().stream().map(Option::of).toList(),
                 lessonDTO.availableTimeDTOList().stream()
                         .map(dt -> AvailableTime.of(dt, availableTimeRemainSeats != null ? availableTimeRemainSeats.get(dt.id()) : null))
@@ -51,9 +53,12 @@ public record LessonDetailResult(
             Integer price,
             Integer seats,
             Integer remainSeats,
-            Long categoryId
+            Long categoryId,
+            String location,
+            Instant closeAt,
+            String category
     ) {
-        public static Lesson of(LessonDTO lessonDTO, Integer remainSeats) {
+        public static Lesson of(LessonDTO lessonDTO, Integer remainSeats, String categoryName) {
             return new Lesson(
                     lessonDTO.id(),
                     lessonDTO.description(),
@@ -63,7 +68,11 @@ public record LessonDetailResult(
                     lessonDTO.price(),
                     lessonDTO.seats(),
                     remainSeats,
-                    lessonDTO.categoryId());
+                    lessonDTO.categoryId(),
+                    lessonDTO.location(),
+                    lessonDTO.closeAt(),
+                    categoryName
+            );
         }
     }
 

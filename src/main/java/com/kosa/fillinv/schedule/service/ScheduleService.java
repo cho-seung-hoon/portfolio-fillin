@@ -6,6 +6,7 @@ import com.kosa.fillinv.global.exception.BusinessException;
 import com.kosa.fillinv.global.response.ErrorCode;
 import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
+import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.entity.Option;
 import com.kosa.fillinv.lesson.repository.AvailableTimeRepository;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
@@ -18,8 +19,16 @@ import com.kosa.fillinv.schedule.dto.response.ScheduleListResponse;
 import com.kosa.fillinv.schedule.entity.Schedule;
 import com.kosa.fillinv.schedule.entity.ScheduleStatus;
 import com.kosa.fillinv.schedule.entity.ScheduleTime;
+import com.kosa.fillinv.schedule.exception.ScheduleException;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import com.kosa.fillinv.schedule.repository.ScheduleTimeRepository;
+import com.kosa.fillinv.stock.repository.StockRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -27,11 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true) // 기본적으로 모든 메서드는 읽기 전용 트랜잭션으로 동작
@@ -45,6 +49,7 @@ public class ScheduleService {
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
     private final ScheduleTimeRepository scheduleTimeRepository;
+    private final StockRepository stockRepository;
 
     @Transactional
     public String createSchedule(String memberId, ScheduleCreateRequest request) { // 스케쥴 생성
@@ -57,8 +62,15 @@ public class ScheduleService {
             default -> throw new BusinessException(ErrorCode.INVALID_LESSON_TYPE);
         };
 
-        scheduleRepository.save(schedule);
-        return schedule.getId();
+        Schedule saved = scheduleRepository.save(schedule);
+
+        if (lesson.getLessonType() == LessonType.ONEDAY) {
+            decreaseStock(saved.getAvailableTimeId());
+        } else if (lesson.getLessonType() == LessonType.STUDY) {
+            decreaseStock(saved.getLessonId());
+        }
+
+        return saved.getId();
     }
 
     private Schedule createMentoringSchedule( // 1:1 멘토링 스케쥴 생성
@@ -147,6 +159,12 @@ public class ScheduleService {
                 .status(ScheduleStatus.PAYMENT_PENDING)
                 .scheduleTimeList(new ArrayList<>())
                 .build();
+    }
+
+    private void decreaseStock(String key) {
+        if (stockRepository.decreaseQuantity(key) == 0) {
+            throw new ScheduleException(ErrorCode.NO_SEAT);
+            }
     }
 
     private Member getMentor(String mentorId) {
