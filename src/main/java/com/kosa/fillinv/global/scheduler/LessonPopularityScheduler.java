@@ -29,7 +29,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LessonPopularityScheduler {
 
-    private static final int M = 5; // 베이지안 평균 가중치
+    private static final int BAYESIAN_AVERAGE_WEIGHT = 5; // 베이지안 평균 가중치
+    private static final double RECENT_APP_COUNT_WEIGHT = 0.6;
+    private static final double REVIEW_COUNT_WEIGHT = 0.2;
+    private static final double BAYESIAN_AVG_WEIGHT = 0.2;
     private final LessonRepository lessonRepository;
     private final ScheduleRepository scheduleRepository;
     private final ReviewRepository reviewRepository;
@@ -110,11 +113,13 @@ public class LessonPopularityScheduler {
 
             // 베이지안 평균
             double bayesianAvg = 0.0;
-            if (v + M > 0) {
-                bayesianAvg = ((double) v / (v + M)) * R + ((double) M / (v + M)) * C;
+            if (v + BAYESIAN_AVERAGE_WEIGHT > 0) {
+                bayesianAvg = ((double) v / (v + BAYESIAN_AVERAGE_WEIGHT)) * R
+                        + ((double) BAYESIAN_AVERAGE_WEIGHT / (v + BAYESIAN_AVERAGE_WEIGHT)) * C;
             }
 
-            double finalScore = (recentAppCount * 0.6) + (v * 0.2) + (bayesianAvg * 0.2);
+            double finalScore = (recentAppCount * RECENT_APP_COUNT_WEIGHT) + (v * REVIEW_COUNT_WEIGHT)
+                    + (bayesianAvg * BAYESIAN_AVG_WEIGHT);
             double roundedScore = Math.round(finalScore * 100.0) / 100.0;
 
             tempToSave.add(new LessonTemp(lessonId, roundedScore));
