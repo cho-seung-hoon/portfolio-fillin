@@ -8,7 +8,6 @@ import {
   useNavigate,
   useParams,
   useSearch,
-  Navigate,
 } from "@tanstack/react-router";
 import { useAuthStore } from "../stores/authStore";
 import { LoginDialog } from "./components/LoginDialog";
@@ -21,11 +20,10 @@ import { PaymentSuccessPage } from "./components/PaymentSuccessPage";
 import { LessonApplication } from "./components/LessonApplication";
 import Home from "./components/Home";
 import { LegalDocs } from "./components/LegalDocs";
+import { RequiredAuth } from "./components/RequiredAuth";
 
 // 라우터 컨텍스트 타입 정의
 interface RouterContext {
-  user: { email: string; name: string } | null;
-  logout: () => void;
   openLogin: () => void;
   openSignup: () => void;
 }
@@ -51,10 +49,8 @@ const indexRoute = createRoute({
     const { search, page, sort } = useSearch({ from: indexRoute.id });
     return (
       <Home
-        user={context.user}
         onLoginClick={context.openLogin}
         onSignupClick={context.openSignup}
-        onLogout={context.logout}
         searchQuery={search}
         page={page}
         sort={sort}
@@ -67,19 +63,10 @@ const myPageRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/mypage",
   component: () => {
-    const context = rootRoute.useRouteContext();
-    const navigate = useNavigate();
-    if (!context.user) {
-      return <Navigate to="/" />;
-    }
     return (
-      <MyPage
-        user={context.user}
-        onLoginClick={context.openLogin}
-        onLogout={context.logout}
-        onNavigateToMain={() => navigate({ to: "/" })}
-        onNavigateToServiceRegistration={() => navigate({ to: "/service/register" })}
-      />
+      <RequiredAuth>
+        <MyPage />
+      </RequiredAuth>
     );
   },
 });
@@ -88,8 +75,11 @@ const serviceRegisterRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/service/register",
   component: () => {
-    const navigate = useNavigate();
-    return <ServiceRegistration onBack={() => window.history.back()} />;
+    return (
+      <RequiredAuth>
+        <ServiceRegistration onBack={() => window.history.back()} />
+      </RequiredAuth>
+    );
   },
 });
 
@@ -98,7 +88,6 @@ const serviceEditRoute = createRoute({
   path: "/service/$id/edit",
   component: () => {
     const { id } = useParams({ from: serviceEditRoute.id });
-    const navigate = useNavigate();
     return <ServiceEdit lessonId={id} onBack={() => window.history.back()} />;
   },
 });
@@ -176,8 +165,6 @@ const routeTree = rootRoute.addChildren([
 const router = createRouter({
   routeTree,
   context: {
-    user: null,
-    logout: () => { },
     openLogin: () => { },
     openSignup: () => { },
   },
@@ -191,7 +178,7 @@ declare module "@tanstack/react-router" {
 }
 
 export default function App() {
-  const user = useAuthStore((state) => state.user);
+  // const user = useAuthStore((state) => state.user); // No longer needed here for context
   const logout = useAuthStore((state) => state.logout);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isSignupDialogOpen, setIsSignupDialogOpen] = useState(false);
@@ -201,8 +188,6 @@ export default function App() {
       <RouterProvider
         router={router}
         context={{
-          user,
-          logout,
           openLogin: () => setIsLoginDialogOpen(true),
           openSignup: () => setIsSignupDialogOpen(true),
         }}
