@@ -2,6 +2,7 @@ package com.kosa.fillinv.global.scheduler;
 
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.LessonTemp;
+import com.kosa.fillinv.lesson.repository.LessonBulkRepository;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.repository.LessonTempRepository;
 import com.kosa.fillinv.review.dto.ReviewStatsDTO;
@@ -10,15 +11,11 @@ import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -37,8 +34,8 @@ public class LessonPopularityScheduler {
     private final ScheduleRepository scheduleRepository;
     private final ReviewRepository reviewRepository;
     private final LessonTempRepository lessonTempRepository;
+    private final LessonBulkRepository lessonBulkRepository;
     private final TransactionTemplate transactionTemplate;
-    private final JdbcTemplate jdbcTemplate;
 
     @Scheduled(cron = "0 0 1 * * *")
     public void updateLessonPopularity() {
@@ -124,7 +121,7 @@ public class LessonPopularityScheduler {
         }
 
         lessonTempRepository.deleteAll();
-        lessonTempRepository.saveAll(tempToSave);
+        lessonBulkRepository.bulkInsertLessonTemp(tempToSave);
     }
 
     private void updateLessonsFromTemp() {
@@ -133,27 +130,7 @@ public class LessonPopularityScheduler {
             return;
         }
 
-        int BATCH_SIZE = 500;
-        String sql = "UPDATE lessons SET popularity_score = ? WHERE lesson_id = ?";
-
-        for (int i = 0; i < temps.size(); i += BATCH_SIZE) {
-            int end = Math.min(temps.size(), i + BATCH_SIZE);
-            List<LessonTemp> batchList = temps.subList(i, end);
-
-            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-                @Override
-                public void setValues(PreparedStatement ps, int j) throws SQLException {
-                    LessonTemp temp = batchList.get(j);
-                    ps.setDouble(1, temp.getScore());
-                    ps.setString(2, temp.getLessonId());
-                }
-
-                @Override
-                public int getBatchSize() {
-                    return batchList.size();
-                }
-            });
-        }
+        lessonBulkRepository.bulkUpdatePopularity(temps);
     }
 
     record ReviewStat(Long count, Double avgScore) {
