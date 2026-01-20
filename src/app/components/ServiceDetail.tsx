@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { serviceDetailService } from "../../api/serviceDetail";
 import { LessonDetail } from "../../types/lesson";
+import { getImageUrl } from "../../utils/image";
 
 interface ServiceDetailProps {
   serviceId: string;
@@ -81,9 +82,9 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                 <div className="relative w-full aspect-video md:aspect-[21/9] bg-gray-100">
                   <img
                     src={
-                      service.thumbnail.includes("picsum.photos")
+                      getImageUrl(service.thumbnail.includes("picsum.photos")
                         ? `${service.thumbnail}${service.thumbnail.includes("?") ? "&" : "?"}random=${service.id}`
-                        : service.thumbnail
+                        : service.thumbnail)
                     }
                     alt={service.title}
                     className="size-full object-cover"
@@ -92,7 +93,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                 <div className="p-6">
                   <div className="flex items-start gap-4 mb-6">
                     <img
-                      src={service.mentor.avatar}
+                      src={getImageUrl(service.mentor.avatar)}
                       alt={service.mentor.name}
                       className="size-20 rounded-full object-cover"
                     />
@@ -110,7 +111,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{service.rating}</span>
+                        <span className="font-medium">{service.rating ? service.rating.toFixed(1) : "신규"}</span>
                         <span className="text-gray-500">({service.reviewCount}개 리뷰)</span>
                       </div>
                       <div className="flex items-center gap-1 text-gray-600">
@@ -241,7 +242,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Star className="size-4" />
-                      <span>만족도 {service.rating}/5.0</span>
+                      <span>만족도 {service.rating ? `${service.rating.toFixed(1)}/5.0` : "신규"}</span>
                     </div>
                   </div>
 

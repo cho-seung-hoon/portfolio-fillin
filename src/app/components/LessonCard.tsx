@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
 import { Lesson } from "../../types/lesson";
+import { getImageUrl } from "../../utils/image";
 
 
 interface LessonCardProps {
@@ -26,9 +27,9 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
       <div className="relative aspect-video overflow-hidden bg-gray-100">
         <img
           src={
-            lesson.thumbnail.includes("picsum.photos")
+            getImageUrl(lesson.thumbnail.includes("picsum.photos")
               ? `${lesson.thumbnail}${lesson.thumbnail.includes("?") ? "&" : "?"}random=${lesson.id}`
-              : lesson.thumbnail
+              : lesson.thumbnail)
           }
           alt={lesson.title}
           className="size-full object-cover group-hover:scale-105 transition-transform duration-300"

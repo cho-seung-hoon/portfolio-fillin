@@ -1,6 +1,7 @@
 import client from "./client";
 import { Lesson, LessonListResult } from "../types/lesson";
 import { SuccessResponse, PageResponse, LessonThumbnail, LessonSortTypeEnum, RegisterLessonRequest, LessonSearchCondition } from "./types";
+import { RegisterLessonResponse } from "./dto/lesson-creation-result";
 
 export interface LessonService {
     getLessons(search?: string, page?: number, sort?: string): Promise<LessonListResult>;
@@ -9,6 +10,7 @@ export interface LessonService {
     updateLesson(lessonId: string, request: RegisterLessonRequest, thumbnail?: File): Promise<void>;
     deleteLesson(lessonId: string): Promise<void>;
 }
+
 
 class DefaultLessonService implements LessonService {
     async getLessons(search?: string, page: number = 1, sort?: string): Promise<LessonListResult> {
@@ -77,16 +79,18 @@ class DefaultLessonService implements LessonService {
             closeAt: dto.closeAt,
         };
     }
-    async createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<void> {
+    async createLesson(request: RegisterLessonRequest, thumbnail: File): Promise<string> {
         const formData = new FormData();
         formData.append("request", new Blob([JSON.stringify(request)], { type: "application/json" }));
         formData.append("thumbnail", thumbnail);
 
-        await client.post("/v1/lessons", formData, {
+        const response = await client.post<SuccessResponse<RegisterLessonResponse>>("/v1/lessons", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
         });
+
+        return response.data.data.lessonId;
     }
 
     async updateLesson(lessonId: string, request: any, thumbnail?: File): Promise<void> {

@@ -10,6 +10,7 @@ import { OneDayClassApplicationView } from "./lesson-application/OneDayClassAppl
 import { MentoringApplicationView } from "./lesson-application/MentoringApplicationView";
 import { LessonApplicationUiModel } from "../../types/lesson-application-ui";
 import { mapApiToLesson } from "../../utils/lesson-application-mapper";
+import { getImageUrl } from "../../utils/image";
 
 import { applicationService, ScheduleCreateRequest } from "../../api/lesson-application-service";
 import { LessonApplicationSkeleton } from "./LessonApplicationSkeleton";
@@ -179,7 +180,7 @@ export function LessonApplication({ lessonId, onBack }: LessonApplicationProps) 
                 <h2 className="text-xl font-bold mb-4">레슨 정보</h2>
                 <div className="flex items-start gap-4">
                   <img
-                    src={lesson.mentor.profileImage}
+                    src={getImageUrl(lesson.mentor.profileImage)}
                     alt={lesson.mentor.nickname}
                     className="size-16 rounded-full object-cover"
                   />
