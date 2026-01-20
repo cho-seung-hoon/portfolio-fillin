@@ -138,7 +138,6 @@ export function ServiceRegistration({
     setIsSubmitting(true);
 
     try {
-      // Map UI Type to API Enum
       const lessonTypeMap: Record<string, "MENTORING" | "ONEDAY" | "STUDY"> = {
         "1-1-mentoring": "MENTORING",
         "1-n-oneday": "ONEDAY",
@@ -146,6 +145,39 @@ export function ServiceRegistration({
       };
 
       const apiLessonType = lessonTypeMap[lessonType] || "MENTORING";
+
+      // Validation for MENTORING before constructing request
+      if (lessonType === "1-1-mentoring") {
+        const { mentoringOptions, availableTimeList, setSelectedDate } = useMentoringRegistrationStore.getState();
+
+        // 1. Check for options
+        if (mentoringOptions.length === 0) {
+          alert("최소 1개 이상의 멘토링 옵션을 만들어주세요.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 2. Validate Available Times against Minimum Option Duration
+        const allDurations = mentoringOptions
+          .flatMap(opt => opt.priceOptions)
+          .map(po => parseInt(po.duration, 10))
+          .filter(d => !isNaN(d));
+
+        const minOptionMinutes = allDurations.length > 0 ? Math.min(...allDurations) : 30;
+
+        for (const slot of availableTimeList) {
+          const start = new Date(slot.startTime).getTime();
+          const end = new Date(slot.endTime).getTime();
+          const durationMinutes = (end - start) / 60000;
+
+          if (durationMinutes < minOptionMinutes) {
+            alert(`설정된 시간 중 최소 진행 시간(${minOptionMinutes}분)보다 짧은 시간이 포함되어 있습니다. 해당 일자로 이동합니다.`);
+            setSelectedDate(new Date(slot.startTime));
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
 
       // Base DTO
       const requestDTO: any = {
