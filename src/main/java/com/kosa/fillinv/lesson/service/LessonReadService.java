@@ -5,11 +5,9 @@ import com.kosa.fillinv.category.entity.Category;
 import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.lesson.entity.LessonType;
-import com.kosa.fillinv.lesson.service.client.MentorSummaryDTO;
-import com.kosa.fillinv.lesson.service.client.ProfileClient;
-import com.kosa.fillinv.lesson.service.client.ReviewClient;
-import com.kosa.fillinv.lesson.service.client.StockClient;
+import com.kosa.fillinv.lesson.service.client.*;
 import com.kosa.fillinv.lesson.service.dto.*;
+import com.kosa.fillinv.schedule.entity.ScheduleStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
@@ -34,6 +32,10 @@ public class LessonReadService {
     private final StockClient stockClient;
 
     private final CategoryService categoryService;
+
+    private final ScheduleClient scheduleClient;
+
+    private static final Set<ScheduleStatus> PARTICIPATED_STATUSES = Set.of(ScheduleStatus.APPROVED, ScheduleStatus.COMPLETED);
 
     public Page<LessonThumbnail> search() {
         return search(LessonSearchCondition.defaultCondition());
@@ -99,7 +101,19 @@ public class LessonReadService {
             availableTimeRemainSeats = stockMap;
         }
 
-        return LessonDetailResult.of(mentorSummaryDTO, lessonDTO, lessonRemainSeats, availableTimeRemainSeats, category.getName());
+        Integer menteeCount = scheduleClient.countByLessonIdAndStatusIn(
+                request.lessonId(),
+                PARTICIPATED_STATUSES
+        );
+
+        return LessonDetailResult.of(
+                mentorSummaryDTO,
+                lessonDTO,
+                lessonRemainSeats,
+                availableTimeRemainSeats,
+                category.getName(),
+                menteeCount == null ? 0 : menteeCount
+        );
     }
 
     private Page<LessonThumbnail> assembleLessonThumbnail(
@@ -124,11 +138,22 @@ public class LessonReadService {
         Map<String, Float> averageRating =
                 reviewClient.getAverageRating(lessonIds);
 
+        Map<String, Integer> menteeCountMap = scheduleClient.countByLessonIdInAndStatusIn(
+                lessonIds,
+                PARTICIPATED_STATUSES
+        );
+
         return lessonPage.map(lesson -> {
             MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
             Float rating = averageRating.get(lesson.id());
-            return LessonThumbnail.of(lesson, mentor, rating,
-                    allCategoriesMap.get(lesson.categoryId()) == null ? null : allCategoriesMap.get(lesson.categoryId()).name());
+            Integer menteeCount = menteeCountMap.getOrDefault(lesson.id(), 0);
+            return LessonThumbnail.of(
+                    lesson,
+                    mentor,
+                    rating,
+                    allCategoriesMap.get(lesson.categoryId()) == null ? null : allCategoriesMap.get(lesson.categoryId()).name(),
+                    menteeCount
+            );
         });
     }
 }
