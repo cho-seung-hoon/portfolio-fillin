@@ -147,7 +147,7 @@ class DefaultServiceDetailService implements ServiceDetailService {
       price: displayPrice,
       originalPrice: undefined,
       rating: 0, // Placeholder, updated in getServiceDetail
-      studentCount: 99999, // MOCKED
+      studentCount: dto.lesson.menteeCount, // Updated from MOCKED 99999
       thumbnail: dto.lesson.thumbnailImage,
       category: dto.lesson.category,
       categoryId: dto.lesson.categoryId ?? 1, // Use from DTO

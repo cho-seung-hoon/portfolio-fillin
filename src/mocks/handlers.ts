@@ -445,7 +445,9 @@ export const handlers = [
                     closeAt: lesson.close_at,
                     categoryId: lesson.category_id,
                     seats: 100, // Default or random
-                    remainSeats: 90
+                    remainSeats: 90,
+                    category: categoryMap.get(lesson.category_id)?.name || "Unknown",
+                    menteeCount: lesson.studentCount
                 },
                 options: [
                     {

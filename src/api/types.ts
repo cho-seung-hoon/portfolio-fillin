@@ -199,6 +199,7 @@ export interface LessonInfoDTO {
     location: string;
     closeAt: string;
     category: string;
+    menteeCount: number;
 }
 
 export interface AvailableTimeDTO {
