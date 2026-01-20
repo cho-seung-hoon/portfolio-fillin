@@ -48,6 +48,17 @@ public class LessonController {
         return SuccessResponse.success(HttpStatus.OK, PageResponse.from(result));
     }
 
+    @GetMapping("/mine")
+    public SuccessResponse<PageResponse<LessonThumbnail>> mine(
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        String mentorId = principal.getUsername();
+
+        Page<LessonThumbnail> result = lessonReadService.ownBy(mentorId);
+
+        return SuccessResponse.success(HttpStatus.OK, PageResponse.from(result));
+    }
+
     @GetMapping("/{lessonId}")
     public SuccessResponse<LessonDetailResult> detail(
             @PathVariable String lessonId

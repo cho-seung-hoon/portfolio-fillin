@@ -6,6 +6,7 @@ public record LessonSearchCondition(
         String keyword,
         LessonType lessonType,
         Long categoryId,
+        String mentorId,
         LessonSortType sortType,
         Integer page,
         Integer size
@@ -25,7 +26,13 @@ public record LessonSearchCondition(
 
     public static LessonSearchCondition defaultCondition() {
         return new LessonSearchCondition(
-                null, null, null, null, null, null
+                null, null, null, null, null, null, null
+        );
+    }
+
+    public static LessonSearchCondition ownBy(String mentorId) {
+        return new LessonSearchCondition(
+                null, null, null, mentorId, null, null, null
         );
     }
 }

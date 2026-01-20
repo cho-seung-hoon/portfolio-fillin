@@ -37,7 +37,7 @@ public class LessonService {
     public Page<LessonDTO> searchLesson(LessonSearchCondition condition) {
         Sort sortBy = condition.sortType().toSort();
         PageRequest pageRequest = PageRequest.of(condition.page(), condition.size(), sortBy);
-        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId());
+        Specification<Lesson> search = LessonSpecifications.search(condition.keyword(), condition.lessonType(), condition.categoryId(), condition.mentorId());
 
         return lessonRepository.findAll(search, pageRequest).map(LessonDTO::of);
     }

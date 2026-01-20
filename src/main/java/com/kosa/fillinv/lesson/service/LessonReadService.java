@@ -56,6 +56,28 @@ public class LessonReadService {
         });
     }
 
+    public Page<LessonThumbnail> ownBy(String mentorId) {
+        LessonSearchCondition condition = LessonSearchCondition.ownBy(mentorId);
+
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(condition);
+
+        Set<String> mentorIds = lessonPage.stream()
+                .map(LessonDTO::mentorId)
+                .collect(Collectors.toSet());
+        Set<String> lessonIds = lessonPage.stream()
+                .map(LessonDTO::id)
+                .collect(Collectors.toSet());
+
+        Map<String, MentorSummaryDTO> mentorMap = profileClient.getMentors(mentorIds);
+        Map<String, Float> averageRating = reviewClient.getAverageRating(lessonIds);
+
+        return lessonPage.map(lesson -> {
+            MentorSummaryDTO mentor = mentorMap.get(lesson.mentorId());
+            Float rating = averageRating.get(lesson.id());
+            return LessonThumbnail.of(lesson, mentor, rating);
+        });
+    }
+
     public LessonDetailResult detail(LessonDetailCommand request) {
 
         LessonDTO lessonDTO = lessonService.readLessonById(request.lessonId())
