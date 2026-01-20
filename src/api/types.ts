@@ -154,6 +154,10 @@ export interface LessonThumbnail {
     mentorNickName: string;
     rating: number;
     categoryId: number;
+    location: string;
+    closeAt: string;
+    createdAt: string;
+    category: string;
 }
 
 export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC";
@@ -191,6 +195,9 @@ export interface LessonInfoDTO {
     seats?: number;
     remainSeats?: number;
     categoryId: number;
+    location: string;
+    closeAt: string;
+    category: string;
 }
 
 export interface AvailableTimeDTO {
@@ -290,4 +297,16 @@ export interface RegisterLessonRequest {
     seats?: number; // Top level seats
     optionList: LessonOptionRequest[];
     availableTimeList: AvailableTimeRequest[];
+}
+
+export interface EditLessonRequest {
+    title: string;
+    description: string;
+    location: string;
+    categoryId: number;
+    closeAt: string; // Instant ISO string
+}
+
+export interface EditLessonResponse {
+    lessonId: string;
 }
