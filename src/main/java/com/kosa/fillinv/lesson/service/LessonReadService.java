@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +133,11 @@ public class LessonReadService {
 
         List<BookedTimeVO> bookedTimes = null;
         if (lessonDTO.lessonType() == LessonType.MENTORING) {
-            bookedTimes = scheduleClient.getBookedTimes(request.lessonId(), MENTORING_BOOKED_STATUES);
+            bookedTimes = scheduleClient.getBookedTimes(
+                    request.lessonId(),
+                    MENTORING_BOOKED_STATUES,
+                    Instant.now().minus(7, ChronoUnit.DAYS) // 모든 schedule_time을 가져오지 않게
+            );
         }
 
         return LessonDetailResult.of(

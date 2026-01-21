@@ -55,6 +55,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
     @Query("SELECT new com.kosa.fillinv.lesson.service.dto.BookedTimeVO(st.startTime, st.endTime) " +
             "FROM Schedule s " +
             "JOIN s.scheduleTimeList st " +
-            "WHERE s.lessonId = :lessonId AND s.status IN :statuses")
-    List<BookedTimeVO> findBookedTimesByLessonIdAndStatusIn(@Param("lessonId") String lessonId, @Param("statuses") Collection<ScheduleStatus> statuses);
+            "WHERE s.lessonId = :lessonId AND s.status IN :statuses AND st.startTime >= :since")
+    List<BookedTimeVO> findBookedTimesByLessonIdAndStatusInAndStartTimeAfter(@Param("lessonId") String lessonId, @Param("statuses") Collection<ScheduleStatus> statuses, @Param("since") Instant since);
 }

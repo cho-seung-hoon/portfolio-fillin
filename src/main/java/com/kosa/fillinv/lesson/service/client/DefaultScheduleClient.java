@@ -7,6 +7,7 @@ import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class DefaultScheduleClient implements ScheduleClient {
     }
 
     @Override
-    public List<BookedTimeVO> getBookedTimes(String lessonId, Collection<ScheduleStatus> statuses) {
-        return scheduleRepository.findBookedTimesByLessonIdAndStatusIn(lessonId, statuses);
+    public List<BookedTimeVO> getBookedTimes(String lessonId, Collection<ScheduleStatus> statuses, Instant since) {
+        return scheduleRepository.findBookedTimesByLessonIdAndStatusInAndStartTimeAfter(lessonId, statuses, since);
     }
 }
