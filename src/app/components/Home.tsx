@@ -16,9 +16,10 @@ interface HomeProps {
   page?: number;
   sort?: string;
   categoryId?: number;
+  lessonType?: string;
 }
 
-export default function Home({ onLoginClick, onSignupClick, searchQuery: initialSearchQuery = "", page = 1, sort: initialSort = "popular", categoryId: initialCategoryId }: HomeProps) {
+export default function Home({ onLoginClick, onSignupClick, searchQuery: initialSearchQuery = "", page = 1, sort: initialSort = "popular", categoryId: initialCategoryId, lessonType: initialLessonType = "all" }: HomeProps) {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -28,18 +29,19 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
   // Local state for filters that are NOT in URL yet (can be moved to URL later if needed)
   const [priceFilter, setPriceFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
-  const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
+  // serviceTypeFilter removed as it is now server-side via lessonType prop
 
   useEffect(() => {
     const fetchLessons = async () => {
       setLoading(true);
       try {
-        // API 호출 시 검색어, 페이지(0-based), 정렬, 카테고리 ID 전달
+        // API 호출 시 검색어, 페이지(0-based), 정렬, 카테고리 ID, 레슨 타입 전달
         const { lessons: data, totalCount } = await lessonService.getLessons(
           initialSearchQuery,
           Math.max(0, page - 1),
           initialSort,
-          initialCategoryId || undefined
+          initialCategoryId || undefined,
+          initialLessonType === "all" ? undefined : initialLessonType
         );
         setLessons(data);
         setTotalCount(totalCount);
@@ -50,14 +52,14 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
       }
     };
     fetchLessons();
-  }, [initialSearchQuery, page, initialSort, initialCategoryId]);
+  }, [initialSearchQuery, page, initialSort, initialCategoryId, initialLessonType]);
 
   const handleLessonClick = (lessonId: string) => {
     navigate({ to: "/service/$id", params: { id: lessonId.toString() } });
   };
 
   // Client-side filtering/sorting is temporarily applied ONLY to the current page
-  // Category filtering is now handled by API, but other filters remain client-side
+  // Category & Service Type filtering is now handled by API, but other filters remain client-side
   const filteredAndSortedLessons = useMemo(() => {
     let filtered = lessons;
 
@@ -75,14 +77,11 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
       filtered = filtered.filter((lesson) => lesson.level === levelFilter);
     }
 
-    // Filter by service type
-    if (serviceTypeFilter !== "all") {
-      filtered = filtered.filter((lesson) => lesson.serviceType === serviceTypeFilter);
-    }
+    // Service Type filtering is now handled by API
 
     // Sorting is now handled by the API, so we just return the filtered list
     return filtered;
-  }, [lessons, priceFilter, levelFilter, serviceTypeFilter]);
+  }, [lessons, priceFilter, levelFilter]);
 
   // Pagination logic using server totalCount
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -94,7 +93,8 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
         search: initialSearchQuery,
         page: newPage,
         sort: initialSort,
-        categoryId: initialCategoryId ?? undefined
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
       }
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -107,7 +107,8 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
         search: initialSearchQuery,
         page: 1, // Reset page on category change
         sort: initialSort,
-        categoryId: newCategoryId ?? undefined
+        categoryId: newCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
       }
     });
   };
@@ -119,7 +120,8 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
         search: query,
         sort: initialSort,
         page: 1,
-        categoryId: initialCategoryId ?? undefined
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
       }
     });
   };
@@ -131,11 +133,11 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
         search: initialSearchQuery,
         page: 1,
         sort: sort,
-        categoryId: initialCategoryId ?? undefined
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
       }
     });
   };
-
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -157,10 +159,18 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
       <SearchFilters
         sortBy={initialSort}
         onSortChange={handleSortChange}
-        serviceTypeFilter={serviceTypeFilter}
+        serviceTypeFilter={initialLessonType}
         onServiceTypeFilterChange={(type) => {
-          setServiceTypeFilter(type);
-          handlePageChange(1);
+          navigate({
+            to: ".",
+            search: {
+              search: initialSearchQuery,
+              page: 1,
+              sort: initialSort,
+              categoryId: initialCategoryId ?? undefined,
+              lessonType: type !== "all" ? type : undefined
+            }
+          });
         }}
         resultCount={totalCount}
       />

@@ -13,7 +13,7 @@ export interface LessonService {
 
 
 class DefaultLessonService implements LessonService {
-    async getLessons(search?: string, page: number = 1, sort?: string, categoryId?: number): Promise<LessonListResult> {
+    async getLessons(search?: string, page: number = 1, sort?: string, categoryId?: number, lessonType?: string): Promise<LessonListResult> {
         // Map UI sort to API Enum
         let sortType: LessonSortTypeEnum = "CREATED_AT_DESC";
         switch (sort) {
@@ -37,6 +37,13 @@ class DefaultLessonService implements LessonService {
         if (categoryId !== undefined && categoryId !== null && !isNaN(categoryId)) {
             params.categoryId = categoryId;
         }
+
+        if (lessonType && lessonType !== "all") {
+            // Map frontend "mentoring" | "oneday" | "study" to backend "MENTORING" | "ONEDAY" | "STUDY"
+            params.lessonType = lessonType.toUpperCase();
+        }
+
+        console.log("Calling getLessons API with params:", params);
 
         // 목록 조회는 비로그인도 가능하도록 publicClient 사용
         const response = await publicClient.get<SuccessResponse<PageResponse<LessonThumbnail>>>("/v1/lessons/search", {
