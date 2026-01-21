@@ -85,6 +85,9 @@ export function CategoryTabs({
 
     // 대분류가 선택되었는데 소분류가 선택되어 있다면 유효성 검사
     if (selectedCategoryId != null) {
+      // 대분류 ID와 같으면 "전체"를 의미하므로 유효함
+      if (selectedCategoryId === selectedMainId) return;
+
       const isValid = subCategories.some((c) => c.categoryId === selectedCategoryId);
       if (!isValid) {
         onCategoryChange(null);
@@ -142,8 +145,8 @@ export function CategoryTabs({
                 key={major.categoryId}
                 onClick={() => {
                   setSelectedMainId(major.categoryId);
-                  // 대분류 변경 시 소분류 선택 초기화
-                  onCategoryChange(null);
+                  // 대분류 변경 시 해당 대분류 ID로 필터링 (전체 소분류 선택 효과)
+                  onCategoryChange(major.categoryId);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className={`relative flex flex-col items-center gap-1.5 px-4 py-2.5 min-w-[80px] whitespace-nowrap transition-colors ${isSelected
@@ -168,8 +171,8 @@ export function CategoryTabs({
               <span className="text-xs text-gray-500 whitespace-nowrap mr-2">소분류</span>
 
               <button
-                onClick={() => onCategoryChange(null)}
-                className={`px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors border ${selectedCategoryId === null
+                onClick={() => onCategoryChange(selectedMainId)}
+                className={`px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors border ${selectedCategoryId === selectedMainId
                   ? "bg-[#00C471] text-white border-[#00C471]"
                   : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                   }`}
