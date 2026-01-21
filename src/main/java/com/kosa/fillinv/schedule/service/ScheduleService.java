@@ -185,9 +185,9 @@ public class ScheduleService {
         Schedule schedule = validator.getSchedule(scheduleId);
 
         // 스케쥴 취소는 스케쥴 참여자(멘토 또는 멘티)만 가능
-        schedule.validateParticipant(memberId);
+        schedule.validateMentor(memberId);
 
-        // 결제 대기 상태인 스케쥴만 승인 대기로 상태 변경 가능
+        // 승인 대기 상태인 스케쥴만 취소로 상태 변경 가능
         if (schedule.getStatus() != ScheduleStatus.APPROVAL_PENDING) {
             throw new BusinessException(ErrorCode.INVALID_SCHEDULE_STATUS);
         }
@@ -202,7 +202,7 @@ public class ScheduleService {
         // 스케쥴 완료는 멘티만 가능
         schedule.validateMentee(memberId);
 
-        // 결제 대기 상태인 스케쥴만 승인 대기로 상태 변경 가능
+        // 승인 상태인 스케쥴만 완료로 상태 변경 가능
         if (schedule.getStatus() != ScheduleStatus.APPROVED) {
             throw new BusinessException(ErrorCode.INVALID_SCHEDULE_STATUS);
         }
