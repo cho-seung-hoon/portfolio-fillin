@@ -34,7 +34,6 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
     const fetchLessons = async () => {
       setLoading(true);
       try {
-        console.log("Fetching lessons with category:", initialCategoryId);
         // API 호출 시 검색어, 페이지(0-based), 정렬, 카테고리 ID 전달
         const { lessons: data, totalCount } = await lessonService.getLessons(
           initialSearchQuery,
