@@ -13,6 +13,7 @@ public record CreateLessonCommand(
         String location,
         String mentorId,
         Long categoryId,
+        String categoryPath,
         Instant closeAt,
         Integer price,
         Integer seats,

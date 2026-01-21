@@ -5,7 +5,7 @@ import com.kosa.fillinv.lesson.entity.LessonType;
 public record LessonSearchCondition(
         String keyword,
         LessonType lessonType,
-        Long categoryId,
+        String categoryPath,
         String mentorId,
         LessonSortType sortType,
         Integer page,
@@ -34,7 +34,7 @@ public record LessonSearchCondition(
         return new LessonSearchCondition(
                 this.keyword,
                 this.lessonType,
-                this.categoryId,
+                this.categoryPath,
                 mentorId,
                 this.sortType,
                 this.page,

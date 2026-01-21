@@ -4,6 +4,7 @@ import com.kosa.fillinv.category.dto.CategoryResponseDto;
 import com.kosa.fillinv.category.entity.Category;
 import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.global.exception.ResourceException;
+import com.kosa.fillinv.lesson.controller.dto.LessonSearchRequest;
 import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.service.client.*;
 import com.kosa.fillinv.lesson.service.dto.*;
@@ -38,31 +39,50 @@ public class LessonReadService {
     private static final Set<ScheduleStatus> PARTICIPATED_STATUSES = Set.of(ScheduleStatus.APPROVED, ScheduleStatus.COMPLETED);
 
     public Page<LessonThumbnail> search() {
-        return search(LessonSearchCondition.defaultCondition());
+        return search(LessonSearchRequest.empty());
     }
 
-    public Page<LessonThumbnail> search(LessonSearchCondition condition) {
-        LessonSearchCondition resolved =
-                condition == null ? LessonSearchCondition.defaultCondition() : condition;
-
-        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
-        return assembleLessonThumbnail(lessonPage);
+    public Page<LessonThumbnail> search(LessonSearchRequest request) {
+        LessonSearchCondition condition = resolveCondition(request);
+        return searchByCondition(condition);
     }
 
     public Page<LessonThumbnail> searchOwnedBy(
-            LessonSearchCondition condition,
+            LessonSearchRequest request,
             String mentorId
     ) {
+        validateMentorId(mentorId);
+
+        LessonSearchCondition condition =
+                resolveCondition(request).ownBy(mentorId);
+
+        return searchByCondition(condition);
+    }
+
+    private LessonSearchCondition resolveCondition(
+            LessonSearchRequest request
+    ) {
+        String categoryPath = resolveCategoryPath(request.categoryId());
+        return request.toCondition(categoryPath);
+    }
+
+    private String resolveCategoryPath(Long categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        return categoryService.getCategoryById(categoryId).getCategoryPath();
+    }
+
+    private void validateMentorId(String mentorId) {
         if (mentorId == null) {
             throw new ResourceException.InvalidArgument(MENTOR_ID_REQUIRED);
         }
+    }
 
-        LessonSearchCondition resolved =
-                condition == null
-                        ? LessonSearchCondition.defaultCondition().ownBy(mentorId)
-                        : condition.ownBy(mentorId);
-
-        Page<LessonDTO> lessonPage = lessonService.searchLesson(resolved);
+    private Page<LessonThumbnail> searchByCondition(
+            LessonSearchCondition condition
+    ) {
+        Page<LessonDTO> lessonPage = lessonService.searchLesson(condition);
         return assembleLessonThumbnail(lessonPage);
     }
 

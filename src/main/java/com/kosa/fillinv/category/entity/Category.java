@@ -24,4 +24,6 @@ public class Category {
     @JoinColumn(name = "parent_category_id")
     private Category parentCategory;
 
+    @Column(name = "category_path", nullable = false)
+    private String categoryPath;
 }

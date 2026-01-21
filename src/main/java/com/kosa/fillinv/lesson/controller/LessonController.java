@@ -41,9 +41,9 @@ public class LessonController {
 
     @GetMapping("/search")
     public SuccessResponse<PageResponse<LessonThumbnail>> search(
-            @ModelAttribute LessonSearchCondition condition
+            @ModelAttribute LessonSearchRequest request
     ) {
-        Page<LessonThumbnail> result = lessonReadService.search(condition);
+        Page<LessonThumbnail> result = lessonReadService.search(request);
 
         return SuccessResponse.success(HttpStatus.OK, PageResponse.from(result));
     }
@@ -51,11 +51,11 @@ public class LessonController {
     @GetMapping("/mine")
     public SuccessResponse<PageResponse<LessonThumbnail>> mine(
             @AuthenticationPrincipal UserDetails principal,
-            @ModelAttribute LessonSearchCondition condition
+            @ModelAttribute LessonSearchRequest request
     ) {
         String mentorId = principal.getUsername();
 
-        Page<LessonThumbnail> result = lessonReadService.searchOwnedBy(condition, mentorId);
+        Page<LessonThumbnail> result = lessonReadService.searchOwnedBy(request, mentorId);
 
         return SuccessResponse.success(HttpStatus.OK, PageResponse.from(result));
     }

@@ -20,7 +20,7 @@ public record RegisterLessonCommand(
         List<AvailableTime> availableTimeList
 ) {
 
-    public CreateLessonCommand toCreateLessonCommand(String thumbnailImage) {
+    public CreateLessonCommand toCreateLessonCommand(String categoryPath, String thumbnailImage) {
         return new CreateLessonCommand(
                 this.title,
                 LessonType.from(this.lessonType),
@@ -29,6 +29,7 @@ public record RegisterLessonCommand(
                 this.location,
                 this.mentorId,
                 this.categoryId,
+                categoryPath,
                 this.closeAt,
                 this.price,
                 this.seats,

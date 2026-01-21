@@ -72,6 +72,7 @@ public class LessonReadServiceIntegrationTest {
                 "서울",
                 "mentor-1",
                 1L,
+                "",
                 Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(7, ChronoUnit.DAYS),
                 10000,
                 null

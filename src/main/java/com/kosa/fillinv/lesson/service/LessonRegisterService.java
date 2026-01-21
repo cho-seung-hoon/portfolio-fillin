@@ -1,5 +1,7 @@
 package com.kosa.fillinv.lesson.service;
 
+import com.kosa.fillinv.category.entity.Category;
+import com.kosa.fillinv.category.service.CategoryService;
 import com.kosa.fillinv.global.exception.ResourceException;
 import com.kosa.fillinv.global.util.FileStorage;
 import com.kosa.fillinv.global.util.UploadFileResult;
@@ -16,6 +18,7 @@ public class LessonRegisterService {
 
     private final LessonService lessonService;
     private final FileStorage fileStorage;
+    private final CategoryService categoryService;
 
     public CreateLessonResult registerLesson(RegisterLessonCommand command, MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -25,7 +28,9 @@ public class LessonRegisterService {
         UploadFileResult upload = fileStorage.upload(file);
 
         try {
-            CreateLessonCommand createLessonCommand = command.toCreateLessonCommand(upload.fileKey());
+            Category category = categoryService.getCategoryById(command.categoryId());
+
+            CreateLessonCommand createLessonCommand = command.toCreateLessonCommand(category.getCategoryPath(), upload.fileKey());
             return lessonService.createLesson(createLessonCommand);
         } catch (Exception e) {
             fileStorage.delete(upload.fileKey());
