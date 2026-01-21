@@ -1,5 +1,9 @@
 package com.kosa.fillinv.schedule.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+
 import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.LessonType;
@@ -14,6 +18,10 @@ import com.kosa.fillinv.schedule.entity.Schedule;
 import com.kosa.fillinv.schedule.entity.ScheduleTime;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import jakarta.persistence.EntityManager;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,23 +31,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doReturn;
-
 @SpringBootTest
 @ActiveProfiles("local")
 @Transactional
 class ScheduleServiceTest {
 
     @Autowired
-    private ScheduleService scheduleService;
+    private ScheduleCreateService scheduleCreateService;
+
+    @Autowired
+    private ScheduleInquiryService scheduleInquiryService;
 
     @Autowired
     private LessonRepository lessonRepository;
@@ -94,8 +95,9 @@ class ScheduleServiceTest {
         );
 
         // when
-        String scheduleId = scheduleService.createSchedule("mentee-1", request);
-        entityManager.flush(); entityManager.clear();
+        String scheduleId = scheduleCreateService.createSchedule("mentee-1", request);
+        entityManager.flush();
+        entityManager.clear();
 
         // then
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow();
@@ -152,8 +154,9 @@ class ScheduleServiceTest {
         );
 
         // when
-        String scheduleId = scheduleService.createSchedule("mentee-2", request);
-        entityManager.flush(); entityManager.clear();
+        String scheduleId = scheduleCreateService.createSchedule("mentee-2", request);
+        entityManager.flush();
+        entityManager.clear();
 
         // then
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow();
@@ -216,8 +219,9 @@ class ScheduleServiceTest {
         );
 
         // when
-        String scheduleId = scheduleService.createSchedule("mentee-3", request);
-        entityManager.flush(); entityManager.clear();
+        String scheduleId = scheduleCreateService.createSchedule("mentee-3", request);
+        entityManager.flush();
+        entityManager.clear();
 
         // then
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow();
