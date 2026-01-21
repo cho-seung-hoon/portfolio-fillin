@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.Instant;
@@ -130,7 +129,7 @@ public class ScheduleController {
 
     // 캘린더 / 스케쥴 전체 조회 (GET) - 시간순 정렬 (특정 날짜 위주)
     @GetMapping("/calendar")
-    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> getCalendarSchedules(
+    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> searchSchedules(
             @AuthenticationPrincipal CustomMemberDetails customMemberDetails, // 로그인한 사용자 ID
             @RequestParam Instant start,
             @RequestParam Instant end,
@@ -151,13 +150,13 @@ public class ScheduleController {
 
     // 검색
     @GetMapping("/search")
-    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> getCalendarSchedules(
+    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> searchSchedules(
             @AuthenticationPrincipal CustomMemberDetails customMemberDetails, // 로그인한 사용자 ID
             @ModelAttribute ScheduleSearchCondition condition
     ) {
         String memberId = customMemberDetails.memberId();
 
-        Page<ScheduleListResponse> responses = scheduleService.search(condition.memberId(memberId));
+        Page<ScheduleListResponse> responses = scheduleService.search(condition.withMemberId(memberId));
 
         return ResponseEntity
                 .ok(SuccessResponse.success(HttpStatus.OK, responses));
