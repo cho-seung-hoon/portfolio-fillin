@@ -9,7 +9,9 @@ public enum LessonSortType {
     CREATED_AT_DESC("createdAt", Sort.Direction.DESC),
 
     PRICE_ASC("price", Sort.Direction.ASC),
-    PRICE_DESC("price", Sort.Direction.DESC);
+    PRICE_DESC("price", Sort.Direction.DESC),
+
+    POPULARITY("popularityScore", Sort.Direction.DESC);
 
     private final String property;
     private final Sort.Direction direction;

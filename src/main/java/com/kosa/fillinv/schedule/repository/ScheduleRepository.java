@@ -14,10 +14,12 @@ import org.springframework.stereotype.Repository;
 import java.util.Collection;
 import java.util.List;
 
+import java.time.Instant;
+import java.util.List;
+
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, String> {
 
-    //Pageable 방식 - return type을 page로 할 경우 pagenation 처리 가능
 
     // 레슨별 스케쥴 목록 조회
     Page<Schedule> findByLessonId(String lessonId, Pageable pageable);
@@ -47,4 +49,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, String> {
     List<LessonCountVO> countByLessonIdInAndStatusIn(@Param("lessonIds") Collection<String> lessonIds, @Param("statuses") Collection<ScheduleStatus> statuses);
 
     Long countByLessonIdAndStatusIn(String lessonId, Collection<ScheduleStatus> statuses);
+
+    @Query("SELECT s.lessonId, COUNT(s) FROM Schedule s JOIN Lesson l ON s.lessonId = l.id WHERE s.createdAt >= :startDate AND s.deletedAt IS NULL AND l.deletedAt IS NULL GROUP BY s.lessonId")
+    List<Object[]> countByLessonIdAndCreatedAtAfter(@Param("startDate") Instant startDate);
 }

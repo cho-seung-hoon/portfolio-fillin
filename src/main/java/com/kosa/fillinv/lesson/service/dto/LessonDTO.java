@@ -23,6 +23,7 @@ public record LessonDTO(
         Integer seats,
         Instant updatedAt,
         Instant deletedAt,
+        Double popularityScore,
         List<AvailableTimeDTO> availableTimeDTOList,
         List<OptionDTO> optionDTOList
 ) {
@@ -42,6 +43,7 @@ public record LessonDTO(
                 lesson.getSeats(),
                 lesson.getUpdatedAt(),
                 lesson.getDeletedAt(),
+                lesson.getPopularityScore(),
                 lesson.getAvailableTimeList().stream().map(AvailableTimeDTO::of).toList(),
                 lesson.getOptionList().stream().map(OptionDTO::of).toList()
         );
@@ -63,6 +65,7 @@ public record LessonDTO(
                 lesson.getSeats(),
                 lesson.getUpdatedAt(),
                 lesson.getDeletedAt(),
+                lesson.getPopularityScore(),
                 availableTimes.stream().map(AvailableTimeDTO::of).toList(),
                 options.stream().map(OptionDTO::of).toList()
         );

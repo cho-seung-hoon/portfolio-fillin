@@ -2,6 +2,7 @@ package com.kosa.fillinv.review.repository;
 
 import com.kosa.fillinv.review.dto.LessonAvgScore;
 import com.kosa.fillinv.review.dto.MyReviewVO;
+import com.kosa.fillinv.review.dto.ReviewStatsDTO;
 import com.kosa.fillinv.review.dto.ReviewWithNicknameVO;
 import com.kosa.fillinv.review.entity.Review;
 import org.springframework.data.domain.Page;
@@ -40,4 +41,8 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     Page<MyReviewVO> findByWriterId(@Param("writerId") String writerId, Pageable pageable);
 
     boolean existsByScheduleId(String scheduleId);
+
+    @Query("SELECT r.lessonId, COUNT(r), AVG(r.score) FROM Review r JOIN Lesson l ON r.lessonId = l.id WHERE r.deletedAt IS NULL AND l.deletedAt IS NULL GROUP BY r.lessonId")
+    List<ReviewStatsDTO> findReviewStatsByLessonId();
+
 }

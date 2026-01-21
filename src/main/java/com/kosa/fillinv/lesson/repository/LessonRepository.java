@@ -3,6 +3,8 @@ package com.kosa.fillinv.lesson.repository;
 import com.kosa.fillinv.lesson.entity.Lesson;
 import com.kosa.fillinv.lesson.entity.LessonType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
@@ -27,4 +29,8 @@ public interface LessonRepository extends JpaRepository<Lesson, String>, JpaSpec
     List<Lesson> findAllByDeletedAtIsNullOrderByPriceDesc();
 
     List<Lesson> findAllByDeletedAtIsNullOrderByPriceAsc();
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Lesson l SET l.popularityScore = 0.0")
+    void resetAllPopularityScores();
 }

@@ -173,6 +173,7 @@ class LessonReadServiceTest {
                 10,
                 now,                             // updatedAt
                 null,                             // deletedAt
+                0.0, // popularityScore
                 Collections.emptyList(),          // availableTimeDTOList
                 Collections.emptyList()           // optionDTOList
         );

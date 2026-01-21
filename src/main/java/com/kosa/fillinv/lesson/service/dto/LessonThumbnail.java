@@ -14,7 +14,8 @@ public record LessonThumbnail(
         Long categoryId,
         String category,
         Instant createdAt,
-        Integer menteeCount
+        Integer menteeCount,
+        Double popularityScore
 ) {
     public static LessonThumbnail of(
             LessonDTO lesson,
@@ -33,7 +34,8 @@ public record LessonThumbnail(
                 lesson.categoryId(),
                 category,
                 lesson.createdAt(),
-                menteeCount
+                menteeCount,
+                lesson.popularityScore()
         );
     }
 }
