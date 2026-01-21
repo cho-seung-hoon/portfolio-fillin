@@ -4,15 +4,19 @@ import com.kosa.fillinv.global.exception.BusinessException;
 import com.kosa.fillinv.global.response.ErrorCode;
 import com.kosa.fillinv.lesson.entity.AvailableTime;
 import com.kosa.fillinv.lesson.entity.Lesson;
+import com.kosa.fillinv.lesson.entity.LessonType;
 import com.kosa.fillinv.lesson.entity.Option;
 import com.kosa.fillinv.lesson.repository.AvailableTimeRepository;
 import com.kosa.fillinv.schedule.dto.request.ScheduleCreateRequest;
 import com.kosa.fillinv.schedule.entity.Schedule;
 import com.kosa.fillinv.schedule.entity.ScheduleTime;
+import com.kosa.fillinv.schedule.exception.ScheduleException;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import com.kosa.fillinv.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +29,7 @@ public class ScheduleCreateService { // 스케줄 생성 서비스
     private final ScheduleValidator validator;
     private final ScheduleMapper mapper;
     private final ScheduleRepository scheduleRepository;
+    private final StockRepository stockRepository;
     private final AvailableTimeRepository availableTimeRepository;
 
     // ------- Public API - 외부 호출 핵심 메서드
@@ -38,8 +43,22 @@ public class ScheduleCreateService { // 스케줄 생성 서비스
             default -> throw new BusinessException(ErrorCode.INVALID_LESSON_TYPE);
         };
 
+        Schedule saved = scheduleRepository.save(schedule);
+
+        if (lesson.getLessonType() == LessonType.ONEDAY) {
+            decreaseStock(saved.getAvailableTimeId());
+        } else if (lesson.getLessonType() == LessonType.STUDY) {
+            decreaseStock(saved.getLessonId());
+        }
+
         scheduleRepository.save(schedule);
         return schedule.getId();
+    }
+
+    private void decreaseStock(String key) {
+        if (stockRepository.decreaseQuantity(key) == 0) {
+            throw new ScheduleException(ErrorCode.NO_SEAT);
+        }
     }
 
     // ------- Private Method - 내부 보조 메서드 (비즈니스 로직)
