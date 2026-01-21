@@ -98,7 +98,7 @@ public class LessonService {
         lesson.updateDescription(command.description());
         lesson.updateLocation(command.location());
         lesson.updateCloseAt(command.closeAt());
-        lesson.updateCategoryId(command.categoryId());
+        lesson.updateCategory(command.categoryId(), command.categoryPath());
 
         return UpdateLessonResult.of(lessonRepository.save(lesson));
     }

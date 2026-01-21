@@ -121,9 +121,10 @@ public class Lesson extends BaseEntity {
         this.location = location;
     }
 
-    public void updateCategoryId(Long categoryId) {
-        if (categoryId == null) return;
+    public void updateCategory(Long categoryId, String categoryPath) {
+        if (categoryId == null || categoryPath == null || categoryPath.isBlank()) return;
         this.categoryId = categoryId;
+        this.categoryPath = categoryPath;
     }
 
     @Override

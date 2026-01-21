@@ -50,7 +50,9 @@ public class LessonRegisterService {
         }
 
         try {
-            UpdateLessonCommand updateLessonCommand = command.toUpdateLessonCommand(upload);
+            Category category = categoryService.getCategoryById(command.categoryId());
+
+            UpdateLessonCommand updateLessonCommand = command.toUpdateLessonCommand(category.getCategoryPath(), upload);
             return lessonService.updateLesson(lessonId, updateLessonCommand, ownerId);
         } catch (Exception e) {
             if (upload != null) {

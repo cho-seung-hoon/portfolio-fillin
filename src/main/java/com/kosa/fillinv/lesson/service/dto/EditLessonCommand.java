@@ -11,13 +11,14 @@ public record EditLessonCommand(
         Long categoryId,
         Instant closeAt
 ) {
-    public UpdateLessonCommand toUpdateLessonCommand(UploadFileResult upload) {
+    public UpdateLessonCommand toUpdateLessonCommand(String categoryPath, UploadFileResult upload) {
         return new UpdateLessonCommand(
                 this.title,
                 upload != null ? upload.fileKey() : null,
                 this.description,
                 this.location,
                 this.categoryId,
+                categoryPath,
                 this.closeAt
         );
     }

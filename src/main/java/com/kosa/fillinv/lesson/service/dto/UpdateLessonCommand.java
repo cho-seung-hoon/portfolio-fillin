@@ -8,6 +8,7 @@ public record UpdateLessonCommand(
         String description,
         String location,
         Long categoryId,
+        String categoryPath,
         Instant closeAt
 ) {
 }
