@@ -66,9 +66,10 @@ public class ScheduleService {
 
     // 멤버가 멘티이면서 승인대기 중인 예정 스케쥴 검색
     public Page<ScheduleListResponse> findAllUpcomingApprovalPendingSchedulesAsMentee(String memberId, Instant from) {
-        ScheduleSearchCondition intended = ScheduleSearchCondition.defaultCondition()
+        ScheduleSearchCondition intended =
+                ScheduleSearchCondition.defaultCondition()
                 .mentee(memberId)
-                .status(ScheduleStatus.APPROVAL_PENDING)
+                .withStatus(ScheduleStatus.APPROVAL_PENDING)
                 .toIntended(from);
 
         return search(intended);
@@ -78,7 +79,7 @@ public class ScheduleService {
     public Page<ScheduleListResponse> findAllUpcomingApprovalPendingSchedulesAsMentor(String memberId, Instant from) {
         ScheduleSearchCondition intended = ScheduleSearchCondition.defaultCondition()
                 .mentor(memberId)
-                .status(ScheduleStatus.APPROVAL_PENDING)
+                .withStatus(ScheduleStatus.APPROVAL_PENDING)
                 .toIntended(from);
 
         return search(intended);
@@ -89,7 +90,7 @@ public class ScheduleService {
         ScheduleSearchCondition condition = ScheduleSearchCondition.defaultCondition()
                 .participate(memberId)
                 .between(start, end)
-                .sort(ScheduleSortType.START_TIME_ASC);
+                .withSortType(ScheduleSortType.START_TIME_ASC);
 
         return search(condition);
     }
@@ -104,7 +105,7 @@ public class ScheduleService {
                 ScheduleTimeSpecifications.search(
                         condition.keyword(),
                         condition.from(),
-                        condition.to(), // to
+                        condition.to(),
                         condition.status(),
                         condition.participantRole() == ScheduleParticipantRole.MENTOR || condition.participantRole() == ScheduleParticipantRole.BOTH
                                 ? condition.memberId() : null,
