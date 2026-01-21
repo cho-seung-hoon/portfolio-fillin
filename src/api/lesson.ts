@@ -20,11 +20,8 @@ class DefaultLessonService implements LessonService {
             case "price-high": sortType = "PRICE_DESC"; break;
             case "price-low": sortType = "PRICE_ASC"; break;
             case "latest": sortType = "CREATED_AT_DESC"; break; // or created_at_asc depending on requirement
-            case "popular": sortType = "CREATED_AT_DESC"; break; // Fallback as popular isn't in Enum yet? User only gave created/price.
-            // User provided: CREATED_AT_ASC, CREATED_AT_DESC, PRICE_ASC, PRICE_DESC.
-            // "popular" (student count) is NOT in the new Enum. 
-            // I will default "popular" to CREATED_AT_DESC for now as user didn't provide POPOULAR sort type.
-            default: sortType = "CREATED_AT_DESC"; break;
+            case "popular": sortType = "POPULARITY"; break;
+            default: sortType = "POPULARITY"; break;
         }
 
         const params: Record<string, any> = {
@@ -42,8 +39,6 @@ class DefaultLessonService implements LessonService {
             // Map frontend "mentoring" | "oneday" | "study" to backend "MENTORING" | "ONEDAY" | "STUDY"
             params.lessonType = lessonType.toUpperCase();
         }
-
-        console.log("Calling getLessons API with params:", params);
 
         // 목록 조회는 비로그인도 가능하도록 publicClient 사용
         const response = await publicClient.get<SuccessResponse<PageResponse<LessonThumbnail>>>("/v1/lessons/search", {

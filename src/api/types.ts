@@ -161,7 +161,7 @@ export interface LessonThumbnail {
     menteeCount: number;
 }
 
-export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC";
+export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC" | "POPULARITY";
 
 export interface LessonSearchCondition {
     keyword?: string;
