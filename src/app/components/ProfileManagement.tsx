@@ -20,6 +20,7 @@ export function ProfileManagement() {
   // Local state for edit inputs (Draft state) only
   const [editNickname, setEditNickname] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editIntroduction, setEditIntroduction] = useState("");
 
   // Other fields state
   const [introduction, setIntroduction] = useState("");
@@ -50,6 +51,11 @@ export function ProfileManagement() {
     setIsEditingPhone(true);
   };
 
+  const startEditingIntroduction = () => {
+    setEditIntroduction(introduction);
+    setIsEditingIntroduction(true);
+  };
+
   // Sync profile data on mount to ensure store is fresh
   useEffect(() => {
     if (!user) return;
@@ -63,6 +69,9 @@ export function ProfileManagement() {
         if (data.category) {
           const categoryName = data.category.name?.trim() === "" ? "태그 없음" : data.category.name;
           setCategory({ ...data.category, name: categoryName });
+        }
+        if (data.phoneNum) {
+          setPhone(data.phoneNum);
         }
         if (data.imageUrl) {
           const fullImageUrl = getImageUrl(data.imageUrl);
@@ -180,6 +189,27 @@ export function ProfileManagement() {
     }
   };
 
+  const handleUpdatePhone = async () => {
+    const phoneRegex = /^[0-9-]+$/;
+    if (!phoneRegex.test(editPhone)) {
+      alert("전화번호는 숫자와 하이픈만 입력 가능합니다.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await profileService.updatePhoneNum(editPhone);
+      setPhone(editPhone);
+      setIsEditingPhone(false);
+      alert("연락처가 수정되었습니다.");
+    } catch (error) {
+      console.error("Failed to update phone number:", error);
+      alert("연락처 수정에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdateIntroduction = async () => {
     if (!category) {
       alert("카테고리를 선택해주세요.");
@@ -187,7 +217,8 @@ export function ProfileManagement() {
     }
     try {
       setLoading(true);
-      await profileService.updateIntroduction(introduction, category.categoryId);
+      await profileService.updateIntroduction(editIntroduction, category.categoryId);
+      setIntroduction(editIntroduction);
       setIsEditingIntroduction(false);
       alert("자기소개와 카테고리가 수정되었습니다.");
     } catch (error) {
@@ -310,11 +341,13 @@ export function ProfileManagement() {
                 </div>
                 {isEditingNickname ? (
                   <Button
-                    onClick={handleUpdateNickname}
-                    disabled={loading}
-                    className="bg-[#00C471] hover:bg-[#00B366]"
+                    variant="outline"
+                    onClick={() => {
+                      setEditNickname(user?.name || "");
+                      setIsEditingNickname(false);
+                    }}
                   >
-                    {loading ? "저장 중..." : "저장"}
+                    취소
                   </Button>
                 ) : (
                   <Button
@@ -358,10 +391,13 @@ export function ProfileManagement() {
                 </div>
                 {isEditingPhone ? (
                   <Button
-                    onClick={() => setIsEditingPhone(false)}
-                    className="bg-[#00C471] hover:bg-[#00B366]"
+                    variant="outline"
+                    onClick={() => {
+                      setEditPhone(phone);
+                      setIsEditingPhone(false);
+                    }}
                   >
-                    저장
+                    취소
                   </Button>
                 ) : (
                   <Button
@@ -371,6 +407,22 @@ export function ProfileManagement() {
                     수정
                   </Button>
                 )}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  onClick={async () => {
+                    if (isEditingNickname) await handleUpdateNickname();
+                    if (isEditingPhone) await handleUpdatePhone();
+                    if (!isEditingNickname && !isEditingPhone) {
+                      alert("수정 중인 정보가 없습니다.");
+                    }
+                  }}
+                  className="bg-[#00C471] hover:bg-[#00B366]"
+                  disabled={loading}
+                >
+                  기본정보 저장
+                </Button>
               </div>
             </div>
           ) : (
@@ -429,16 +481,19 @@ export function ProfileManagement() {
                   {!isLoadingProfile && (
                     isEditingIntroduction ? (
                       <Button
-                        onClick={handleUpdateIntroduction}
-                        className="bg-[#00C471] hover:bg-[#00B366]"
+                        variant="outline"
+                        onClick={() => {
+                          setEditIntroduction(introduction);
+                          setIsEditingIntroduction(false);
+                        }}
                         size="sm"
                       >
-                        저장
+                        취소
                       </Button>
                     ) : (
                       <Button
                         variant="outline"
-                        onClick={() => setIsEditingIntroduction(true)}
+                        onClick={startEditingIntroduction}
                         size="sm"
                       >
                         수정
@@ -450,8 +505,8 @@ export function ProfileManagement() {
                   <Skeleton className="w-full h-[300px] rounded-lg" />
                 ) : isEditingIntroduction ? (
                   <Textarea
-                    value={introduction}
-                    onChange={(e) => setIntroduction(e.target.value)}
+                    value={editIntroduction}
+                    onChange={(e) => setEditIntroduction(e.target.value)}
                     className="min-h-[300px]"
                     placeholder="자신을 간단히 소개해주세요"
                   />

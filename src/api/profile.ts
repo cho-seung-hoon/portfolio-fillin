@@ -6,6 +6,7 @@ export interface ProfileService {
     updateNickname(nickname: string): Promise<void>;
     updateIntroduction(introduction: string, categoryId: number): Promise<void>;
     updateProfileImage(image: File): Promise<void>;
+    updatePhoneNum(phoneNum: string): Promise<void>;
 }
 
 class DefaultProfileService implements ProfileService {
@@ -36,6 +37,10 @@ class DefaultProfileService implements ProfileService {
                 "Content-Type": "multipart/form-data",
             },
         });
+    }
+
+    async updatePhoneNum(phoneNum: string): Promise<void> {
+        await client.patch<SuccessResponse<void>>("/v1/profile/me/phone", { phoneNum });
     }
 }
 
