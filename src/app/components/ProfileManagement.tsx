@@ -341,13 +341,11 @@ export function ProfileManagement() {
                 </div>
                 {isEditingNickname ? (
                   <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditNickname(user?.name || "");
-                      setIsEditingNickname(false);
-                    }}
+                    onClick={handleUpdateNickname}
+                    disabled={loading}
+                    className="bg-[#00C471] hover:bg-[#00B366]"
                   >
-                    취소
+                    {loading ? "저장 중..." : "저장"}
                   </Button>
                 ) : (
                   <Button
@@ -364,7 +362,7 @@ export function ProfileManagement() {
                 <div className="flex items-center gap-8 flex-1">
                   <label className="text-gray-600 w-24">계정 이메일</label>
                   <div className="flex items-center gap-2">
-                    <span className="text-yellow-500">●</span>
+                    <span className="text-gray-400">●</span>
                     <span>{user.email}</span>
                   </div>
                 </div>
@@ -391,13 +389,11 @@ export function ProfileManagement() {
                 </div>
                 {isEditingPhone ? (
                   <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditPhone(phone);
-                      setIsEditingPhone(false);
-                    }}
+                    onClick={handleUpdatePhone}
+                    disabled={loading}
+                    className="bg-[#00C471] hover:bg-[#00B366]"
                   >
-                    취소
+                    {loading ? "저장 중..." : "저장"}
                   </Button>
                 ) : (
                   <Button
@@ -407,22 +403,6 @@ export function ProfileManagement() {
                     수정
                   </Button>
                 )}
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <Button
-                  onClick={async () => {
-                    if (isEditingNickname) await handleUpdateNickname();
-                    if (isEditingPhone) await handleUpdatePhone();
-                    if (!isEditingNickname && !isEditingPhone) {
-                      alert("수정 중인 정보가 없습니다.");
-                    }
-                  }}
-                  className="bg-[#00C471] hover:bg-[#00B366]"
-                  disabled={loading}
-                >
-                  기본정보 저장
-                </Button>
               </div>
             </div>
           ) : (
@@ -481,14 +461,11 @@ export function ProfileManagement() {
                   {!isLoadingProfile && (
                     isEditingIntroduction ? (
                       <Button
-                        variant="outline"
-                        onClick={() => {
-                          setEditIntroduction(introduction);
-                          setIsEditingIntroduction(false);
-                        }}
+                        onClick={handleUpdateIntroduction}
+                        className="bg-[#00C471] hover:bg-[#00B366]"
                         size="sm"
                       >
-                        취소
+                        저장
                       </Button>
                     ) : (
                       <Button
