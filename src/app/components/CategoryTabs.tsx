@@ -46,8 +46,17 @@ export function CategoryTabs({
   onCategoryChange,
 }: CategoryTabsProps) {
   const [allCategories, setAllCategories] = useState<CategoryResponseDto[]>([]);
-  // 선택된 대분류 ID 상태
-  const [selectedMainId, setSelectedMainId] = useState<number | null>(null);
+
+  // selectedMainId is derived from selectedCategoryId
+  const selectedMainId = React.useMemo(() => {
+    if (selectedCategoryId == null) return null;
+    const category = allCategories.find(c => c.categoryId === selectedCategoryId);
+    // 카테고리 정보가 없으면 아직 로딩 전이거나 잘못된 ID일 수 있음
+    if (!category) return null;
+
+    // 부모가 있으면 부모 ID, 없으면(대분류면) 자기 자신 ID
+    return category.parentCategoryId ?? category.categoryId;
+  }, [selectedCategoryId, allCategories]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -73,41 +82,6 @@ export function CategoryTabs({
     ? []
     : allCategories.filter((c) => c.parentCategoryId === selectedMainId);
 
-  // 선택된 대분류가 바뀌면, 현재 선택된 소분류가 해당 대분류에 속하지 않으면 초기화
-  useEffect(() => {
-    if (selectedMainId == null) {
-      // 대분류가 선택되지 않았으면 소분류도 초기화
-      if (selectedCategoryId != null) {
-        onCategoryChange(null);
-      }
-      return;
-    }
-
-    // 대분류가 선택되었는데 소분류가 선택되어 있다면 유효성 검사
-    if (selectedCategoryId != null) {
-      // 대분류 ID와 같으면 "전체"를 의미하므로 유효함
-      if (selectedCategoryId === selectedMainId) return;
-
-      const isValid = subCategories.some((c) => c.categoryId === selectedCategoryId);
-      if (!isValid) {
-        onCategoryChange(null);
-      }
-    }
-  }, [selectedMainId, selectedCategoryId, subCategories, onCategoryChange]);
-
-  // 선택된 카테고리 ID가 변경되면 대분류도 업데이트
-  // 단, selectedCategoryId가 null일 때는 대분류를 null로 리셋하지 않음 (사용자가 대분류를 직접 선택한 경우 유지)
-  useEffect(() => {
-    if (selectedCategoryId) {
-      const category = allCategories.find(c => c.categoryId === selectedCategoryId);
-      if (category?.parentCategoryId) {
-        setSelectedMainId(category.parentCategoryId);
-      } else if (category) {
-        setSelectedMainId(category.categoryId);
-      }
-    }
-  }, [selectedCategoryId, allCategories]);
-
 
   if (mainCategories.length === 0) return null;
 
@@ -119,7 +93,6 @@ export function CategoryTabs({
           {/* 전체 */}
           <button
             onClick={() => {
-              setSelectedMainId(null);
               onCategoryChange(null);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
@@ -144,7 +117,6 @@ export function CategoryTabs({
               <button
                 key={major.categoryId}
                 onClick={() => {
-                  setSelectedMainId(major.categoryId);
                   // 대분류 변경 시 해당 대분류 ID로 필터링 (전체 소분류 선택 효과)
                   onCategoryChange(major.categoryId);
                   window.scrollTo({ top: 0, behavior: "smooth" });

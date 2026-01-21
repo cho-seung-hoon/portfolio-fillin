@@ -34,7 +34,7 @@ class DefaultLessonService implements LessonService {
             sortType
         };
 
-        if (categoryId !== undefined) {
+        if (categoryId !== undefined && categoryId !== null && !isNaN(categoryId)) {
             params.categoryId = categoryId;
         }
 

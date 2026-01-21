@@ -37,16 +37,17 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  validateSearch: (search: Record<string, unknown>): { search?: string; page?: number; sort?: string } => {
+  validateSearch: (search: Record<string, unknown>): { search?: string; page?: number; sort?: string; categoryId?: number } => {
     return {
       search: (search.search as string) || "",
       page: Number(search.page) || 1,
       sort: (search.sort as string) || "popular",
+      categoryId: (search.categoryId && !isNaN(Number(search.categoryId))) ? Number(search.categoryId) : undefined,
     };
   },
   component: () => {
     const context = rootRoute.useRouteContext();
-    const { search, page, sort } = useSearch({ from: indexRoute.id });
+    const { search, page, sort, categoryId } = useSearch({ from: indexRoute.id });
     return (
       <Home
         onLoginClick={context.openLogin}
@@ -54,6 +55,7 @@ const indexRoute = createRoute({
         searchQuery={search}
         page={page}
         sort={sort}
+        categoryId={categoryId}
       />
     );
   },
