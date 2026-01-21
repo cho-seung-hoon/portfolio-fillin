@@ -183,7 +183,7 @@ function ScrollableTimeline({
                                     title={`예약됨: ${bookedSlot.time}`}
                                 >
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-[10px] text-red-600 font-medium">예약</span>
+                                        <span className="text-[10px] text-red-600 font-medium"></span>
                                     </div>
                                 </div>
                             );
@@ -279,7 +279,20 @@ export function MentoringApplicationView({
 
     // 특정 날짜의 예약된 슬롯 가져오기
     const getBookedSlotsForDate = (date: Date): { time: string }[] => {
-        return [];
+        const bookedTimes = lesson.schedules?.["1-1"]?.bookedTimes || [];
+        const dateStr = format(date, "yyyy-MM-dd");
+
+        const slotsForDate = bookedTimes.filter((t) => {
+            const tDate = new Date(t.startTime);
+            return format(tDate, "yyyy-MM-dd") === dateStr;
+        });
+
+        return slotsForDate.map((t) => {
+            const start = new Date(t.startTime);
+            const end = new Date(t.endTime);
+            const formatTime = (d: Date) => d.toTimeString().slice(0, 5); // "HH:mm"
+            return { time: `${formatTime(start)}-${formatTime(end)}` };
+        });
     };
 
     // 두 시간 범위가 겹치는지 확인

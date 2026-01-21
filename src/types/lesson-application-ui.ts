@@ -33,6 +33,10 @@ export interface MentoringSchedule {
         startTime: string; // ISO 8601 string
         endTime: string;   // ISO 8601 string
     }[];
+    bookedTimes: {
+        startTime: string; // ISO 8601 string
+        endTime: string;   // ISO 8601 string
+    }[];
 }
 
 export interface OneDaySchedule {
