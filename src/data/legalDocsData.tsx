@@ -3,12 +3,12 @@ import { FileText, ShieldCheck } from "lucide-react";
 export const legalDocsContent = {
     terms: {
         title: "이용약관",
-        subtitle: "FillinV 서비스 이용을 위한 기본 규칙",
+        subtitle: "Fillin 서비스 이용을 위한 기본 규칙",
         icon: <FileText className="text-blue-500" size={32} />,
         sections: [
             {
                 title: "제 1 조 (목적)",
-                body: "본 약관은 'FillinV' 프로젝트 팀(이하 '팀')이 제공하는 온라인 학습 및 멘토링 서비스의 베타(Beta) 버전 이용 조건 및 절차에 관한 기본적인 사항을 규정함을 목적으로 합니다."
+                body: "본 약관은 'Fillin' 프로젝트 팀(이하 '팀')이 제공하는 온라인 학습 및 멘토링 서비스의 베타(Beta) 버전 이용 조건 및 절차에 관한 기본적인 사항을 규정함을 목적으로 합니다."
             },
             {
                 title: "제 2 조 (서비스의 성격)",
@@ -32,7 +32,7 @@ export const legalDocsContent = {
         sections: [
             {
                 title: "1. 개인정보 수집 항목",
-                body: "FillinV는 베타 서비스 운영 및 사용자 식별을 위해 아래와 같은 최소한의 개인정보를 수집하고 있습니다.\n- 필수항목: 이름, 이메일 주소, 비밀번호"
+                body: "Fillin은 베타 서비스 운영 및 사용자 식별을 위해 아래와 같은 최소한의 개인정보를 수집하고 있습니다.\n- 필수항목: 이름, 이메일 주소, 비밀번호"
             },
             {
                 title: "2. 개인정보의 수집 및 이용 목적",

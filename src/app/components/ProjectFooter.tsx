@@ -8,14 +8,14 @@ export function ProjectFooter() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
                     {/* Brand Column */}
                     <div className="space-y-4">
-                        <h3 className="text-2xl font-bold text-[#00C471]">FillinV</h3>
+                        <h3 className="text-2xl font-bold text-[#00C471]">Fillin</h3>
                         <p className="text-base font-bold text-gray-900 leading-tight">
                             "빈 시간을 '수익'과 '성장'으로 채우는<br />
-                            틈새 능력 마켓, FillinV"
+                            틈새 능력 마켓, Fillin"
                         </p>
                         <div className="flex items-center gap-4 pt-2">
                             <a
-                                href="https://github.com/FillinV"
+                                href="https://github.com/Fillin"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-gray-500 hover:text-[#00C471] transition-colors"
@@ -24,7 +24,7 @@ export function ProjectFooter() {
                                 <Github size={20} />
                             </a>
                             <a
-                                href="mailto:fillinv.official@gmail.com"
+                                href="mailto:fillin.official@gmail.com"
                                 className="text-gray-500 hover:text-[#00C471] transition-colors"
                                 aria-label="Email"
                             >
@@ -68,7 +68,7 @@ export function ProjectFooter() {
                         <div className="space-y-3">
                             <div className="flex items-start gap-2 text-sm text-gray-600">
                                 <Mail size={16} className="mt-0.5 shrink-0" />
-                                <span>fillinv.official@gmail.com</span>
+                                <span>fillin.official@gmail.com</span>
                             </div>
                             <div className="flex items-start gap-2 text-sm text-gray-600">
                                 <Clock size={16} className="mt-0.5 shrink-0" />
@@ -80,7 +80,7 @@ export function ProjectFooter() {
                             <div className="flex items-start gap-2 text-sm text-gray-600 pt-2 border-t border-gray-200">
                                 <Info size={16} className="mt-0.5 shrink-0" />
                                 <div>
-                                    <p className="font-medium text-gray-800">FillinV 프로젝트 팀</p>
+                                    <p className="font-medium text-gray-800">Fillin 프로젝트 팀</p>
                                     <p className="text-xs text-gray-500 mt-1">
                                         본 서비스는 정식 출시를 준비 중인 베타 버전(Beta)이며,<br />
                                         현재는 교육 및 서비스 검증 목적으로 운영되고 있습니다.
@@ -95,7 +95,7 @@ export function ProjectFooter() {
                 <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-2">
                         <p className="text-xs text-gray-500">
-                            © 2026 FillinV Team. All rights reserved.
+                            © 2026 Fillin Team. All rights reserved.
                         </p>
                         <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded-full font-medium border border-gray-200">
                             v1.0.0
