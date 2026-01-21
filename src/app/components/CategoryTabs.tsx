@@ -17,13 +17,6 @@ import {
 } from "lucide-react";
 import { categoryService } from "../../api/category";
 import { CategoryResponseDto } from "../../api/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 
 interface CategoryTabsProps {
   selectedCategoryId: number | null;
@@ -110,17 +103,10 @@ export function CategoryTabs({
         setSelectedMainId(category.categoryId);
       }
     }
-    // selectedCategoryId가 null일 때는 setSelectedMainId(null)을 호출하지 않음
-    // 이렇게 하면 대분류를 변경할 때 소분류만 초기화되고 대분류는 유지됨
   }, [selectedCategoryId, allCategories]);
 
-  const handleMinorChange = (value: string) => {
-    if (value === "none") {
-      onCategoryChange(null);
-    } else {
-      onCategoryChange(Number(value));
-    }
-  };
+
+  if (mainCategories.length === 0) return null;
 
   return (
     <div className="border-b bg-white sticky top-16 z-40">
@@ -175,33 +161,37 @@ export function CategoryTabs({
           })}
         </div>
 
-        {/* 소분류 선택 - 항상 노출 (대분류 미선택 시 비활성) */}
-        <div className="pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">소분류</span>
-            <Select
-              value={selectedCategoryId?.toString() || "none"}
-              onValueChange={handleMinorChange}
-              disabled={selectedMainId == null}
-            >
-              <SelectTrigger className="w-full md:w-[240px]">
-                <SelectValue
-                  placeholder={
-                    selectedMainId == null ? "대분류를 먼저 선택하세요" : "소분류를 선택하세요"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">전체 소분류</SelectItem>
-                {subCategories.map((cat) => (
-                  <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* 소분류 선택 - 버튼 리스트 (대분류 선택 시에만 노출) */}
+        {selectedMainId !== null && (
+          <div className="pb-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-gray-500 whitespace-nowrap mr-2">소분류</span>
+
+              <button
+                onClick={() => onCategoryChange(null)}
+                className={`px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors border ${selectedCategoryId === null
+                  ? "bg-[#00C471] text-white border-[#00C471]"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  }`}
+              >
+                전체
+              </button>
+
+              {subCategories.map((cat) => (
+                <button
+                  key={cat.categoryId}
+                  onClick={() => onCategoryChange(cat.categoryId)}
+                  className={`px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors border ${selectedCategoryId === cat.categoryId
+                    ? "bg-[#00C471] text-white border-[#00C471]"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
