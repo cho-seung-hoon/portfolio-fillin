@@ -1,5 +1,6 @@
 package com.kosa.fillinv.lesson.service.client;
 
+import com.kosa.fillinv.lesson.service.dto.BookedTimeVO;
 import com.kosa.fillinv.lesson.service.dto.LessonCountVO;
 import com.kosa.fillinv.schedule.entity.ScheduleStatus;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,5 +34,10 @@ public class DefaultScheduleClient implements ScheduleClient {
     public Integer countByLessonIdAndStatusIn(String lessonId, Collection<ScheduleStatus> statuses) {
         Long count = scheduleRepository.countByLessonIdAndStatusIn(lessonId, statuses);
         return count != null ? count.intValue() : 0;
+    }
+
+    @Override
+    public List<BookedTimeVO> getBookedTimes(String lessonId, Collection<ScheduleStatus> statuses) {
+        return scheduleRepository.findBookedTimesByLessonIdAndStatusIn(lessonId, statuses);
     }
 }

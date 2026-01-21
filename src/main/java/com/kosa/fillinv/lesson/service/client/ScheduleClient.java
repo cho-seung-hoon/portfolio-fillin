@@ -1,8 +1,10 @@
 package com.kosa.fillinv.lesson.service.client;
 
+import com.kosa.fillinv.lesson.service.dto.BookedTimeVO;
 import com.kosa.fillinv.schedule.entity.ScheduleStatus;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public interface ScheduleClient {
@@ -10,4 +12,6 @@ public interface ScheduleClient {
             Collection<ScheduleStatus> statuses);
 
     Integer countByLessonIdAndStatusIn(String lessonId, Collection<ScheduleStatus> statuses);
+
+    List<BookedTimeVO> getBookedTimes(String lessonId, Collection<ScheduleStatus> statuses);
 }
