@@ -32,7 +32,7 @@ export function MyPage() {
       <div className="flex flex-1">
         <MyPageSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <main className="flex-1 bg-gray-50">
+        <main className="flex-1 bg-gray-50 min-w-0">
           {activeTab === "home" && <MyPageHome userName={user.name} onTabChange={setActiveTab} />}
           {activeTab === "lessons" && <LessonManagement />}
           {activeTab === "coupons" && (
