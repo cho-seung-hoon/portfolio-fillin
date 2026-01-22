@@ -1,5 +1,7 @@
 package com.kosa.fillinv.schedule.controller;
 
+import com.kosa.fillinv.global.exception.BusinessException;
+import com.kosa.fillinv.global.response.ErrorCode;
 import com.kosa.fillinv.global.response.SuccessResponse;
 import com.kosa.fillinv.global.security.details.CustomMemberDetails;
 import com.kosa.fillinv.schedule.controller.dto.CreateScheduleResponse;
@@ -18,13 +20,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -66,10 +69,13 @@ public class ScheduleController {
     // Ex: GET /api/v1/schedules/1/times/95e3a0e6-e685-4a60-ab63-880031fd4c69
     @GetMapping("/{scheduleId}/times/{scheduleTimeId}")
     public ResponseEntity<SuccessResponse<ScheduleDetailResponse>> getScheduleDetails(
+            @AuthenticationPrincipal CustomMemberDetails customMemberDetails,
             @PathVariable String scheduleId,
             @PathVariable String scheduleTimeId
     ) {
-        ScheduleDetailResponse response = scheduleInquiryService.getScheduleDetail(scheduleId, scheduleTimeId);
+        String memberId = customMemberDetails.memberId();
+
+        ScheduleDetailResponse response = scheduleInquiryService.getScheduleDetail(memberId, scheduleId, scheduleTimeId);
 
         return ResponseEntity
                 .ok(SuccessResponse.success(HttpStatus.OK, response));
@@ -129,19 +135,21 @@ public class ScheduleController {
 
     // 캘린더 / 스케쥴 전체 조회 (GET) - 시간순 정렬 (특정 날짜 위주)
     @GetMapping("/calendar")
-    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> searchSchedules(
+    public ResponseEntity<SuccessResponse<Page<ScheduleListResponse>>> calendarSchedules(
             @AuthenticationPrincipal CustomMemberDetails customMemberDetails, // 로그인한 사용자 ID
             @RequestParam Instant start,
             @RequestParam Instant end,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size
+            @RequestParam(defaultValue = "1000") Integer size
     ) {
         String memberId = customMemberDetails.memberId();
 
         Page<ScheduleListResponse> responses = scheduleService.calendar(
                 memberId,
                 start,
-                end
+                end,
+                page,
+                size
         );
 
         return ResponseEntity
@@ -162,6 +170,27 @@ public class ScheduleController {
                 .ok(SuccessResponse.success(HttpStatus.OK, responses));
     }
 
+    // 스케쥴 상태 변경 (PATCH)
+    // 멘토의 멘티 수강신청 승인/거절 처리 (승인 대기인 상태일 경우 해당 상태 변경 가능)
+    @PatchMapping("/{scheduleId}/status")
+    public ResponseEntity<SuccessResponse<Void>> updateStatus(
+            @AuthenticationPrincipal CustomMemberDetails customMemberDetails,
+            @PathVariable String scheduleId,
+            @RequestParam ScheduleStatus next
+    ) {
+        String memberId = customMemberDetails.memberId();
+
+        switch (next) {
+            case APPROVED -> scheduleService.approveLessonByMentor(memberId, scheduleId);
+            case CANCELED -> scheduleService.rejectLessonByMentor(memberId, scheduleId);
+            case COMPLETED -> scheduleService.completeLesson(memberId, scheduleId);
+            default -> throw new BusinessException(ErrorCode.INVALID_SCHEDULE_STATUS);
+        }
+
+        return ResponseEntity.ok(SuccessResponse.success(HttpStatus.OK));
+    }
+
+
     // 상태 일치 스케쥴 조회
     // Ex: GET /api/v1/schedules/1/status/PAYMENT_PENDING
     @GetMapping("/{scheduleId}/status/{status}")
@@ -174,8 +203,6 @@ public class ScheduleController {
         return ResponseEntity
                 .ok(SuccessResponse.success(HttpStatus.OK, response));
     }
-
-    // 스케쥴 상태 변경 (PATCH)
 
     // 멘티 모드: 내 수강 신청 목록 조회 (페이지네이션)
     // Ex: GET /api/v1/schedules/mentee/12?page=0&size=10

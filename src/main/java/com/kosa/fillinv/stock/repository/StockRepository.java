@@ -15,5 +15,10 @@ public interface StockRepository extends JpaRepository<Stock, String> {
             "WHERE s.serviceKey = :key AND s.quantity > 0")
     int decreaseQuantity(@Param("key") String key);
 
+    @Modifying
+    @Query("UPDATE Stock s SET s.quantity = s.quantity + 1 " +
+            "WHERE s.serviceKey = :key")
+    int increaseQuantity(@Param("key") String key);
+
     List<Stock> findAllByServiceKeyIn(Collection<String> serviceKeys);
 }
