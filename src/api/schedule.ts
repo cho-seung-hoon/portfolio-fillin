@@ -18,9 +18,18 @@ export interface ScheduleSearchCondition {
     sortType?: ScheduleSortType;
 }
 
+export interface PastScheduleSearchCondition {
+    keyword?: string;
+    status?: ScheduleStatus;
+    to: string; // ISO Instant, required for past
+    page: number;
+    size: number;
+    sortType?: ScheduleSortType;
+}
+
 export interface ScheduleService {
     getUpcomingSchedules(condition: ScheduleSearchCondition): Promise<PageResponse<ScheduleListResponse>>;
-    getPastSchedules(condition: { page: number, size: number, from: string, keyword?: string, status?: ScheduleStatus }): Promise<PageResponse<ScheduleListResponse>>;
+    getPastSchedules(condition: PastScheduleSearchCondition): Promise<PageResponse<ScheduleListResponse>>;
     getCalendarSchedules(start: string, end: string, page?: number, size?: number): Promise<PageResponse<ScheduleListResponse>>;
     getScheduleDetail(scheduleId: string, scheduleTimeId: string): Promise<ScheduleDetailResponse>;
     searchSchedules(condition: {
@@ -42,7 +51,7 @@ class DefaultScheduleService implements ScheduleService {
         return response.data.data;
     }
 
-    async getPastSchedules(condition: ScheduleSearchCondition): Promise<PageResponse<ScheduleListResponse>> {
+    async getPastSchedules(condition: PastScheduleSearchCondition): Promise<PageResponse<ScheduleListResponse>> {
         const response = await client.get<SuccessResponse<PageResponse<ScheduleListResponse>>>(
             "/v1/schedules/past",
             { params: condition }

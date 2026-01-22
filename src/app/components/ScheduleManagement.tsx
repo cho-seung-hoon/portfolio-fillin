@@ -92,7 +92,7 @@ export function ScheduleManagement() {
       if (activeTab === "upcoming") {
         response = await scheduleService.getUpcomingSchedules({ ...condition, from: now });
       } else {
-        response = await scheduleService.getPastSchedules({ ...condition, from: now });
+        response = await scheduleService.getPastSchedules({ ...condition, to: now });
       }
 
       setSchedules(response.content);
