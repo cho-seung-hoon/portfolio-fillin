@@ -1,4 +1,4 @@
-import { Heart, Star, Users } from "lucide-react";
+import { Star, Users } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -69,14 +69,7 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
           </div>
         </div>
 
-        {/* Like Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 bg-white/90 hover:bg-white"
-        >
-          <Heart className="size-4" />
-        </Button>
+
 
         {/* Discount Badge */}
         {discount > 0 && (
@@ -118,8 +111,7 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
             <Users className="size-4" />
             <span>{Number(lesson.studentCount ?? 0).toLocaleString()}</span>
           </div>
-          <span className="text-gray-400">·</span>
-          <span className="text-gray-500">{lesson.level}</span>
+
         </div>
 
         {/* Price */}

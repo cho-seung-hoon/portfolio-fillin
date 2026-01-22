@@ -80,8 +80,8 @@ class DefaultLessonService implements LessonService {
             category: dto.category, // Updated from placeholder string
             categoryId: dto.categoryId,
             level: "초급", // Default
-            tags: ["신규"],
-            isNew: true, // simplified
+            tags: [],
+            isNew: false, // simplified
             isBest: dto.rating >= 4.5,
             serviceType: serviceTypeMap[dto.lessonType] || "mentoring",
             location: dto.location,
