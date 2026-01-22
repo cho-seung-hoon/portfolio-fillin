@@ -15,7 +15,7 @@ export function ProjectFooter() {
                         </p>
                         <div className="flex items-center gap-4 pt-2">
                             <a
-                                href="https://github.com/Fillin"
+                                href="https://github.com/FillinV"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-gray-500 hover:text-[#00C471] transition-colors"
