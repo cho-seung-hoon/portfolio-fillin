@@ -54,7 +54,7 @@ export function ProjectHeader({
             <img
               src={getImageUrl("logo.png")}
               alt="logo"
-              className="h-8 w-auto cursor-pointer"
+              className="h-12 w-auto cursor-pointer"
               onClick={onNavigateToMain}
             />
           </div>
