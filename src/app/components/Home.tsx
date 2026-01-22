@@ -15,35 +15,33 @@ interface HomeProps {
   searchQuery?: string;
   page?: number;
   sort?: string;
+  categoryId?: number;
+  lessonType?: string;
 }
 
-export default function Home({ onLoginClick, onSignupClick, searchQuery: initialSearchQuery = "", page = 1, sort: initialSort = "popular" }: HomeProps) {
+export default function Home({ onLoginClick, onSignupClick, searchQuery: initialSearchQuery = "", page = 1, sort: initialSort = "popular", categoryId: initialCategoryId, lessonType: initialLessonType = "all" }: HomeProps) {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState(initialSort);
-  const [priceFilter, setPriceFilter] = useState("all");
-  const [levelFilter, setLevelFilter] = useState("all");
-  const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const itemsPerPage = 20;
 
-  useEffect(() => {
-    // URL의 라우트 파라미터가 변경되면 로컬 상태도 업데이트
-    setSearchQuery(initialSearchQuery);
-    setSortBy(initialSort);
+  // Local state for filters that are NOT in URL yet (can be moved to URL later if needed)
+  const [priceFilter, setPriceFilter] = useState("all");
+  const [levelFilter, setLevelFilter] = useState("all");
+  // serviceTypeFilter removed as it is now server-side via lessonType prop
 
+  useEffect(() => {
     const fetchLessons = async () => {
       setLoading(true);
       try {
-        // API 호출 시 검색어, 페이지(0-based), 정렬, 카테고리 ID 전달
+        // API 호출 시 검색어, 페이지(0-based), 정렬, 카테고리 ID, 레슨 타입 전달
         const { lessons: data, totalCount } = await lessonService.getLessons(
           initialSearchQuery,
           Math.max(0, page - 1),
-          sortBy,
-          selectedCategoryId || undefined
+          initialSort,
+          initialCategoryId || undefined,
+          initialLessonType === "all" ? undefined : initialLessonType
         );
         setLessons(data);
         setTotalCount(totalCount);
@@ -54,14 +52,14 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
       }
     };
     fetchLessons();
-  }, [initialSearchQuery, page, sortBy, selectedCategoryId]);
+  }, [initialSearchQuery, page, initialSort, initialCategoryId, initialLessonType]);
 
   const handleLessonClick = (lessonId: string) => {
     navigate({ to: "/service/$id", params: { id: lessonId.toString() } });
   };
 
   // Client-side filtering/sorting is temporarily applied ONLY to the current page
-  // Category filtering is now handled by API, but other filters remain client-side
+  // Category & Service Type filtering is now handled by API, but other filters remain client-side
   const filteredAndSortedLessons = useMemo(() => {
     let filtered = lessons;
 
@@ -79,29 +77,66 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
       filtered = filtered.filter((lesson) => lesson.level === levelFilter);
     }
 
-    // Filter by service type
-    if (serviceTypeFilter !== "all") {
-      filtered = filtered.filter((lesson) => lesson.serviceType === serviceTypeFilter);
-    }
+    // Service Type filtering is now handled by API
 
     // Sorting is now handled by the API, so we just return the filtered list
     return filtered;
-  }, [lessons, priceFilter, levelFilter, serviceTypeFilter]); // Removed sortBy and selectedCategory from dep array as they trigger API fetch now
+  }, [lessons, priceFilter, levelFilter]);
 
   // Pagination logic using server totalCount
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const handlePageChange = (newPage: number) => {
-    // Navigate with new page param
     navigate({
       to: ".",
       search: {
-        search: searchQuery,
+        search: initialSearchQuery,
         page: newPage,
-        sort: sortBy
+        sort: initialSort,
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
       }
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCategoryChange = (newCategoryId: number | null) => {
+    navigate({
+      to: ".",
+      search: {
+        search: initialSearchQuery,
+        page: 1, // Reset page on category change
+        sort: initialSort,
+        categoryId: newCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
+      }
+    });
+  };
+
+  const handleSearchChange = (query: string) => {
+    navigate({
+      to: ".",
+      search: {
+        search: query,
+        sort: initialSort,
+        page: 1,
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
+      }
+    });
+  };
+
+  const handleSortChange = (sort: string) => {
+    navigate({
+      to: ".",
+      search: {
+        search: initialSearchQuery,
+        page: 1,
+        sort: sort,
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
+      }
+    });
   };
 
   return (
@@ -114,48 +149,34 @@ export default function Home({ onLoginClick, onSignupClick, searchQuery: initial
         onNavigateToServiceRegistration={() => navigate({ to: "/service/register" })}
       />
       <SearchSection
-        searchQuery={searchQuery}
-        onSearchChange={(query) => {
-          setSearchQuery(query);
-          navigate({
-            to: ".",
-            search: {
-              search: query,
-              sort: sortBy
-            }
-          });
-        }}
+        searchQuery={initialSearchQuery}
+        onSearchChange={handleSearchChange}
       />
       <CategoryTabs
-        selectedCategoryId={selectedCategoryId}
-        onCategoryChange={(categoryId) => {
-          setSelectedCategoryId(categoryId);
-          handlePageChange(1);
-        }}
+        selectedCategoryId={initialCategoryId ?? null}
+        onCategoryChange={handleCategoryChange}
       />
       <SearchFilters
-        sortBy={sortBy}
-        onSortChange={(sort) => {
-          setSortBy(sort);
+        sortBy={initialSort}
+        onSortChange={handleSortChange}
+        serviceTypeFilter={initialLessonType}
+        onServiceTypeFilterChange={(type) => {
           navigate({
             to: ".",
             search: {
-              search: searchQuery,
-              page: 1, // Reset page on sort change
-              sort: sort
+              search: initialSearchQuery,
+              page: 1,
+              sort: initialSort,
+              categoryId: initialCategoryId ?? undefined,
+              lessonType: type !== "all" ? type : undefined
             }
           });
-        }}
-        serviceTypeFilter={serviceTypeFilter}
-        onServiceTypeFilterChange={(type) => {
-          setServiceTypeFilter(type);
-          handlePageChange(1);
         }}
         resultCount={totalCount}
       />
       <SearchResults
         lessons={filteredAndSortedLessons}
-        searchQuery={searchQuery}
+        searchQuery={initialSearchQuery}
         onLessonClick={handleLessonClick}
         currentPage={page}
         totalPages={totalPages}

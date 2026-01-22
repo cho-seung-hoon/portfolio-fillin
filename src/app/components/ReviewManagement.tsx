@@ -20,8 +20,12 @@ import {
 
 
 
+import { useNavigate } from "@tanstack/react-router";
+
 interface WrittenReview {
   id: string;
+  lessonId: string;
+  lessonType?: LessonTypeEnum;
   classTitle: string;
   optionName: string;
   mentorNickname: string; // Changed from menteeNickname
@@ -38,8 +42,12 @@ import { Pagination } from "./Pagination"; // Assuming Pagination is in the same
 
 
 import { Skeleton } from "./ui/skeleton";
+import { Badge } from "./ui/badge";
+import { LessonTypeEnum } from "../../api/types";
+import { formatDateWithLocale, formatDateTimeWithLocale } from "../../utils/date";
 
 export function ReviewManagement() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"pending" | "written">("pending");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<UnwrittenReviewResponseDTO | null>(null);
@@ -88,6 +96,8 @@ export function ReviewManagement() {
       const pageResponse = await reviewService.getMyReviews(page - 1, itemsPerPage);
       const reviews = pageResponse.content.map(r => ({
         id: r.reviewId,
+        lessonId: r.lessonId,
+        lessonType: r.lessonType,
         classTitle: r.lessonName,
         optionName: r.optionName,
         mentorNickname: r.mentorNickname,
@@ -197,6 +207,19 @@ export function ReviewManagement() {
     );
   };
 
+  const renderLessonTypeBadge = (type?: LessonTypeEnum) => {
+    switch (type) {
+      case "MENTORING":
+        return <Badge className="bg-[#00C471] hover:bg-[#00B366] text-white border-0 text-[10px] px-1.5 py-0.5 whitespace-nowrap">1:1</Badge>;
+      case "ONEDAY":
+        return <Badge className="bg-[#FF9500] hover:bg-[#E68600] text-white border-0 text-[10px] px-1.5 py-0.5 whitespace-nowrap">원데이</Badge>;
+      case "STUDY":
+        return <Badge className="bg-[#0091FF] hover:bg-[#0081E6] text-white border-0 text-[10px] px-1.5 py-0.5 whitespace-nowrap">스터디</Badge>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="p-8">
       <h2 className="text-3xl mb-6">리뷰 및 평점</h2>
@@ -271,14 +294,22 @@ export function ReviewManagement() {
                             {(pendingPage - 1) * itemsPerPage + index + 1}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {review.lessonName}
+                            <div className="flex items-center gap-2">
+                              {renderLessonTypeBadge(review.lessonType)}
+                              <span
+                                className="hover:text-[#00C471] hover:underline cursor-pointer"
+                                onClick={() => navigate({ to: `/service/${review.lessonId}` })}
+                              >
+                                {review.lessonName}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-gray-600">
-                            {review.optionName}
+                            {review.lessonType === "MENTORING" ? review.optionName : "-"}
                           </TableCell>
                           <TableCell>{review.mentorNickname}</TableCell>
                           <TableCell className="text-gray-600">
-                            {review.reservationDate}
+                            {formatDateTimeWithLocale(review.reservationDate)}
                           </TableCell>
                           <TableCell className="text-center">
                             <Button
@@ -357,14 +388,25 @@ export function ReviewManagement() {
                             {(writtenPage - 1) * itemsPerPage + index + 1}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {review.classTitle}
+                            <div className="flex items-center gap-2">
+                              {renderLessonTypeBadge(review.lessonType)}
+                              <span
+                                className="hover:text-[#00C471] hover:underline cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate({ to: `/service/${review.lessonId}` });
+                                }}
+                              >
+                                {review.classTitle}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-gray-600">
-                            {review.optionName}
+                            {review.lessonType === "MENTORING" ? review.optionName : "-"}
                           </TableCell>
                           <TableCell>{review.mentorNickname}</TableCell>
                           <TableCell className="text-gray-600">
-                            {review.reservationDate}
+                            {formatDateWithLocale(review.reservationDate)}
                           </TableCell>
                           <TableCell>
                             {renderStarRating(review.rating)}
@@ -409,13 +451,21 @@ export function ReviewManagement() {
             <div className="space-y-6">
               {/* 클래스 정보 */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">
+                <h3
+                  className="font-semibold text-lg mb-2 hover:text-[#00C471] hover:underline cursor-pointer w-fit"
+                  onClick={() => {
+                    const lessonId = selectedReview ? selectedReview.lessonId : viewingReview?.lessonId;
+                    if (lessonId) {
+                      navigate({ to: `/service/${lessonId}` });
+                    }
+                  }}
+                >
                   {selectedReview ? selectedReview.lessonName : viewingReview?.classTitle}
                 </h3>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>옵션: {selectedReview ? selectedReview.optionName : viewingReview?.optionName}</p>
                   <p>멘토: {selectedReview ? selectedReview.mentorNickname : viewingReview?.mentorNickname}</p>
-                  <p>수강일: {selectedReview ? selectedReview.reservationDate : viewingReview?.reservationDate}</p>
+                  <p>수강일: {formatDateTimeWithLocale(selectedReview ? selectedReview.reservationDate : viewingReview?.reservationDate || "")}</p>
                 </div>
               </div>
 

@@ -28,7 +28,7 @@ export function MyPageSidebar({
   onTabChange,
 }: MyPageSidebarProps) {
   return (
-    <aside className="w-56 bg-white border-r min-h-screen p-4">
+    <aside className="w-56 bg-white border-r min-h-screen p-4 shrink-0">
       <nav className="space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;

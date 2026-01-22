@@ -9,6 +9,12 @@ export interface LessonDetailResult {
     lesson: Lesson;
     options: Option[];
     availableTimes: AvailableTime[];
+    bookedTimes: BookedTime[];
+}
+
+export interface BookedTime {
+    startTime: string; // ISO 8601 string
+    endTime: string; // ISO 8601 string
 }
 
 export interface Mentor {

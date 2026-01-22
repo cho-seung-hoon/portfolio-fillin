@@ -3,6 +3,7 @@ import { ProjectHeader } from "./ProjectHeader";
 import { ProjectFooter } from "./ProjectFooter";
 import { ChevronLeft } from "lucide-react";
 import { legalDocsContent } from "../../data/legalDocsData";
+import { handleSmartBack } from "../../utils/navigation";
 
 interface LegalDocsProps {
     type: "terms" | "privacy";
@@ -26,7 +27,7 @@ export function LegalDocs({ type }: LegalDocsProps) {
 
             <main className="flex-1 container mx-auto px-4 py-8 max-w-3xl">
                 <button
-                    onClick={() => window.history.back()}
+                    onClick={() => handleSmartBack(navigate)}
                     className="flex items-center gap-1 text-gray-400 hover:text-black transition-colors mb-12 text-sm"
                 >
                     <ChevronLeft size={16} />

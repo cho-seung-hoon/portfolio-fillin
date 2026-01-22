@@ -75,7 +75,7 @@ export function StudyScheduleView({ service }: StudyScheduleViewProps) {
                 <h4 className="font-medium mb-3">회차별 일정</h4>
                 <div className="space-y-2">
                     {service.schedules["1-n-study"]?.sessions.map((session, idx) => {
-                        const [year, month, day] = session.date.split("-").map(Number);
+                        const [year, month, day] = (session.date || "").split("-").map(Number);
                         const dateObj = new Date(year, month - 1, day);
                         const isSelected = selectedDate && isSameDay(dateObj, selectedDate);
 
@@ -83,13 +83,13 @@ export function StudyScheduleView({ service }: StudyScheduleViewProps) {
                             <div
                                 key={idx}
                                 className={`border rounded-lg py-2 px-4 flex items-center gap-4 transition-all ${isSelected
-                                        ? "border-[#00C471] bg-[#E6F9F2] ring-1 ring-[#00C471]"
-                                        : "border-gray-100 bg-gray-50/50"
+                                    ? "border-[#00C471] bg-[#E6F9F2] ring-1 ring-[#00C471]"
+                                    : "border-gray-100 bg-gray-50/50"
                                     }`}
                             >
                                 <div className={`flex-shrink-0 size-8 rounded-full border flex items-center justify-center font-bold text-xs transition-colors ${isSelected
-                                        ? "bg-[#00C471] text-white border-[#00C471]"
-                                        : "bg-white border-gray-200 text-gray-400"
+                                    ? "bg-[#00C471] text-white border-[#00C471]"
+                                    : "bg-white border-gray-200 text-gray-400"
                                     }`}>
                                     {session.session}
                                 </div>
@@ -213,7 +213,7 @@ export function StudyScheduleView({ service }: StudyScheduleViewProps) {
                                                         }`}
                                                     title={session.time}
                                                 >
-                                                    {session.time.split("-")[0]}
+                                                    {(session.time || "").split("-")[0]}
                                                 </div>
                                             </div>
                                         ))}

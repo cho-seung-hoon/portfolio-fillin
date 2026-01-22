@@ -48,21 +48,7 @@ export function SearchSection({ searchQuery, onSearchChange }: SearchSectionProp
             </Button>
           </div>
 
-          {/* Quick Tags */}
-          {!searchQuery && (
-            <div className="flex flex-wrap items-center gap-2 mt-4">
-              <span className="text-sm text-gray-500">추천 검색어:</span>
-              {["React", "Python", "디자인", "AI", "데이터분석", "Node.js", "SQL"].map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => onSearchChange(tag)}
-                  className="px-3 py-1.5 text-sm bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
+
         </div>
       </div>
     </section>

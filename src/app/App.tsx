@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   RouterProvider,
   createRouter,
@@ -21,6 +21,7 @@ import { LessonApplication } from "./components/LessonApplication";
 import Home from "./components/Home";
 import { LegalDocs } from "./components/LegalDocs";
 import { RequiredAuth } from "./components/RequiredAuth";
+import { handleSmartBack, setHasNavigatedInternal } from "../utils/navigation";
 
 // 라우터 컨텍스트 타입 정의
 interface RouterContext {
@@ -37,16 +38,18 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  validateSearch: (search: Record<string, unknown>): { search?: string; page?: number; sort?: string } => {
+  validateSearch: (search: Record<string, unknown>): { search?: string; page?: number; sort?: string; categoryId?: number; lessonType?: string } => {
     return {
       search: (search.search as string) || "",
       page: Number(search.page) || 1,
       sort: (search.sort as string) || "popular",
+      categoryId: (search.categoryId && !isNaN(Number(search.categoryId))) ? Number(search.categoryId) : undefined,
+      lessonType: (search.lessonType as string) || "all",
     };
   },
   component: () => {
     const context = rootRoute.useRouteContext();
-    const { search, page, sort } = useSearch({ from: indexRoute.id });
+    const { search, page, sort, categoryId, lessonType } = useSearch({ from: indexRoute.id });
     return (
       <Home
         onLoginClick={context.openLogin}
@@ -54,6 +57,8 @@ const indexRoute = createRoute({
         searchQuery={search}
         page={page}
         sort={sort}
+        categoryId={categoryId}
+        lessonType={lessonType}
       />
     );
   },
@@ -62,10 +67,16 @@ const indexRoute = createRoute({
 const myPageRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/mypage",
+  validateSearch: (search: Record<string, unknown>): { tab: string } => {
+    return {
+      tab: (search.tab as string) || "home",
+    };
+  },
   component: () => {
+    const { tab } = useSearch({ from: myPageRoute.id });
     return (
       <RequiredAuth>
-        <MyPage />
+        <MyPage currentTab={tab} />
       </RequiredAuth>
     );
   },
@@ -75,20 +86,28 @@ const serviceRegisterRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/service/register",
   component: () => {
+    const navigate = useNavigate();
     return (
       <RequiredAuth>
-        <ServiceRegistration onBack={() => window.history.back()} />
+        <ServiceRegistration onBack={() => handleSmartBack(navigate)} />
       </RequiredAuth>
     );
   },
 });
+
+// ... (omitted middle parts are fine if I target specific chunks, but here I am replacing the end of file probably better to use multi-replace or careful chunking)
+// Actually, I will just fix the end of the file where I messed up headers and the syntax error in serviceRegisterRoute.
+
+// Let's do it in chunks.
+
 
 const serviceEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/service/$id/edit",
   component: () => {
     const { id } = useParams({ from: serviceEditRoute.id });
-    return <ServiceEdit lessonId={id} onBack={() => window.history.back()} />;
+    const navigate = useNavigate();
+    return <ServiceEdit lessonId={id} onBack={() => handleSmartBack(navigate)} />;
   },
 });
 
@@ -101,7 +120,7 @@ const serviceDetailRoute = createRoute({
     return (
       <ServiceDetail
         serviceId={id}
-        onBack={() => navigate({ to: "/" })}
+        onBack={() => handleSmartBack(navigate)}
         onNavigateToApplication={() =>
           navigate({ to: "/service/$id/apply", params: { id } })
         }
@@ -119,7 +138,7 @@ const serviceApplyRoute = createRoute({
     return (
       <LessonApplication
         lessonId={id}
-        onBack={() => navigate({ to: "/service/$id", params: { id } })}
+        onBack={() => handleSmartBack(navigate, "/service/$id", { id })}
       />
     );
   },
@@ -177,11 +196,19 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// App component using module-scoped router
 export default function App() {
   // const user = useAuthStore((state) => state.user); // No longer needed here for context
   const logout = useAuthStore((state) => state.logout);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isSignupDialogOpen, setIsSignupDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = router.subscribe("onBeforeLoad", () => {
+      setHasNavigatedInternal();
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <>

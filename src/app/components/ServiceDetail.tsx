@@ -8,7 +8,6 @@ import { StudyScheduleView } from "./service-detail/StudyScheduleView";
 import { ServiceReviews } from "./service-detail/ServiceReviews";
 import {
   Star,
-  Clock,
   Users,
   ChevronLeft,
   Award,
@@ -233,10 +232,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                   </Button>
 
                   <div className="mt-6 space-y-3 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Clock className="size-4" />
-                      <span>평균 응답 시간: 1시간 이내</span>
-                    </div>
+
                     <div className="flex items-center gap-2 text-gray-600">
                       <Users className="size-4" />
                       <span>현재 {formatNumber(service.studentCount)}명 수강 중</span>
@@ -247,27 +243,7 @@ export function ServiceDetail({ serviceId, onBack, onNavigateToApplication }: Se
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <h4 className="font-medium mb-3">이런 점이 좋아요</h4>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li className="flex items-start gap-2">
-                        <span className="text-[#00C471] mt-1">✓</span>
-                        <span>실무 경험 10년차 전문가</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-[#00C471] mt-1">✓</span>
-                        <span>체계적인 커리큘럼</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-[#00C471] mt-1">✓</span>
-                        <span>실전 프로젝트 포함</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-[#00C471] mt-1">✓</span>
-                        <span>평생 수강 가능</span>
-                      </li>
-                    </ul>
-                  </div>
+
                 </CardContent>
               </Card>
             </div>

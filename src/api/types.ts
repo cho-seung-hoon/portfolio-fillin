@@ -159,9 +159,10 @@ export interface LessonThumbnail {
     closeAt: string;
     createdAt: string;
     menteeCount: number;
+    price?: number;
 }
 
-export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC";
+export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC" | "POPULARITY";
 
 export interface LessonSearchCondition {
     keyword?: string;
@@ -236,6 +237,7 @@ export interface MyReviewResponseDTO {
     optionName: string;
     reservationDate: string; // LocalDate
     mentorNickname: string;
+    lessonType?: LessonTypeEnum;
 }
 
 export interface CategoryResponseDto {
@@ -267,6 +269,7 @@ export interface UnwrittenReviewResponseDTO {
     optionName: string;
     reservationDate: string; // LocalDate string (YYYY-MM-DD)
     mentorNickname: string;
+    lessonType?: LessonTypeEnum;
 }
 
 export interface CreateReviewRequestDTO {
@@ -311,4 +314,44 @@ export interface EditLessonRequest {
 
 export interface EditLessonResponse {
     lessonId: string;
+}
+
+export type ScheduleStatus = "PAYMENT_PENDING" | "APPROVAL_PENDING" | "APPROVED" | "CANCELED" | "COMPLETED";
+
+export type ScheduleSortType = "START_TIME_ASC" | "START_TIME_DESC";
+
+export type ScheduleParticipantRole = "MENTOR" | "MENTEE";
+
+export interface ScheduleListResponse {
+    scheduleId: string;
+    scheduleTimeId: string;
+    lessonTitle: string;
+    optionName: string;
+    menteeNickname: string;
+    mentorNickname: string;
+    reservationDate: string; // ISO string
+    status: ScheduleStatus;
+    lessonType: string;
+    startTime: string;
+    endTime: string;
+    location: string;
+}
+
+export interface ScheduleDetailResponse {
+    scheduleId: string;
+    scheduleTimeId: string; // Internal ID for time slot
+    lessonTitle: string;
+    category: string;
+    mentorNickname: string;
+    menteeNickname: string;
+    startTime: string; // Instant ISO string
+    endTime: string; // Instant ISO string
+    location: string;
+    description: string;
+    lessonType: string;
+    requestContent: string;
+    status: ScheduleStatus;
+    price: number;
+    optionName: string;
+    userRole: "MENTOR" | "MENTEE" | "NONE";
 }

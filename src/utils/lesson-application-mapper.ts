@@ -27,6 +27,10 @@ export function mapApiToLesson(apiData: LessonDetailResult): LessonApplicationUi
                 startTime: t.startTime, // Keep ISO string, UI components parse it to local Date
                 endTime: t.endTime,
             })),
+            bookedTimes: (apiData.bookedTimes || []).map((t) => ({
+                startTime: t.startTime,
+                endTime: t.endTime,
+            })),
         };
     } else if (lessonType === "oneday") {
         // 1:N OneDay - availableTimes to sessions

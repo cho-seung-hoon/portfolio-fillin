@@ -13,18 +13,15 @@ export interface LessonService {
 
 
 class DefaultLessonService implements LessonService {
-    async getLessons(search?: string, page: number = 1, sort?: string, categoryId?: number): Promise<LessonListResult> {
+    async getLessons(search?: string, page: number = 1, sort?: string, categoryId?: number, lessonType?: string): Promise<LessonListResult> {
         // Map UI sort to API Enum
         let sortType: LessonSortTypeEnum = "CREATED_AT_DESC";
         switch (sort) {
             case "price-high": sortType = "PRICE_DESC"; break;
             case "price-low": sortType = "PRICE_ASC"; break;
             case "latest": sortType = "CREATED_AT_DESC"; break; // or created_at_asc depending on requirement
-            case "popular": sortType = "CREATED_AT_DESC"; break; // Fallback as popular isn't in Enum yet? User only gave created/price.
-            // User provided: CREATED_AT_ASC, CREATED_AT_DESC, PRICE_ASC, PRICE_DESC.
-            // "popular" (student count) is NOT in the new Enum. 
-            // I will default "popular" to CREATED_AT_DESC for now as user didn't provide POPOULAR sort type.
-            default: sortType = "CREATED_AT_DESC"; break;
+            case "popular": sortType = "POPULARITY"; break;
+            default: sortType = "POPULARITY"; break;
         }
 
         const params: Record<string, any> = {
@@ -34,8 +31,13 @@ class DefaultLessonService implements LessonService {
             sortType
         };
 
-        if (categoryId !== undefined) {
+        if (categoryId !== undefined && categoryId !== null && !isNaN(categoryId)) {
             params.categoryId = categoryId;
+        }
+
+        if (lessonType && lessonType !== "all") {
+            // Map frontend "mentoring" | "oneday" | "study" to backend "MENTORING" | "ONEDAY" | "STUDY"
+            params.lessonType = lessonType.toUpperCase();
         }
 
         // 목록 조회는 비로그인도 가능하도록 publicClient 사용
@@ -70,7 +72,7 @@ class DefaultLessonService implements LessonService {
             id: dto.lessonId,
             title: dto.lessonTitle,
             instructor: dto.mentorNickName,
-            price: 999999, // Hardcoded as requested
+            price: dto.price ?? null, // Use API price or null
             originalPrice: undefined,
             rating: dto.rating,
             studentCount: dto.menteeCount ?? 0, // Guard against undefined
@@ -78,8 +80,8 @@ class DefaultLessonService implements LessonService {
             category: dto.category, // Updated from placeholder string
             categoryId: dto.categoryId,
             level: "초급", // Default
-            tags: ["신규"],
-            isNew: true, // simplified
+            tags: [],
+            isNew: false, // simplified
             isBest: dto.rating >= 4.5,
             serviceType: serviceTypeMap[dto.lessonType] || "mentoring",
             location: dto.location,

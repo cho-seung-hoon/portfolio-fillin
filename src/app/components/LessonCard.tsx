@@ -1,4 +1,4 @@
-import { Heart, Star, Users } from "lucide-react";
+import { Star, Users } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -13,7 +13,7 @@ interface LessonCardProps {
 }
 
 export function LessonCard({ lesson, onClick }: LessonCardProps) {
-  const discount = lesson.originalPrice
+  const discount = (lesson.originalPrice && lesson.price !== null)
     ? Math.round(((lesson.originalPrice - lesson.price) / lesson.originalPrice) * 100)
     : 0;
 
@@ -69,14 +69,7 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
           </div>
         </div>
 
-        {/* Like Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 bg-white/90 hover:bg-white"
-        >
-          <Heart className="size-4" />
-        </Button>
+
 
         {/* Discount Badge */}
         {discount > 0 && (
@@ -118,8 +111,7 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
             <Users className="size-4" />
             <span>{Number(lesson.studentCount ?? 0).toLocaleString()}</span>
           </div>
-          <span className="text-gray-400">·</span>
-          <span className="text-gray-500">{lesson.level}</span>
+
         </div>
 
         {/* Price */}
@@ -130,7 +122,11 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
             </span>
           )}
           <span className="text-xl text-[#00C471]">
-            {lesson.price === 0 ? "무료" : `₩${Number(lesson.price ?? 0).toLocaleString()}`}
+            {lesson.price === null || lesson.price === undefined
+              ? <span className="text-gray-400 text-lg">정보없음</span>
+              : lesson.price === 0
+                ? "무료"
+                : `₩${Number(lesson.price).toLocaleString()}`}
           </span>
         </div>
       </div>

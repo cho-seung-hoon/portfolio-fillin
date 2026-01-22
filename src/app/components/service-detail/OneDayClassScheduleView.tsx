@@ -27,7 +27,7 @@ export function OneDayClassScheduleView({ service }: OneDayClassScheduleViewProp
     // 1:N 원데이 캘린더 관련 함수
     const getOnedaySessionsForDate = (date: Date) => {
         return service.schedules["1-n-oneday"]?.sessions.filter((session) => {
-            const [year, month, day] = session.date.split("-").map(Number);
+            const [year, month, day] = (session.date || "").split("-").map(Number);
             const sessionDate = new Date(year, month - 1, day);
             return isSameDay(sessionDate, date);
         }) || [];
@@ -140,7 +140,7 @@ export function OneDayClassScheduleView({ service }: OneDayClassScheduleViewProp
                                                     }`}
                                                 title={`${session.time} (잔여 ${session.remaining}/${session.maxSeats}석)`}
                                             >
-                                                {session.time.split("-")[0]}
+                                                {(session.time || "").split("-")[0]}
                                             </div>
                                         ))}
                                         {/* 4개 이상일 경우 "+N개 더" 표시 */}
