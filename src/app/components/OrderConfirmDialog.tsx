@@ -108,10 +108,12 @@ export function OrderConfirmDialog({
                             </div>
 
                             <div className="pt-4 border-t border-gray-200 grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <p className="text-xs text-gray-500">선택 옵션</p>
-                                    <p className="text-sm font-medium text-gray-900">{selectedOption?.name || service.title}</p>
-                                </div>
+                                {service.serviceType === "mentoring" && (
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-gray-500">선택 옵션</p>
+                                        <p className="text-sm font-medium text-gray-900">{selectedOption?.name || service.title}</p>
+                                    </div>
+                                )}
                                 <div className="space-y-1">
                                     <p className="text-xs text-gray-500">예약 일정</p>
                                     <div className="text-sm font-medium">
