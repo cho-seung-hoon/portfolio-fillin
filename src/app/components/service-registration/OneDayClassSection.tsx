@@ -9,8 +9,6 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { TimePicker } from "../ui/time-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { CalendarIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { useOneDayRegistrationStore, AvailableTime } from "../../../store/useOneDayRegistrationStore";
 
@@ -184,27 +182,18 @@ export function OneDayClassSection() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-sm">날짜</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start text-left font-normal bg-white"
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {newSessionDate ? (
-                                                format(newSessionDate, "yyyy-MM-dd")
-                                            ) : (
-                                                <span className="text-gray-500">날짜 선택</span>
-                                            )}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <CalendarModule
-                                            selectedDate={newSessionDate}
-                                            onDateSelect={setNewSessionDate}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
+                                <Input
+                                    type="date"
+                                    value={newSessionDate ? format(newSessionDate, "yyyy-MM-dd") : ''}
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            setNewSessionDate(new Date(e.target.value));
+                                        } else {
+                                            setNewSessionDate(undefined);
+                                        }
+                                    }}
+                                    className="bg-white"
+                                />
                             </div>
                             <TimePicker
                                 value={newSessionStartTime}

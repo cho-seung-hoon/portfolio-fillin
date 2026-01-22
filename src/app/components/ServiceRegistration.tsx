@@ -19,9 +19,6 @@ import {
   Image,
   Upload
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { CalendarModule } from "./service-registration/CalendarModule";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -404,30 +401,18 @@ export function ServiceRegistration({
                     <CalendarIcon className="size-4" />
                     모집 마감일
                   </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="closeAt"
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal bg-white"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {closeAt ? (
-                          format(new Date(closeAt), "yyyy-MM-dd")
-                        ) : (
-                          <span className="text-gray-500">날짜 선택</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarModule
-                        selectedDate={closeAt ? new Date(closeAt) : undefined}
-                        onDateSelect={(date) => {
-                          setCloseAt(toLocalISOString(format(date, "yyyy-MM-dd"), "23:59:59"));
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="closeAt"
+                    type="date"
+                    value={closeAt ? new Date(closeAt).toLocaleDateString('en-CA') : ''} // Display as YYYY-MM-DD
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setCloseAt(toLocalISOString(e.target.value, "23:59:59"));
+                      } else {
+                        setCloseAt(null);
+                      }
+                    }}
+                  />
                 </div>
 
                 {/* 썸네일 이미지 (Thumbnail) */}
