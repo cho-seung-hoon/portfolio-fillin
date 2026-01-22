@@ -21,3 +21,7 @@ export function formatDateWithLocale(date: Date | string, formatStr: string = "P
 
     return format(dateObj, formatStr, { locale: selectedLocale });
 }
+
+export function formatDateTimeWithLocale(date: Date | string): string {
+    return formatDateWithLocale(date, "Pp");
+}

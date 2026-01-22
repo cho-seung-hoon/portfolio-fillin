@@ -38,6 +38,7 @@ import { Pagination } from "./Pagination"; // Assuming Pagination is in the same
 
 
 import { Skeleton } from "./ui/skeleton";
+import { formatDateWithLocale, formatDateTimeWithLocale } from "../../utils/date";
 
 export function ReviewManagement() {
   const [activeTab, setActiveTab] = useState<"pending" | "written">("pending");
@@ -278,7 +279,7 @@ export function ReviewManagement() {
                           </TableCell>
                           <TableCell>{review.mentorNickname}</TableCell>
                           <TableCell className="text-gray-600">
-                            {review.reservationDate}
+                            {formatDateTimeWithLocale(review.reservationDate)}
                           </TableCell>
                           <TableCell className="text-center">
                             <Button
@@ -364,7 +365,7 @@ export function ReviewManagement() {
                           </TableCell>
                           <TableCell>{review.mentorNickname}</TableCell>
                           <TableCell className="text-gray-600">
-                            {review.reservationDate}
+                            {formatDateWithLocale(review.reservationDate)}
                           </TableCell>
                           <TableCell>
                             {renderStarRating(review.rating)}
@@ -415,7 +416,7 @@ export function ReviewManagement() {
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>옵션: {selectedReview ? selectedReview.optionName : viewingReview?.optionName}</p>
                   <p>멘토: {selectedReview ? selectedReview.mentorNickname : viewingReview?.mentorNickname}</p>
-                  <p>수강일: {selectedReview ? selectedReview.reservationDate : viewingReview?.reservationDate}</p>
+                  <p>수강일: {formatDateTimeWithLocale(selectedReview ? selectedReview.reservationDate : viewingReview?.reservationDate || "")}</p>
                 </div>
               </div>
 
