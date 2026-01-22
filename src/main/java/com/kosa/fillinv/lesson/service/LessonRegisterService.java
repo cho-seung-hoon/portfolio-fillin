@@ -50,9 +50,12 @@ public class LessonRegisterService {
         }
 
         try {
-            Category category = categoryService.getCategoryById(command.categoryId());
+            String categoryPath = null;
+            if (command.categoryId() != null) {
+                categoryPath = categoryService.getCategoryById(command.categoryId()).getCategoryPath();
+            }
 
-            UpdateLessonCommand updateLessonCommand = command.toUpdateLessonCommand(category.getCategoryPath(), upload);
+            UpdateLessonCommand updateLessonCommand = command.toUpdateLessonCommand(categoryPath, upload);
             return lessonService.updateLesson(lessonId, updateLessonCommand, ownerId);
         } catch (Exception e) {
             if (upload != null) {
