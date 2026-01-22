@@ -67,10 +67,16 @@ const indexRoute = createRoute({
 const myPageRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/mypage",
+  validateSearch: (search: Record<string, unknown>): { tab: string } => {
+    return {
+      tab: (search.tab as string) || "home",
+    };
+  },
   component: () => {
+    const { tab } = useSearch({ from: myPageRoute.id });
     return (
       <RequiredAuth>
-        <MyPage />
+        <MyPage currentTab={tab} />
       </RequiredAuth>
     );
   },
