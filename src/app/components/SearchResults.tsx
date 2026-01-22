@@ -45,17 +45,7 @@ export function SearchResults({ lessons, searchQuery, onLessonClick, currentPage
               )}
               다른 키워드로 검색해보세요.
             </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <span className="text-sm text-gray-500">추천 키워드:</span>
-              {["웹 개발", "Python", "디자인", "마케팅"].map((keyword) => (
-                <button
-                  key={keyword}
-                  className="px-3 py-1.5 text-sm bg-gray-100 rounded-full hover:bg-gray-200"
-                >
-                  {keyword}
-                </button>
-              ))}
-            </div>
+
           </div>
         </div>
       </section>
