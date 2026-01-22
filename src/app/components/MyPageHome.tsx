@@ -1,313 +1,143 @@
 import { Sparkles, Calendar, ChevronRight, Clock, User, MessageSquare, MapPin, FileText, Tag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { MyPageCalendar } from "./MyPageCalendar";
+import { ScheduleDetailModal } from "./ScheduleDetailModal";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { reviewService } from "../../api/review";
+import { scheduleService } from "../../api/schedule";
 import { useEffect } from "react";
+import { ScheduleListResponse, ScheduleDetailResponse, ScheduleStatus } from "../../api/types";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import { useAuthStore } from "../../stores/authStore";
 
 interface MyPageHomeProps {
   userName: string;
   onTabChange?: (tab: string) => void;
 }
 
-interface ScheduleDetail {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  endTime: string;
-  type: string;
-  mentee?: string;
-  mentor?: string;
-  participants?: number;
-  requestContent: string;
-  description: string;
-  location: string;
-  category: string;
-  duration: number;
-  status: "대기" | "확정" | "취소" | "완료";
-}
-
-const statusColors = {
-  대기: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  확정: "bg-blue-50 text-blue-700 border-blue-200",
-  취소: "bg-red-50 text-red-700 border-red-200",
-  완료: "bg-[#E6F9F2] text-[#00C471] border-[#00C471]/20",
+const statusColors: Record<ScheduleStatus, string> = {
+  PAYMENT_PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  APPROVAL_PENDING: "bg-orange-50 text-orange-700 border-orange-200",
+  APPROVED: "bg-blue-50 text-blue-700 border-blue-200",
+  CANCELED: "bg-red-50 text-red-700 border-red-200",
+  COMPLETED: "bg-[#E6F9F2] text-[#00C471] border-[#00C471]/20",
 };
 
-// Mock detailed data
-const mockDetailedSchedules: { [key: number]: ScheduleDetail } = {
-  1: {
-    id: 1,
-    title: "React 심화 과정 1:1 멘토링",
-    date: "2024.01.15",
-    time: "14:00",
-    endTime: "15:00",
-    type: "1:1 멘토링",
-    mentee: "김멘티",
-    requestContent: "React Hooks에 대해 깊이 있게 배우고 싶습니다. 특히 useEffect와 커스텀 훅 작성에 대해 질문이 있습니다.",
-    description: "React의 핵심 개념부터 고급 패턴까지 체계적으로 학습하는 심화 과정입니다.",
-    location: "온라인 (Zoom)",
-    category: "프론트엔드",
-    duration: 60,
-    status: "확정",
-  },
-  2: {
-    id: 2,
-    title: "프론트엔드 원데이 클래스",
-    date: "2024.01.18",
-    time: "10:00",
-    endTime: "12:00",
-    type: "원데이",
-    participants: 12,
-    requestContent: "실무에서 바로 사용할 수 있는 프론트엔드 개발 스킬을 배우고 싶습니다.",
-    description: "최신 프론트엔드 기술 스택을 활용한 실전 프로젝트 구축 원데이 클래스입니다.",
-    location: "온라인 (Google Meet)",
-    category: "프론트엔드",
-    duration: 120,
-    status: "확정",
-  },
-  3: {
-    id: 3,
-    title: "TypeScript 스터디",
-    date: "2024.01.20",
-    time: "19:00",
-    endTime: "21:00",
-    type: "스터디",
-    participants: 8,
-    requestContent: "TypeScript의 고급 타입 시스템과 제네릭에 대해 학습하고 싶습니다.",
-    description: "TypeScript의 타입 시스템을 깊이 있게 다루는 스터디 세션입니다.",
-    location: "온라인 (Discord)",
-    category: "프론트엔드",
-    duration: 120,
-    status: "대기",
-  },
-  // 승인 대기 신청 (mentorConfirmations)
-  101: {
-    id: 101,
-    title: "React 심화 과정",
-    date: "2024.01.20",
-    time: "14:00",
-    endTime: "15:00",
-    type: "1:1 멘토링",
-    mentee: "김멘티",
-    requestContent: "React의 고급 개념과 최적화 기법을 배우고 싶습니다.",
-    description: "React의 핵심 개념부터 고급 패턴까지 체계적으로 학습하는 심화 과정입니다.",
-    location: "온라인 (Zoom)",
-    category: "프론트엔드",
-    duration: 60,
-    status: "대기",
-  },
-  102: {
-    id: 102,
-    title: "Next.js 프로젝트 리뷰",
-    date: "2024.01.22",
-    time: "10:00",
-    endTime: "11:30",
-    type: "1:1 멘토링",
-    mentee: "이학생",
-    requestContent: "Next.js 프로젝트 구조와 최적화 방법에 대해 리뷰받고 싶습니다.",
-    description: "Next.js 실전 프로젝트에 대한 상세한 코드 리뷰와 피드백을 제공합니다.",
-    location: "온라인 (Zoom)",
-    category: "프론트엔드",
-    duration: 90,
-    status: "대기",
-  },
-  103: {
-    id: 103,
-    title: "프론트엔드 원데이",
-    date: "2024.01.25",
-    time: "15:00",
-    endTime: "17:00",
-    type: "원데이",
-    participants: 1,
-    mentee: "박개발",
-    requestContent: "최신 프론트엔드 트렌드와 실무 스킬을 배우고 싶습니다.",
-    description: "최신 프론트엔드 기술 스택을 활용한 실전 프로젝트 구축 원데이 클래스입니다.",
-    location: "온라인 (Google Meet)",
-    category: "프론트엔드",
-    duration: 120,
-    status: "대기",
-  },
-  // 멘토 승인 대기 (menteeConfirmations)
-  201: {
-    id: 201,
-    title: "React 고급 테크닉",
-    date: "2024.01.18",
-    time: "14:00",
-    endTime: "15:00",
-    type: "1:1 멘토링",
-    mentor: "박멘토",
-    requestContent: "React의 고급 패턴과 성능 최적화에 대해 배우고 싶습니다.",
-    description: "React 고급 패턴과 실무 테크닉을 심화 학습하는 멘토링입니다.",
-    location: "온라인 (Zoom)",
-    category: "프론트엔드",
-    duration: 60,
-    status: "대기",
-  },
-  202: {
-    id: 202,
-    title: "TypeScript 마스터클래스",
-    date: "2024.01.21",
-    time: "10:00",
-    endTime: "12:00",
-    type: "원데이",
-    mentor: "최강사",
-    requestContent: "TypeScript 고급 타입 시스템과 실전 활용법을 배우고 싶습니다.",
-    description: "TypeScript의 고급 타입 시스템을 마스터하는 심화 과정입니다.",
-    location: "온라인 (Google Meet)",
-    category: "프론트엔드",
-    duration: 120,
-    status: "대기",
-  },
-  // Additional Mentor Schedules for Testing 'More' button
-  301: { id: 301, title: "실전 React Query", date: "2024.01.26", time: "10:00", endTime: "11:00", type: "1:1 멘토링", mentee: "정개발", requestContent: "React Query의 캐싱 메커니즘이 궁금합니다.", description: "서버 상태 관리를 위한 React Query 심화", location: "온라인", category: "프론트엔드", duration: 60, status: "확정" },
-  302: { id: 302, title: "Tailwind CSS 디자인", date: "2024.01.27", time: "14:00", endTime: "16:00", type: "원데이", participants: 10, requestContent: "세련된 UI 만드는 법", description: "Tailwind를 이용한 유틸리티 퍼스트 디자인", location: "온라인", category: "디자인", duration: 120, status: "확정" },
-  303: { id: 303, title: "Node.js 기초", date: "2024.01.28", time: "13:00", endTime: "15:00", type: "스터디", participants: 5, requestContent: "백엔드 기초", description: "Node.js 런타임 이해", location: "온라인", category: "백엔드", duration: 120, status: "확정" },
-  304: { id: 304, title: "Javascript ES6+", date: "2024.01.29", time: "19:00", endTime: "20:30", type: "1:1 멘토링", mentee: "최코딩", requestContent: "최신 자바스크립트 문법", description: "모던 자바스크립트 완전 정복", location: "온라인", category: "언어", duration: 90, status: "확정" },
-  305: { id: 305, title: "알고리즘 코테 준비", date: "2024.01.30", time: "10:00", endTime: "12:00", type: "원데이", participants: 20, requestContent: "DFS/BFS 정복", description: "코딩 테스트 단골 문제 풀이", location: "온라인", category: "알고리즘", duration: 120, status: "확정" },
-  // Additional Mentee Schedules
-  401: { id: 401, title: "Python 기초", date: "2024.02.01", time: "14:00", endTime: "16:00", type: "스터디", mentor: "배파이썬", requestContent: "파이썬 기초부터", description: "파이썬 입문", location: "온라인", category: "언어", duration: 120, status: "확정" },
-  402: { id: 402, title: "MySQL DB 설계", date: "2024.02.02", time: "15:00", endTime: "17:00", type: "1:1 멘토링", mentor: "데이터킹", requestContent: "정규화 방법", description: "데이터베이스 설계 입문", location: "온라인", category: "데이터베이스", duration: 120, status: "확정" },
-  403: { id: 403, title: "Docker 컨테이너 정복", date: "2024.02.03", time: "10:00", endTime: "12:00", type: "원데이", mentor: "정고래", requestContent: "도커 기본 사용법", description: "도커 실습", location: "온라인", category: "데브옵스", duration: 120, status: "확정" },
-  404: { id: 404, title: "AWS 배포 가이드", date: "2024.02.04", time: "14:00", endTime: "16:00", type: "1:1 멘토링", mentor: "구름 전문가", requestContent: "EC2 배포 방법", description: "AWS 입문", location: "온라인", category: "데브옵스", duration: 120, status: "확정" },
-  405: { id: 405, title: "Spring Boot WebFlux", date: "2024.02.05", time: "20:00", endTime: "22:00", type: "스터디", mentor: "리액티브샘", requestContent: "리액티브 프로그래밍", description: "WebFlux 심화", location: "온라인", category: "백엔드", duration: 120, status: "확정" },
+const statusLabels: Record<ScheduleStatus, string> = {
+  PAYMENT_PENDING: "결제 대기",
+  APPROVAL_PENDING: "승인 대기",
+  APPROVED: "승인",
+  CANCELED: "취소",
+  COMPLETED: "완료",
 };
 
 export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
+  const { user } = useAuthStore();
   const [approvalTab, setApprovalTab] = useState<"received" | "sent">("received");
-  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleDetail | null>(null);
+  const [selectedSchedule, setSelectedSchedule] = useState<(ScheduleListResponse & { role?: "MENTOR" | "MENTEE" }) | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [unwrittenReviewCount, setUnwrittenReviewCount] = useState(0);
 
-  // Pagination for schedules
-  const [visibleMentorCount, setVisibleMentorCount] = useState(5);
-  const [visibleMenteeCount, setVisibleMenteeCount] = useState(5);
+  // Data states
+  // unified schedule state
+  const [allUpcomingSchedules, setAllUpcomingSchedules] = useState<(ScheduleListResponse & { role: "MENTOR" | "MENTEE" })[]>([]);
+  const [mentorConfirmations, setMentorConfirmations] = useState<ScheduleListResponse[]>([]);
+  const [menteeConfirmations, setMenteeConfirmations] = useState<ScheduleListResponse[]>([]);
+
+  // Pagination
+  const [visibleScheduleCount, setVisibleScheduleCount] = useState(5);
 
   useEffect(() => {
-    const fetchUnwrittenReviewCount = async () => {
+    const fetchData = async () => {
       try {
-        const response = await reviewService.getUnwrittenReviews(0, 1);
-        setUnwrittenReviewCount(response.totalElements);
+        // Fetch unwritten review count
+        const reviewsPromise = reviewService.getUnwrittenReviews(0, 1);
+
+        // Fetch upcoming schedules (Consolidated)
+        const upcomingSchedulesPromise = scheduleService.getUpcomingSchedules({
+          from: new Date().toISOString(),
+          status: "APPROVED",
+          page: 0,
+          size: 40 // Larger size to cover both roles
+        });
+
+        // Fetch pending requests (Received: Mentor needs to approve)
+        const mentorConfirmationsPromise = scheduleService.searchSchedules({
+          participantRole: "MENTOR",
+          status: "APPROVAL_PENDING",
+          page: 0,
+          size: 20
+        });
+
+        // Fetch pending requests (Sent: Mentee waiting for approval)
+        const menteeConfirmationsPromise = scheduleService.searchSchedules({
+          participantRole: "MENTEE",
+          status: "APPROVAL_PENDING",
+          page: 0,
+          size: 20
+        });
+
+        const [reviewsRes, upcomingRes, mentorConfRes, menteeConfRes] = await Promise.all([
+          reviewsPromise,
+          upcomingSchedulesPromise,
+          mentorConfirmationsPromise,
+          menteeConfirmationsPromise
+        ]);
+
+        setUnwrittenReviewCount(reviewsRes.totalElements);
+
+        // Map roles based on user's name
+        const combined = upcomingRes.content.map(s => {
+          const isMentor = s.mentorNickname === user?.name;
+          return {
+            ...s,
+            role: (isMentor ? "MENTOR" : "MENTEE") as "MENTOR" | "MENTEE"
+          };
+        }).sort((a, b) =>
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
+
+        setAllUpcomingSchedules(combined);
+        setMentorConfirmations(mentorConfRes.content);
+        setMenteeConfirmations(menteeConfRes.content);
+
       } catch (error) {
-        console.error("Failed to fetch unwritten review count:", error);
+        console.error("Failed to fetch dashboard data:", error);
       }
     };
-    fetchUnwrittenReviewCount();
+    fetchData();
   }, []);
 
-  const handleScheduleClick = (scheduleId: number) => {
-    const detail = mockDetailedSchedules[scheduleId];
-    if (detail) {
-      setSelectedSchedule(detail);
-      setIsDetailModalOpen(true);
+  const handleScheduleClick = (schedule: ScheduleListResponse & { role?: "MENTOR" | "MENTEE" }) => {
+    setSelectedSchedule(schedule);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleStatusChange = async (newStatus: ScheduleStatus) => {
+    if (!selectedSchedule) return;
+
+    try {
+      await scheduleService.updateStatus(selectedSchedule.scheduleId, newStatus);
+      setIsDetailModalOpen(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("상태 변경에 실패했습니다.");
     }
   };
 
-  const handleStatusChange = (newStatus: "대기" | "확정" | "취소" | "완료") => {
-    if (selectedSchedule) {
-      // TODO: API 호출하여 상태 업데이트
-      console.log("상태 변경:", {
-        scheduleId: selectedSchedule.id,
-        oldStatus: selectedSchedule.status,
-        newStatus: newStatus,
-      });
-
-      // Update local state
-      setSelectedSchedule({
-        ...selectedSchedule,
-        status: newStatus,
-      });
-
-      alert(`상태가 "${newStatus}"로 변경되었습니다.`);
-    }
+  const formatDateTime = (isoString?: string) => {
+    if (!isoString) return "-";
+    return format(new Date(isoString), "yyyy.MM.dd HH:mm", { locale: ko });
   };
 
-  // Mock data
-  const mockData = {
-    stats: {
-      upcomingSchedules: 15,
-      mentorApprovals: 2,
-      receivedRequests: 3,
-    },
-    upcomingMentorSchedules: [
-      { id: 1, title: "React 심화 과정 1:1 멘토링", date: "2024.01.15", time: "14:00", type: "1:1 멘토링", mentee: "김멘티" },
-      { id: 2, title: "프론트엔드 원데이 클래스", date: "2024.01.18", time: "10:00", type: "원데이", participants: 12 },
-      { id: 3, title: "TypeScript 스터디", date: "2024.01.20", time: "19:00", type: "스터디", participants: 8 },
-      { id: 4, title: "Next.js 1:1 멘토링", date: "2024.01.22", time: "16:00", type: "1:1 멘토링", mentee: "이학생" },
-      { id: 5, title: "웹 개발 원데이", date: "2024.01.25", time: "13:00", type: "원데이", participants: 15 },
-      { id: 301, title: "실전 React Query", date: "2024.01.26", time: "10:00", type: "1:1 멘토링", mentee: "정개발" },
-      { id: 302, title: "Tailwind CSS 디자인", date: "2024.01.27", time: "14:00", type: "원데이", participants: 10 },
-      { id: 303, title: "Node.js 기초", date: "2024.01.28", time: "13:00", type: "스터디", participants: 5 },
-      { id: 304, title: "Javascript ES6+", date: "2024.01.29", time: "19:00", type: "1:1 멘토링", mentee: "최코딩" },
-      { id: 305, title: "알고리즘 코테 준비", date: "2024.01.30", time: "10:00", type: "원데이", participants: 20 },
-    ],
-    upcomingMenteeSchedules: [
-      { id: 201, title: "React 고급 테크닉", date: "2024.01.18", time: "14:00", type: "1:1 멘토링", mentor: "박멘토" },
-      { id: 202, title: "TypeScript 마스터클래스", date: "2024.01.21", time: "10:00", type: "원데이", mentor: "최강사" },
-      { id: 401, title: "Python 기초", date: "2024.02.01", time: "14:00", type: "스터디", mentor: "배파이썬" },
-      { id: 402, title: "MySQL DB 설계", date: "2024.02.02", time: "15:00", type: "1:1 멘토링", mentor: "데이터킹" },
-      { id: 403, title: "Docker 컨테이너 정복", date: "2024.02.03", time: "10:00", type: "원데이", mentor: "정고래" },
-      { id: 404, title: "AWS 배포 가이드", date: "2024.02.04", time: "14:00", type: "1:1 멘토링", mentor: "구름 전문가" },
-      { id: 405, title: "Spring Boot WebFlux", date: "2024.02.05", time: "20:00", type: "스터디", mentor: "리액티브샘" },
-    ],
-    mentorConfirmations: [
-      {
-        id: 101,
-        service: "React 심화 과정",
-        name: "김멘티",
-        type: "1:1 멘토링",
-        requestedDate: "2024.01.20",
-        requestedTime: "14:00",
-      },
-      {
-        id: 102,
-        service: "Next.js 프로젝트 리뷰",
-        name: "이학생",
-        type: "1:1 멘토링",
-        requestedDate: "2024.01.22",
-        requestedTime: "10:00",
-      },
-      {
-        id: 103,
-        service: "프론트엔드 원데이",
-        name: "박개발",
-        type: "원데이",
-        requestedDate: "2024.01.25",
-        requestedTime: "15:00",
-      },
-    ],
-    menteeConfirmations: [
-      {
-        id: 201,
-        service: "React 고급 테크닉",
-        mentor: "박멘토",
-        type: "1:1 멘토링",
-        requestedDate: "2024.01.18",
-        requestedTime: "14:00",
-      },
-      {
-        id: 202,
-        service: "TypeScript 마스터클래스",
-        mentor: "최강사",
-        type: "원데이",
-        requestedDate: "2024.01.21",
-        requestedTime: "10:00",
-      },
-    ],
-  };
 
   return (
     <div className="p-8">
+      {/* ... (Grid content remains same) ... */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-6">
@@ -339,7 +169,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                 <div className="flex items-center gap-3">
                   <CardTitle>예정 스케줄</CardTitle>
                   <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-md text-sm">
-                    {mockData.upcomingMentorSchedules.length + mockData.upcomingMenteeSchedules.length} 건
+                    {allUpcomingSchedules.length} 건
                   </span>
                 </div>
                 <button
@@ -352,126 +182,97 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
               </div>
             </CardHeader>
             <CardContent className="space-y-8">
-              {/* 멘토 입장 */}
               <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-gray-500 border-l-4 border-blue-500 pl-2">
-                  받을 스케줄 (멘토 입장)
-                </h4>
-                {mockData.upcomingMentorSchedules.length > 0 ? (
-                  <div className="space-y-2">
-                    {mockData.upcomingMentorSchedules.slice(0, visibleMentorCount).map((schedule) => (
-                      <div
-                        key={schedule.id}
-                        className="p-3 border border-gray-200 rounded-lg hover:border-blue-400 transition-colors cursor-pointer"
-                        onClick={() => handleScheduleClick(schedule.id)}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5">
-                            <Calendar className="size-4 text-blue-500" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium mb-0.5">{schedule.title}</div>
-                            <div className="text-xs text-gray-600 mb-1.5">
-                              {schedule.date} · {schedule.time}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                                {schedule.type}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {"participants" in schedule ? `${schedule.participants}명 참여` : `멘티: ${schedule.mentee}`}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="flex gap-2">
-                      {visibleMentorCount < mockData.upcomingMentorSchedules.length && (
-                        <Button
-                          variant="ghost"
-                          className="flex-1 text-gray-500 hover:text-blue-500 hover:bg-blue-50"
-                          onClick={() => setVisibleMentorCount(prev => prev + 5)}
-                        >
-                          더보기 (+{Math.min(5, mockData.upcomingMentorSchedules.length - visibleMentorCount)})
-                        </Button>
-                      )}
-                      {visibleMentorCount > 5 && (
-                        <Button
-                          variant="ghost"
-                          className="flex-1 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                          onClick={() => setVisibleMentorCount(5)}
-                        >
-                          접기
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-10 text-center text-gray-400 text-sm">
-                    예정된 멘토 스케줄이 없습니다.
-                  </div>
-                )}
-              </div>
+                {allUpcomingSchedules.length > 0 ? (
+                  <div className="space-y-3">
+                    {allUpcomingSchedules.slice(0, visibleScheduleCount).map((schedule) => {
+                      const isMentor = schedule.role === "MENTOR";
+                      const themeColor = isMentor ? "blue" : "purple";
+                      const borderColor = isMentor ? "border-blue-200 hover:border-blue-400" : "border-purple-200 hover:border-purple-400";
 
-              {/* 멘티 입장 */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-gray-500 border-l-4 border-purple-500 pl-2">
-                  받을 스케줄 (멘티 입장)
-                </h4>
-                {mockData.upcomingMenteeSchedules.length > 0 ? (
-                  <div className="space-y-2">
-                    {mockData.upcomingMenteeSchedules.slice(0, visibleMenteeCount).map((schedule) => (
-                      <div
-                        key={schedule.id}
-                        className="p-3 border border-gray-200 rounded-lg hover:border-purple-400 transition-colors cursor-pointer"
-                        onClick={() => handleScheduleClick(schedule.id)}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5">
-                            <Calendar className="size-4 text-purple-500" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium mb-0.5">{schedule.title}</div>
-                            <div className="text-xs text-gray-600 mb-1.5">
-                              {schedule.date} · {schedule.time}
+                      return (
+                        <div
+                          key={`${schedule.role}-${schedule.scheduleTimeId}`}
+                          className={`p-4 border rounded-lg transition-all cursor-pointer bg-white hover:shadow-sm ${borderColor}`}
+                          onClick={() => handleScheduleClick(schedule)}
+                        >
+                          <div className="flex items-start gap-4">
+                            {/* Date Badge */}
+                            <div className={`flex flex-col items-center justify-center min-w-[60px] h-[60px] rounded-lg border ${isMentor ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-purple-50 border-purple-100 text-purple-600"
+                              }`}>
+                              <span className="text-xs font-semibold">{format(new Date(schedule.startTime), "M월", { locale: ko })}</span>
+                              <span className="text-xl font-bold">{format(new Date(schedule.startTime), "d")}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                                {schedule.type}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                멘토: {schedule.mentor}
-                              </span>
+
+                            <div className="flex-1 space-y-2">
+                              {/* Header: Role Badge & Time */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded border ${isMentor
+                                    ? "bg-blue-100 text-blue-700 border-blue-200"
+                                    : "bg-purple-100 text-purple-700 border-purple-200"
+                                    }`}>
+                                    {isMentor ? "멘토링 (진행)" : "멘토링 (수강)"}
+                                  </span>
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {format(new Date(schedule.startTime), "a h:mm", { locale: ko })}
+                                    {" - "}
+                                    {format(new Date(schedule.endTime), "a h:mm", { locale: ko })}
+                                  </span>
+                                </div>
+                                <span className={`text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500`}>
+                                  {schedule.optionName}
+                                </span>
+                              </div>
+
+                              {/* Title */}
+                              <div className="font-medium text-gray-900 line-clamp-1">
+                                {schedule.lessonTitle.replace(schedule.mentorNickname, "").replace(/\(\s*\)|\[\s*\]/g, "").trim()}
+                              </div>
+
+                              {/* Footer: User Info */}
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <User className="size-3.5" />
+                                <span>
+                                  {isMentor ? `멘티: ${schedule.menteeNickname}` : `멘토: ${schedule.mentorNickname}`}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                    <div className="flex gap-2">
-                      {visibleMenteeCount < mockData.upcomingMenteeSchedules.length && (
+                      );
+                    })}
+
+                    {/* Load More Button */}
+                    {allUpcomingSchedules.length > visibleScheduleCount && (
+                      <div className="pt-2">
                         <Button
-                          variant="ghost"
-                          className="flex-1 text-gray-500 hover:text-purple-500 hover:bg-purple-50"
-                          onClick={() => setVisibleMenteeCount(prev => prev + 5)}
+                          variant="outline"
+                          className="w-full text-gray-500 hover:text-gray-900"
+                          onClick={() => setVisibleScheduleCount(prev => prev + 5)}
                         >
-                          더보기 (+{Math.min(5, mockData.upcomingMenteeSchedules.length - visibleMenteeCount)})
+                          더보기 ({allUpcomingSchedules.length - visibleScheduleCount}건 남음)
                         </Button>
-                      )}
-                      {visibleMenteeCount > 5 && (
+                      </div>
+                    )}
+
+                    {/* Collapse Button */}
+                    {visibleScheduleCount > 5 && (
+                      <div className="pt-2">
                         <Button
                           variant="ghost"
-                          className="flex-1 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                          onClick={() => setVisibleMenteeCount(5)}
+                          className="w-full text-gray-400 hover:text-gray-600"
+                          onClick={() => setVisibleScheduleCount(5)}
                         >
                           접기
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="py-10 text-center text-gray-400 text-sm">
-                    예정된 멘티 스케줄이 없습니다.
+                  <div className="py-12 text-center bg-gray-50 rounded-lg text-gray-400">
+                    <Calendar className="size-8 mx-auto mb-2 opacity-50" />
+                    <p>예정된 스케줄이 없습니다.</p>
                   </div>
                 )}
               </div>
@@ -490,7 +291,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                     : "text-gray-500 hover:text-gray-700"
                     }`}
                 >
-                  승인 대기 신청 ({mockData.stats.receivedRequests})
+                  승인 대기 신청 ({mentorConfirmations.length})
                   {approvalTab === "received" && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00C471]" />
                   )}
@@ -502,7 +303,7 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
                     : "text-gray-500 hover:text-gray-700"
                     }`}
                 >
-                  멘토 승인 대기 ({mockData.stats.mentorApprovals})
+                  멘토 승인 대기 ({menteeConfirmations.length})
                   {approvalTab === "sent" && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00C471]" />
                   )}
@@ -513,29 +314,29 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
               {approvalTab === "received" ? (
                 // Mentor View: 본인이 승인해야 할 신청
                 <>
-                  {mockData.mentorConfirmations.length > 0 ? (
+                  {mentorConfirmations.length > 0 ? (
                     <div className="space-y-2">
-                      {mockData.mentorConfirmations.map((confirmation) => (
+                      {mentorConfirmations.map((confirmation) => (
                         <div
-                          key={confirmation.id}
+                          key={confirmation.scheduleTimeId}
                           className="p-3 border border-gray-200 rounded-lg hover:border-[#00C471] transition-colors cursor-pointer"
-                          onClick={() => handleScheduleClick(confirmation.id)}
+                          onClick={() => handleScheduleClick({ ...confirmation, role: "MENTOR" })}
                         >
                           <div className="flex items-start gap-2">
                             <div className="mt-0.5">
                               <User className="size-4 text-[#00C471]" />
                             </div>
                             <div className="flex-1">
-                              <div className="text-sm font-medium mb-0.5">{confirmation.service}</div>
+                              <div className="text-sm font-medium mb-0.5">{confirmation.lessonTitle}</div>
                               <div className="text-xs text-gray-600 mb-1.5">
-                                신청자: {confirmation.name}
+                                신청자: {confirmation.menteeNickname}
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-[#00C471]/20 text-[#00C471] rounded text-xs">
-                                  {confirmation.type}
+                                  {confirmation.optionName}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  {confirmation.requestedDate} · {confirmation.requestedTime}
+                                  {formatDateTime(confirmation.startTime)}
                                 </span>
                               </div>
                             </div>
@@ -552,29 +353,29 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
               ) : (
                 // Mentee View: 멘토에게 승인받아야 할 요청
                 <>
-                  {mockData.menteeConfirmations.length > 0 ? (
+                  {menteeConfirmations.length > 0 ? (
                     <div className="space-y-2">
-                      {mockData.menteeConfirmations.map((confirmation) => (
+                      {menteeConfirmations.map((confirmation) => (
                         <div
-                          key={confirmation.id}
+                          key={confirmation.scheduleTimeId}
                           className="p-3 border border-gray-200 rounded-lg hover:border-purple-400 transition-colors cursor-pointer"
-                          onClick={() => handleScheduleClick(confirmation.id)}
+                          onClick={() => handleScheduleClick({ ...confirmation, role: "MENTEE" })}
                         >
                           <div className="flex items-start gap-2">
                             <div className="mt-0.5">
                               <User className="size-4 text-purple-500" />
                             </div>
                             <div className="flex-1">
-                              <div className="text-sm font-medium mb-0.5">{confirmation.service}</div>
+                              <div className="text-sm font-medium mb-0.5">{confirmation.lessonTitle}</div>
                               <div className="text-xs text-gray-600 mb-1.5">
-                                멘토: {confirmation.mentor}
+                                멘토: {confirmation.mentorNickname}
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                                  {confirmation.type}
+                                  {confirmation.optionName}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  {confirmation.requestedDate} · {confirmation.requestedTime}
+                                  {formatDateTime(confirmation.startTime)}
                                 </span>
                               </div>
                             </div>
@@ -600,161 +401,13 @@ export function MyPageHome({ userName, onTabChange }: MyPageHomeProps) {
       </div>
 
       {/* Schedule Detail Modal */}
-      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">{selectedSchedule?.title}</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
-              상세한 스케줄 정보를 확인할 수 있습니다.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedSchedule && (
-            <div className="space-y-6 p-6">
-              {/* 예약 정보 섹션 */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">예약 정보</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Calendar className="size-5 text-blue-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">일시</div>
-                      <div className="text-sm font-medium">
-                        {selectedSchedule.date} {selectedSchedule.time} - {selectedSchedule.endTime}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <User className="size-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">
-                        {selectedSchedule.mentee ? "멘티" : selectedSchedule.mentor ? "멘토" : "참여자"}
-                      </div>
-                      <div className="text-sm font-medium">
-                        {selectedSchedule.mentee || selectedSchedule.mentor ||
-                          (selectedSchedule.participants ? `${selectedSchedule.participants}명` : "-")}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <FileText className="size-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">요청사항</div>
-                      <div className="text-sm font-medium">
-                        {selectedSchedule.requestContent}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 레슨 정보 섹션 */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">레슨 정보</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Tag className="size-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">레슨 유형</div>
-                      <div className="text-sm font-medium">{selectedSchedule.type}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <FileText className="size-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">레슨 설명</div>
-                      <div className="text-sm font-medium">
-                        {selectedSchedule.description}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <MapPin className="size-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">레슨 장소</div>
-                      <div className="text-sm font-medium">{selectedSchedule.location}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Tag className="size-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">카테고리</div>
-                      <div className="text-sm font-medium">{selectedSchedule.category}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Clock className="size-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <div className="text-sm text-gray-500">진행 시간</div>
-                      <div className="text-sm font-medium">{selectedSchedule.duration}분</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 하단 버튼 */}
-              <div className="flex justify-between items-center pt-4 border-t">
-                <div className="flex gap-2">
-                  {selectedSchedule.status === "대기" && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                        onClick={() => handleStatusChange("확정")}
-                      >
-                        확정
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-red-300 text-red-700 hover:bg-red-50"
-                        onClick={() => handleStatusChange("취소")}
-                      >
-                        일정 취소
-                      </Button>
-                    </>
-                  )}
-
-                  {selectedSchedule.status === "확정" && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-red-300 text-red-700 hover:bg-red-50"
-                        onClick={() => handleStatusChange("취소")}
-                      >
-                        일정 취소
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-[#00C471] text-[#00C471] hover:bg-[#E6F9F2]"
-                        onClick={() => handleStatusChange("완료")}
-                      >
-                        완료
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDetailModalOpen(false)}
-                >
-                  닫기
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ScheduleDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        schedule={selectedSchedule}
+        onStatusChange={handleStatusChange}
+        isMentor={selectedSchedule?.role === "MENTOR"}
+      />
     </div>
   );
 }

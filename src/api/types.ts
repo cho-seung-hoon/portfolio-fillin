@@ -312,3 +312,43 @@ export interface EditLessonRequest {
 export interface EditLessonResponse {
     lessonId: string;
 }
+
+export type ScheduleStatus = "PAYMENT_PENDING" | "APPROVAL_PENDING" | "APPROVED" | "CANCELED" | "COMPLETED";
+
+export type ScheduleSortType = "START_TIME_ASC" | "START_TIME_DESC";
+
+export type ScheduleParticipantRole = "MENTOR" | "MENTEE";
+
+export interface ScheduleListResponse {
+    scheduleId: string;
+    scheduleTimeId: string;
+    lessonTitle: string;
+    optionName: string;
+    menteeNickname: string;
+    mentorNickname: string;
+    reservationDate: string; // ISO string
+    status: ScheduleStatus;
+    lessonType: string;
+    startTime: string;
+    endTime: string;
+    location: string;
+}
+
+export interface ScheduleDetailResponse {
+    scheduleId: string;
+    scheduleTimeId: string; // Internal ID for time slot
+    lessonTitle: string;
+    category: string;
+    mentorNickname: string;
+    menteeNickname: string;
+    startTime: string; // Instant ISO string
+    endTime: string; // Instant ISO string
+    location: string;
+    description: string;
+    lessonType: string;
+    requestContent: string;
+    status: ScheduleStatus;
+    price: number;
+    optionName: string;
+    userRole: "MENTOR" | "MENTEE" | "NONE";
+}
