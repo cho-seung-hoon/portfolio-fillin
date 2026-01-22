@@ -256,7 +256,7 @@ public class LessonService {
                 throw new ResourceException.InvalidArgument(INVALID_SEAT);
             }
             if (command.price() == null || command.price() <= 0) {
-                throw new ResourceException.InvalidArgument(LESSON_PRICE_REQUIRED);
+                throw new ResourceException.InvalidArgument(LESSON_PRICE_INVALID);
             }
         } else if (command.lessonType() == LessonType.MENTORING) {
             if (command.optionCommandList() == null || command.optionCommandList().isEmpty()) {

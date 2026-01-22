@@ -16,7 +16,7 @@ public class LessonError {
         return String.format("레슨 유형( %s )이 유효하지 않습니다.", lessonType);
     }
     public static String INVALID_SEAT = "좌석 수는 1개 이상이어야 합니다.";
-    public static final String LESSON_PRICE_REQUIRED = "가격 정보가 올바르지 않습니다.";
+    public static final String LESSON_PRICE_INVALID = "가격 정보가 올바르지 않습니다.";
     public static final String OPTION_REQUIRED = "옵션은 필수입니다.";
     public static final String OPTION_PRICE_INVALID = "옵션 가격 정보가 올바르지 않습니다.";
     public static final String AVAILABLE_TIME_REQUIRED = "이용 가능 시간은 필수입니다.";
