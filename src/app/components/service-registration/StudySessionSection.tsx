@@ -57,6 +57,17 @@ export function StudySessionSection() {
         }
     }, [isBasicInfoComplete, availableTimeList.length]);
 
+    // 정기 스터디인 경우 선택된 날짜를 시작일로 자동 설정
+    useEffect(() => {
+        if (isRecurring && selectedDate) {
+            const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
+            const currentStartDate = studyStartDate ? format(new Date(studyStartDate), "yyyy-MM-dd") : null;
+            if (currentStartDate !== selectedDateStr) {
+                setStudyStartDate(toLocalISOString(selectedDateStr, "00:00:00"));
+            }
+        }
+    }, [selectedDate, isRecurring]);
+
     const addSession = () => {
         // TimePicker의 기본값이 "09:00"이므로 빈 문자열이 아닌지 확인
         const hasStartTime = newSessionStartTime && newSessionStartTime.trim() !== "";
@@ -67,26 +78,90 @@ export function StudySessionSection() {
             return;
         }
 
-        // ISO 8601 formatting for Instant compatibility logic handled on submit or here?
-        // User requested "align data", DTO expects Instant. 
-        // The Store defines AvailableTime as { startTime: string; endTime: string; ... }
-        // We will store simpler strings here and parent can format, OR we format here.
-        // Let's store "YYYY-MM-DDTHH:mm:00" format which is close to Instant.
+        // 정기 스터디인 경우
+        if (isRecurring) {
+            if (selectedWeekdays.length === 0) {
+                alert("정기 스터디 요일을 선택해주세요.");
+                return;
+            }
 
-        const dateStr = format(selectedDate, "yyyy-MM-dd");
+            if (!studyEndDate) {
+                alert("스터디 종료일을 입력해주세요.");
+                return;
+            }
 
-        // Convert Local Date+Time to ISO 8601 (UTC)
-        const startDateTime = new Date(`${dateStr}T${newSessionStartTime}:00`).toISOString();
-        const endDateTime = new Date(`${dateStr}T${newSessionEndTime}:00`).toISOString();
+            // 선택된 날짜를 시작일로 설정
+            const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
+            setStudyStartDate(toLocalISOString(selectedDateStr, "00:00:00"));
 
-        const newSession: AvailableTime = {
-            startTime: startDateTime,
-            endTime: endDateTime,
-            price: 0,
-            seats: 0,
-        };
+            const start = new Date(selectedDate);
+            const end = new Date(studyEndDate);
+            const sessions: AvailableTime[] = [];
 
-        addAvailableTime(newSession);
+            // 시작일부터 종료일까지 반복
+            const currentDate = new Date(start);
+            while (currentDate <= end) {
+                const weekday = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+                // 선택된 요일인 경우 스터디 생성
+                if (selectedWeekdays.includes(weekday)) {
+                    const dateStr = format(currentDate, "yyyy-MM-dd");
+                    const startDateTime = new Date(`${dateStr}T${newSessionStartTime}:00`).toISOString();
+                    const endDateTime = new Date(`${dateStr}T${newSessionEndTime}:00`).toISOString();
+
+                    // 중복 체크 (이미 같은 날짜와 시간의 스터디가 있는지 확인)
+                    const isDuplicate = availableTimeList.some(session => {
+                        const sessionDate = format(new Date(session.startTime), "yyyy-MM-dd");
+                        const sessionStart = format(new Date(session.startTime), "HH:mm");
+                        return sessionDate === dateStr && sessionStart === newSessionStartTime;
+                    });
+
+                    if (!isDuplicate) {
+                        sessions.push({
+                            startTime: startDateTime,
+                            endTime: endDateTime,
+                            price: 0, // 스터디는 상위 레벨의 총 참가비 사용
+                            seats: 0, // 스터디는 상위 레벨의 총 모집 인원 사용
+                        });
+                    }
+                }
+
+                // 다음 날로 이동
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // 모든 세션 추가
+            sessions.forEach(session => addAvailableTime(session));
+
+            if (sessions.length > 0) {
+                alert(`${sessions.length}개의 정기 스터디 일정이 생성되었습니다.`);
+            } else {
+                alert("생성할 스터디 일정이 없습니다. (이미 등록된 일정이거나 조건에 맞는 날짜가 없습니다)");
+            }
+        } else {
+            // 일반 스터디인 경우
+            if (!studyStartDate || !studyEndDate) {
+                alert("스터디 시작일과 종료일을 입력해주세요.");
+                return;
+            }
+
+            const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+            // Convert Local Date+Time to ISO 8601 (UTC)
+            const startDateTime = new Date(`${dateStr}T${newSessionStartTime}:00`).toISOString();
+            const endDateTime = new Date(`${dateStr}T${newSessionEndTime}:00`).toISOString();
+
+            const newSession: AvailableTime = {
+                startTime: startDateTime,
+                endTime: endDateTime,
+                price: 0, // 스터디는 상위 레벨의 총 참가비 사용
+                seats: 0, // 스터디는 상위 레벨의 총 모집 인원 사용
+            };
+
+            addAvailableTime(newSession);
+        }
+
+        // 초기화 (날짜는 유지하고 입력 필드만 초기화)
         setNewSessionStartTime("09:00");
         setNewSessionEndTime("10:00");
     };
@@ -115,62 +190,6 @@ export function StudySessionSection() {
         }
     };
 
-    const generateRecurringSessions = () => {
-        if (!studyStartDate || !studyEndDate || selectedWeekdays.length === 0) {
-            alert("시작일, 종료일 및 요일을 선택해주세요.");
-            return;
-        }
-
-        if (!newSessionStartTime || !newSessionEndTime) {
-            alert("시작 시간과 종료 시간을 입력해주세요.");
-            return;
-        }
-
-        const start = new Date(studyStartDate);
-        const end = new Date(studyEndDate);
-        const sessions: AvailableTime[] = [];
-
-        // 시작일부터 종료일까지 반복
-        const currentDate = new Date(start);
-        while (currentDate <= end) {
-            const weekday = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-
-            // 선택된 요일인 경우 스터디 생성
-            if (selectedWeekdays.includes(weekday)) {
-                const dateStr = format(currentDate, "yyyy-MM-dd");
-                const startDateTime = new Date(`${dateStr}T${newSessionStartTime}:00`).toISOString();
-                const endDateTime = new Date(`${dateStr}T${newSessionEndTime}:00`).toISOString();
-
-                // 중복 체크 (이미 같은 날짜와 시간의 스터디가 있는지 확인)
-                const isDuplicate = availableTimeList.some(session => {
-                    const sessionDate = format(new Date(session.startTime), "yyyy-MM-dd");
-                    const sessionStart = format(new Date(session.startTime), "HH:mm");
-                    return sessionDate === dateStr && sessionStart === newSessionStartTime;
-                });
-
-                if (!isDuplicate) {
-                    sessions.push({
-                        startTime: startDateTime,
-                        endTime: endDateTime,
-                        price: 0,
-                        seats: 0,
-                    });
-                }
-            }
-
-            // 다음 날로 이동
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-
-        // 모든 세션 추가
-        sessions.forEach(session => addAvailableTime(session));
-
-        if (sessions.length > 0) {
-            alert(`${sessions.length}개의 정기 스터디 일정이 생성되었습니다.`);
-        } else {
-            alert("생성할 스터디 일정이 없습니다. (이미 등록된 일정이거나 조건에 맞는 날짜가 없습니다)");
-        }
-    };
 
     return (
         <Card>
@@ -223,126 +242,11 @@ export function StudySessionSection() {
                         </div>
                     </div>
 
-                    {/* 모집 정보 */}
-                    <div className="bg-gray-50 p-4 rounded-md border-2 border-dashed border-gray-300">
-                        <h4 className="font-medium mb-4">모집 정보</h4>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-sm">총 모집 인원 (명)</Label>
-                                    <Input
-                                        type="number"
-                                        value={seats || ''}
-                                        onChange={(e) => setSeats(Number(e.target.value))}
-                                        placeholder="10"
-                                        min="1"
-                                        className="bg-white"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-sm">총 참가비 (원)</Label>
-                                    <Input
-                                        type="number"
-                                        value={price || ''}
-                                        onChange={(e) => setPrice(Number(e.target.value))}
-                                        placeholder="50000"
-                                        min="0"
-                                        className="bg-white"
-                                    />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-sm">스터디 시작일 <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        type="date"
-                                        value={studyStartDate ? new Date(studyStartDate).toLocaleDateString('en-CA') : ''}
-                                        onChange={(e) => {
-                                            if (e.target.value) {
-                                                setStudyStartDate(toLocalISOString(e.target.value, "00:00:00"));
-                                            } else {
-                                                setStudyStartDate(null);
-                                            }
-                                        }}
-                                        className="bg-white"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-sm">스터디 종료일 <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        type="date"
-                                        value={studyEndDate ? new Date(studyEndDate).toLocaleDateString('en-CA') : ''}
-                                        onChange={(e) => {
-                                            if (e.target.value) {
-                                                setStudyEndDate(toLocalISOString(e.target.value, "23:59:59"));
-                                            } else {
-                                                setStudyEndDate(null);
-                                            }
-                                        }}
-                                        className="bg-white"
-                                        min={studyStartDate ? new Date(studyStartDate).toLocaleDateString('en-CA') : undefined}
-                                    />
-                                </div>
-                            </div>
-                            <div className="bg-white p-4 rounded-md border border-gray-200">
-                                <div className="flex items-center space-x-2 mb-4">
-                                    <Checkbox
-                                        id="isRecurring"
-                                        checked={isRecurring}
-                                        onCheckedChange={(checked) => setIsRecurring(checked === true)}
-                                    />
-                                    <Label htmlFor="isRecurring" className="text-sm font-medium cursor-pointer">
-                                        주마다 계속 반복하여 스터디를 정기적으로 열기
-                                    </Label>
-                                </div>
-                                {isRecurring && (
-                                    <div className="space-y-4 pt-3 border-t border-gray-200">
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                                                <Clock className="size-4" />
-                                                정기 스터디 요일 선택
-                                            </Label>
-                                            <div className="flex flex-wrap gap-3">
-                                                {weekdays.map((day, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className={`flex items-center justify-center w-12 h-12 rounded-lg border-2 cursor-pointer transition-all ${selectedWeekdays.includes(index)
-                                                                ? "bg-[#00C471] border-[#00C471] text-white"
-                                                                : "bg-white border-gray-300 text-gray-700 hover:border-[#00C471] hover:bg-[#E6F9F2]"
-                                                            }`}
-                                                        onClick={() => toggleWeekday(index)}
-                                                    >
-                                                        <span className="text-sm font-medium">{day}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        {selectedWeekdays.length > 0 && studyStartDate && studyEndDate && (
-                                            <div className="space-y-2">
-                                                <p className="text-xs text-gray-600">
-                                                    선택한 요일: {selectedWeekdays.map(w => weekdays[w]).join(", ")}
-                                                </p>
-                                                <Button
-                                                    type="button"
-                                                    onClick={generateRecurringSessions}
-                                                    className="w-full bg-[#00C471] hover:bg-[#00B366] gap-2"
-                                                >
-                                                    <Plus className="size-4" />
-                                                    정기 스터디 일정 생성
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
                     {/* 일정 선택 */}
                     <div ref={scheduleSectionRef}>
                         <h4 className="font-medium mb-2">일정 선택</h4>
                         <p className="text-sm text-gray-600 mb-4">
-                            스터디가 진행될 날짜와 시간을 추가해주세요. 여러 회차를 등록할 수 있습니다.
+                            캘린더에서 날짜를 선택하면 모집 정보 입력 폼이 나타납니다.
                         </p>
 
                         <CalendarModule
@@ -371,15 +275,137 @@ export function StudySessionSection() {
                                 );
                             }}
                         />
+                    </div>
 
-                        {selectedDate && (
+                    {/* 모집 정보 (날짜 선택 시 나타남) */}
+                    {selectedDate && (
+                        <div className="bg-gray-50 p-4 rounded-md border-2 border-dashed border-gray-300">
+                            <h4 className="font-medium mb-4">
+                                {format(selectedDate, "yyyy년 M월 d일 (EEE)", { locale: ko })} 모집 정보
+                            </h4>
                             <div className="space-y-4">
-                                <div className="bg-gray-50 p-4 rounded-md">
-                                    <h4 className="font-medium mb-3">
-                                        {format(selectedDate, "yyyy년 M월 d일 (EEE)", { locale: ko })} 회차 추가
-                                    </h4>
+                                {/* 총 모집 인원 및 참가비 (상위 레벨) */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">총 모집 인원 (명) <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            type="number"
+                                            value={seats || ''}
+                                            onChange={(e) => setSeats(Number(e.target.value))}
+                                            placeholder="10"
+                                            min="1"
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">총 참가비 (원) <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            type="number"
+                                            value={price || ''}
+                                            onChange={(e) => setPrice(Number(e.target.value))}
+                                            placeholder="100000"
+                                            min="0"
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                </div>
 
-                                    <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                                {/* 스터디 시작일 및 종료일 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">스터디 시작일 <span className="text-red-500">*</span></Label>
+                                        {isRecurring ? (
+                                            <Input
+                                                type="date"
+                                                value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ''}
+                                                disabled
+                                                className="bg-gray-100"
+                                            />
+                                        ) : (
+                                            <Input
+                                                type="date"
+                                                value={studyStartDate ? new Date(studyStartDate).toLocaleDateString('en-CA') : ''}
+                                                onChange={(e) => {
+                                                    if (e.target.value) {
+                                                        setStudyStartDate(toLocalISOString(e.target.value, "00:00:00"));
+                                                    } else {
+                                                        setStudyStartDate(null);
+                                                    }
+                                                }}
+                                                className="bg-white"
+                                            />
+                                        )}
+                                        {isRecurring && (
+                                            <p className="text-xs text-gray-500">
+                                                선택한 날짜가 시작일로 설정됩니다
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm">스터디 종료일 <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            type="date"
+                                            value={studyEndDate ? new Date(studyEndDate).toLocaleDateString('en-CA') : ''}
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    setStudyEndDate(toLocalISOString(e.target.value, "23:59:59"));
+                                                } else {
+                                                    setStudyEndDate(null);
+                                                }
+                                            }}
+                                            className="bg-white"
+                                            min={isRecurring && selectedDate ? format(selectedDate, "yyyy-MM-dd") : (studyStartDate ? new Date(studyStartDate).toLocaleDateString('en-CA') : undefined)}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 주마다 반복 여부 */}
+                                <div className="bg-white p-4 rounded-md border border-gray-200">
+                                    <div className="flex items-center space-x-2 mb-4">
+                                        <Checkbox
+                                            id="isRecurring"
+                                            checked={isRecurring}
+                                            onCheckedChange={(checked) => setIsRecurring(checked === true)}
+                                        />
+                                        <Label htmlFor="isRecurring" className="text-sm font-medium cursor-pointer">
+                                            주마다 계속 반복하여 스터디를 정기적으로 열기
+                                        </Label>
+                                    </div>
+                                    {isRecurring && (
+                                        <div className="space-y-4 pt-3 border-t border-gray-200">
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                                                    <Clock className="size-4" />
+                                                    정기 스터디 요일 선택
+                                                </Label>
+                                                <div className="flex flex-wrap gap-3">
+                                                    {weekdays.map((day, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className={`flex items-center justify-center w-12 h-12 rounded-lg border-2 cursor-pointer transition-all ${selectedWeekdays.includes(index)
+                                                                ? "bg-[#00C471] border-[#00C471] text-white"
+                                                                : "bg-white border-gray-300 text-gray-700 hover:border-[#00C471] hover:bg-[#E6F9F2]"
+                                                                }`}
+                                                            onClick={() => toggleWeekday(index)}
+                                                        >
+                                                            <span className="text-sm font-medium">{day}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {selectedWeekdays.length > 0 && (
+                                                    <p className="text-xs text-gray-600">
+                                                        선택한 요일: {selectedWeekdays.map(w => weekdays[w]).join(", ")}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 시간대 선택 */}
+                                <div className="bg-white p-4 rounded-md border border-gray-200">
+                                    <h4 className="font-medium mb-3">시간대 선택</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <TimePicker
                                             value={newSessionStartTime}
                                             onChange={setNewSessionStartTime}
@@ -390,59 +416,37 @@ export function StudySessionSection() {
                                             onChange={setNewSessionEndTime}
                                             label="종료 시간"
                                         />
-                                        <Button
-                                            type="button"
-                                            onClick={addSession}
-                                            className="bg-[#00C471] hover:bg-[#00B366] gap-2"
-                                            disabled={!selectedDate || !newSessionStartTime?.trim() || !newSessionEndTime?.trim()}
-                                        >
-                                            <Plus className="size-4" />
-                                            추가
-                                        </Button>
                                     </div>
-                                    {(!selectedDate || !newSessionStartTime?.trim() || !newSessionEndTime?.trim()) && (
-                                        <p className="text-xs text-gray-500 mt-2 text-center">
-                                            날짜와 시간을 모두 선택해주세요
-                                        </p>
-                                    )}
                                 </div>
 
-                                {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).length > 0 && (
-                                    <div className="bg-gray-50 p-4 rounded-md">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h5 className="font-medium">등록된 회차</h5>
-                                            <span className="text-sm text-gray-500">
-                                                총 {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).length}개
-                                            </span>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {getSessionsForDate(format(selectedDate, "yyyy-MM-dd")).map((session: AvailableTime, idx: number) => (
-                                                <div
-                                                    key={idx}
-                                                    className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-medium">
-                                                            {getSessionTimeRange(session)}
-                                                        </span>
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveSession(session)}
-                                                        className="text-gray-400 hover:text-gray-600"
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                {/* 회차 추가 버튼 */}
+                                <Button
+                                    type="button"
+                                    onClick={addSession}
+                                    className="w-full bg-[#00C471] hover:bg-[#00B366] gap-2"
+                                    disabled={
+                                        !selectedDate || 
+                                        !newSessionStartTime?.trim() || 
+                                        !newSessionEndTime?.trim() || 
+                                        !price || 
+                                        !seats ||
+                                        (isRecurring && (selectedWeekdays.length === 0 || !studyEndDate)) ||
+                                        (!isRecurring && (!studyStartDate || !studyEndDate))
+                                    }
+                                >
+                                    <Plus className="size-4" />
+                                    {isRecurring ? "정기 회차 추가" : "회차 추가"}
+                                </Button>
+                                {(!selectedDate || !newSessionStartTime?.trim() || !newSessionEndTime?.trim() || !price || !seats || (isRecurring && (selectedWeekdays.length === 0 || !studyEndDate)) || (!isRecurring && (!studyStartDate || !studyEndDate))) && (
+                                    <p className="text-xs text-gray-500 text-center">
+                                        {isRecurring 
+                                            ? "모든 필드와 요일을 선택해주세요" 
+                                            : "모든 필드를 입력해주세요"}
+                                    </p>
                                 )}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* 등록된 회차 목록 */}
                     {availableTimeList.length > 0 && (

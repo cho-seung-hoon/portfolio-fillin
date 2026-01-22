@@ -169,6 +169,37 @@ export function OneDayClassSection() {
                         </div>
                     </div>
 
+                    {/* 달력 미리보기 */}
+                    <div className="border-t pt-6">
+                        <h4 className="font-medium mb-4">일정 달력</h4>
+                        <CalendarModule
+                            selectedDate={undefined}
+                            onDateSelect={() => { }}
+                            renderDateContent={(date) => {
+                                const dateKey = format(date, "yyyy-MM-dd");
+                                const dateSessions = getSessionsForDate(dateKey);
+                                if (dateSessions.length === 0) return null;
+                                return (
+                                    <div className="space-y-1">
+                                        {dateSessions.slice(0, 2).map((session, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
+                                            >
+                                                {formatTimeRange(session.startTime, session.endTime)}
+                                            </div>
+                                        ))}
+                                        {dateSessions.length > 2 && (
+                                            <div className="text-xs text-gray-500 px-2">
+                                                +{dateSessions.length - 2}개
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            }}
+                        />
+                    </div>
+
                     {/* 회차 추가 폼 */}
                     <div className="bg-gray-50 p-4 rounded-md border-2 border-dashed border-gray-300">
                         <div className="flex items-center justify-between mb-4">
@@ -295,39 +326,6 @@ export function OneDayClassSection() {
                                     );
                                 })}
                             </div>
-                        </div>
-                    )}
-
-                    {/* 달력 미리보기 */}
-                    {availableTimeList.length > 0 && (
-                        <div className="border-t pt-6">
-                            <h4 className="font-medium mb-4">일정 달력</h4>
-                            <CalendarModule
-                                selectedDate={undefined}
-                                onDateSelect={() => { }}
-                                renderDateContent={(date) => {
-                                    const dateKey = format(date, "yyyy-MM-dd");
-                                    const dateSessions = getSessionsForDate(dateKey);
-                                    if (dateSessions.length === 0) return null;
-                                    return (
-                                        <div className="space-y-1">
-                                            {dateSessions.slice(0, 2).map((session, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="text-xs px-2 py-1 bg-[#E6F9F2] text-[#00C471] rounded truncate"
-                                                >
-                                                    {formatTimeRange(session.startTime, session.endTime)}
-                                                </div>
-                                            ))}
-                                            {dateSessions.length > 2 && (
-                                                <div className="text-xs text-gray-500 px-2">
-                                                    +{dateSessions.length - 2}개
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                }}
-                            />
                         </div>
                     )}
                 </div>
