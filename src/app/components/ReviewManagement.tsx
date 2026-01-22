@@ -207,6 +207,19 @@ export function ReviewManagement() {
     );
   };
 
+  const renderLessonTypeBadge = (type?: LessonTypeEnum) => {
+    switch (type) {
+      case "MENTORING":
+        return <Badge className="bg-[#00C471] hover:bg-[#00B366] text-white border-0 text-[10px] px-1.5 py-0.5 whitespace-nowrap">1:1</Badge>;
+      case "ONEDAY":
+        return <Badge className="bg-[#FF9500] hover:bg-[#E68600] text-white border-0 text-[10px] px-1.5 py-0.5 whitespace-nowrap">원데이</Badge>;
+      case "STUDY":
+        return <Badge className="bg-[#0091FF] hover:bg-[#0081E6] text-white border-0 text-[10px] px-1.5 py-0.5 whitespace-nowrap">스터디</Badge>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="p-8">
       <h2 className="text-3xl mb-6">리뷰 및 평점</h2>
