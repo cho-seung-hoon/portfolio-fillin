@@ -48,13 +48,13 @@ export function MentoringScheduleView({ service }: MentoringScheduleViewProps) {
 
     // 시간 문자열을 분으로 변환
     const timeToMinutes = (time: string) => {
-        const [hours, minutes] = time.split(":").map(Number);
+        const [hours, minutes] = (time || "").split(":").map(Number);
         return hours * 60 + minutes;
     };
 
     // 시간 범위를 바 위치와 너비로 변환
     const getBarStyle = (timeRange: string) => {
-        const [start, end] = timeRange.split("-");
+        const [start, end] = (timeRange || "").split("-");
         const startMinutes = timeToMinutes(start);
         const endMinutes = timeToMinutes(end);
 
