@@ -4,8 +4,8 @@ import com.kosa.fillinv.global.exception.BusinessException;
 import com.kosa.fillinv.global.response.ErrorCode;
 import com.kosa.fillinv.global.response.SuccessResponse;
 import com.kosa.fillinv.global.security.details.CustomMemberDetails;
-import com.kosa.fillinv.schedule.controller.dto.CreateScheduleResponse;
 import com.kosa.fillinv.schedule.dto.request.ScheduleCreateRequest;
+import com.kosa.fillinv.schedule.dto.response.CreateScheduleResponse;
 import com.kosa.fillinv.schedule.dto.response.ScheduleDetailResponse;
 import com.kosa.fillinv.schedule.dto.response.ScheduleListResponse;
 import com.kosa.fillinv.schedule.entity.ScheduleStatus;
@@ -13,6 +13,7 @@ import com.kosa.fillinv.schedule.service.ScheduleCreateService;
 import com.kosa.fillinv.schedule.service.ScheduleInquiryService;
 import com.kosa.fillinv.schedule.service.ScheduleService;
 import com.kosa.fillinv.schedule.service.dto.ScheduleSearchCondition;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -30,8 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.time.Instant;
 
 @RestController
 @RequiredArgsConstructor

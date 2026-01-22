@@ -1,4 +1,4 @@
-package com.kosa.fillinv.schedule.controller.dto;
+package com.kosa.fillinv.schedule.dto.response;
 
 public record CreateScheduleResponse(
         String scheduleId
