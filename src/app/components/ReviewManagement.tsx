@@ -25,6 +25,7 @@ import { useNavigate } from "@tanstack/react-router";
 interface WrittenReview {
   id: string;
   lessonId: string;
+  lessonType?: LessonTypeEnum;
   classTitle: string;
   optionName: string;
   mentorNickname: string; // Changed from menteeNickname
@@ -41,6 +42,8 @@ import { Pagination } from "./Pagination"; // Assuming Pagination is in the same
 
 
 import { Skeleton } from "./ui/skeleton";
+import { Badge } from "./ui/badge";
+import { LessonTypeEnum } from "../../api/types";
 import { formatDateWithLocale, formatDateTimeWithLocale } from "../../utils/date";
 
 export function ReviewManagement() {
@@ -94,6 +97,7 @@ export function ReviewManagement() {
       const reviews = pageResponse.content.map(r => ({
         id: r.reviewId,
         lessonId: r.lessonId,
+        lessonType: r.lessonType,
         classTitle: r.lessonName,
         optionName: r.optionName,
         mentorNickname: r.mentorNickname,
@@ -277,15 +281,18 @@ export function ReviewManagement() {
                             {(pendingPage - 1) * itemsPerPage + index + 1}
                           </TableCell>
                           <TableCell className="font-medium">
-                            <span
-                              className="hover:text-[#00C471] hover:underline cursor-pointer"
-                              onClick={() => navigate({ to: `/service/${review.lessonId}` })}
-                            >
-                              {review.lessonName}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {renderLessonTypeBadge(review.lessonType)}
+                              <span
+                                className="hover:text-[#00C471] hover:underline cursor-pointer"
+                                onClick={() => navigate({ to: `/service/${review.lessonId}` })}
+                              >
+                                {review.lessonName}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-gray-600">
-                            {review.optionName}
+                            {review.lessonType === "MENTORING" ? review.optionName : "-"}
                           </TableCell>
                           <TableCell>{review.mentorNickname}</TableCell>
                           <TableCell className="text-gray-600">
@@ -368,18 +375,21 @@ export function ReviewManagement() {
                             {(writtenPage - 1) * itemsPerPage + index + 1}
                           </TableCell>
                           <TableCell className="font-medium">
-                            <span
-                              className="hover:text-[#00C471] hover:underline cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate({ to: `/service/${review.lessonId}` });
-                              }}
-                            >
-                              {review.classTitle}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {renderLessonTypeBadge(review.lessonType)}
+                              <span
+                                className="hover:text-[#00C471] hover:underline cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate({ to: `/service/${review.lessonId}` });
+                                }}
+                              >
+                                {review.classTitle}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-gray-600">
-                            {review.optionName}
+                            {review.lessonType === "MENTORING" ? review.optionName : "-"}
                           </TableCell>
                           <TableCell>{review.mentorNickname}</TableCell>
                           <TableCell className="text-gray-600">

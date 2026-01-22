@@ -13,7 +13,7 @@ interface LessonCardProps {
 }
 
 export function LessonCard({ lesson, onClick }: LessonCardProps) {
-  const discount = lesson.originalPrice
+  const discount = (lesson.originalPrice && lesson.price !== null)
     ? Math.round(((lesson.originalPrice - lesson.price) / lesson.originalPrice) * 100)
     : 0;
 
@@ -130,7 +130,11 @@ export function LessonCard({ lesson, onClick }: LessonCardProps) {
             </span>
           )}
           <span className="text-xl text-[#00C471]">
-            {lesson.price === 0 ? "무료" : `₩${Number(lesson.price ?? 0).toLocaleString()}`}
+            {lesson.price === null || lesson.price === undefined
+              ? <span className="text-gray-400 text-lg">정보없음</span>
+              : lesson.price === 0
+                ? "무료"
+                : `₩${Number(lesson.price).toLocaleString()}`}
           </span>
         </div>
       </div>

@@ -2,7 +2,7 @@ export interface Lesson {
     id: string;
     title: string;
     instructor: string;
-    price: number;
+    price: number | null;
     originalPrice?: number;
     rating: number | null;
     studentCount: number;

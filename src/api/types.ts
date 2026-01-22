@@ -159,6 +159,7 @@ export interface LessonThumbnail {
     closeAt: string;
     createdAt: string;
     menteeCount: number;
+    price?: number;
 }
 
 export type LessonSortTypeEnum = "CREATED_AT_ASC" | "CREATED_AT_DESC" | "PRICE_ASC" | "PRICE_DESC" | "POPULARITY";
@@ -236,6 +237,7 @@ export interface MyReviewResponseDTO {
     optionName: string;
     reservationDate: string; // LocalDate
     mentorNickname: string;
+    lessonType?: LessonTypeEnum;
 }
 
 export interface CategoryResponseDto {
@@ -267,6 +269,7 @@ export interface UnwrittenReviewResponseDTO {
     optionName: string;
     reservationDate: string; // LocalDate string (YYYY-MM-DD)
     mentorNickname: string;
+    lessonType?: LessonTypeEnum;
 }
 
 export interface CreateReviewRequestDTO {

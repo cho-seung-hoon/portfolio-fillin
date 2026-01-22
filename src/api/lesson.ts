@@ -72,7 +72,7 @@ class DefaultLessonService implements LessonService {
             id: dto.lessonId,
             title: dto.lessonTitle,
             instructor: dto.mentorNickName,
-            price: 999999, // Hardcoded as requested
+            price: dto.price ?? null, // Use API price or null
             originalPrice: undefined,
             rating: dto.rating,
             studentCount: dto.menteeCount ?? 0, // Guard against undefined

@@ -275,7 +275,8 @@ export const handlers = [
                 location: lesson.location,
                 closeAt: lesson.close_at,
                 category: categoryMap.get(lesson.category_id)?.name || "Unknown",
-                menteeCount: lesson.studentCount
+                menteeCount: lesson.studentCount,
+                price: lesson.price
             };
         });
 
@@ -486,7 +487,9 @@ export const handlers = [
                 createdAt: "2025-12-21T10:00:00Z",
                 optionName: "1:1 멘토링 60분",
                 reservationDate: "2025-12-20",
-                mentorNickname: "Mentor-mentor-001"
+                mentorNickname: "Mentor-mentor-001",
+                lessonType: "MENTORING",
+                price: 50000
             },
             {
                 reviewId: "my-review-2",
@@ -498,7 +501,22 @@ export const handlers = [
                 createdAt: "2025-12-16T09:00:00Z",
                 optionName: "그룹 세션 90분",
                 reservationDate: "2025-12-15",
-                mentorNickname: "FrontendMaster"
+                mentorNickname: "멘토1",
+                lessonType: "MENTORING",
+                price: 75000
+            },
+            {
+                reviewId: "my-review-3",
+                score: 5,
+                content: "원데이 클래스도 너무 좋았어요!",
+                scheduleId: "SCH002",
+                lessonName: "원데이 클래스 예시",
+                lessonId: "2",
+                optionName: "기본 옵션",
+                reservationDate: "2024-03-20",
+                mentorNickname: "멘토2",
+                lessonType: "ONEDAY",
+                price: 30000
             }
         ];
 
