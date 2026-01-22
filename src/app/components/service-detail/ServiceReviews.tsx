@@ -60,9 +60,7 @@ export function ServiceReviews({ service }: ServiceReviewsProps) {
                                         </div>
                                     </div>
                                     <p className="text-gray-700 mb-3">{review.content}</p>
-                                    <button className="text-sm text-gray-500 hover:text-gray-700">
-                                        도움이 돼요 ({review.helpful})
-                                    </button>
+
                                 </div>
                             </div>
                         </div>
