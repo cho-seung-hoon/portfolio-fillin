@@ -33,6 +33,12 @@ interface ServiceRegistrationState {
     // Available Times (Used by Mentoring, OneDay, Study)
     availableTimeList: AvailableTime[];
 
+    // Study-specific: Start/End dates and recurring option
+    studyStartDate: string | null;
+    studyEndDate: string | null;
+    isRecurring: boolean;
+    selectedWeekdays: number[]; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
     // Actions
     setTitle: (title: string) => void;
     setLessonType: (type: string) => void;
@@ -49,6 +55,12 @@ interface ServiceRegistrationState {
     addAvailableTime: (time: AvailableTime) => void;
     removeAvailableTime: (index: number) => void;
 
+    setStudyStartDate: (date: string | null) => void;
+    setStudyEndDate: (date: string | null) => void;
+    setIsRecurring: (isRecurring: boolean) => void;
+    setSelectedWeekdays: (weekdays: number[]) => void;
+    toggleWeekday: (weekday: number) => void;
+
     reset: () => void;
 }
 
@@ -63,6 +75,10 @@ export const useStudyRegistrationStore = create<ServiceRegistrationState>((set) 
     seats: 0,
     optionList: [],
     availableTimeList: [],
+    studyStartDate: null,
+    studyEndDate: null,
+    isRecurring: false,
+    selectedWeekdays: [],
 
     setTitle: (title) => set({ title }),
     setLessonType: (lessonType) => set({ lessonType }),
@@ -83,6 +99,17 @@ export const useStudyRegistrationStore = create<ServiceRegistrationState>((set) 
             availableTimeList: state.availableTimeList.filter((_, i) => i !== index),
         })),
 
+    setStudyStartDate: (studyStartDate) => set({ studyStartDate }),
+    setStudyEndDate: (studyEndDate) => set({ studyEndDate }),
+    setIsRecurring: (isRecurring) => set({ isRecurring }),
+    setSelectedWeekdays: (selectedWeekdays) => set({ selectedWeekdays }),
+    toggleWeekday: (weekday) => set((state) => {
+        const weekdays = state.selectedWeekdays.includes(weekday)
+            ? state.selectedWeekdays.filter(w => w !== weekday)
+            : [...state.selectedWeekdays, weekday].sort();
+        return { selectedWeekdays: weekdays };
+    }),
+
     reset: () =>
         set({
             title: "",
@@ -95,5 +122,9 @@ export const useStudyRegistrationStore = create<ServiceRegistrationState>((set) 
             seats: 0,
             optionList: [],
             availableTimeList: [],
+            studyStartDate: null,
+            studyEndDate: null,
+            isRecurring: false,
+            selectedWeekdays: [],
         }),
 }));
