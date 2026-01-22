@@ -73,6 +73,9 @@ export function ProfileManagement() {
         if (data.phoneNum) {
           setPhone(data.phoneNum);
         }
+        if (data.introduction) {
+          setIntroduction(data.introduction);
+        }
         if (data.imageUrl) {
           const fullImageUrl = getImageUrl(data.imageUrl);
           setProfileImage(fullImageUrl);
@@ -252,6 +255,10 @@ export function ProfileManagement() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelIntroduction = () => {
+    setIsEditingIntroduction(false);
   };
 
   if (!user) return null;
@@ -461,11 +468,11 @@ export function ProfileManagement() {
                   {!isLoadingProfile && (
                     isEditingIntroduction ? (
                       <Button
-                        onClick={handleUpdateIntroduction}
-                        className="bg-[#00C471] hover:bg-[#00B366]"
+                        onClick={handleCancelIntroduction}
+                        variant="outline"
                         size="sm"
                       >
-                        저장
+                        취소
                       </Button>
                     ) : (
                       <Button
