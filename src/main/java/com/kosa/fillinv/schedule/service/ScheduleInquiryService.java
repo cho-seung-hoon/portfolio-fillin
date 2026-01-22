@@ -64,11 +64,11 @@ public class ScheduleInquiryService { // 스케줄 조회 서비스
                 Sort.by("startTime").descending()
         );
         // end를 현재시간으로 고정하여 과거 데이터만 조회
-        return getFilteredPage(loginMemberId, filter, null, LocalDateTime.now(), pageable);
+        return getFilteredPage(loginMemberId, filter, null, LocalDateTime.now(), sortedByDesc);
     }
 
     // 스케쥴 상세 조회
-    public ScheduleDetailResponse getScheduleDetail(String scheduleId, String scheduleTimeId) {
+    public ScheduleDetailResponse getScheduleDetail(String memberId, String scheduleId, String scheduleTimeId) {
         Schedule schedule = validator.getSchedule(scheduleId);
         ScheduleTime scheduleTime = validator.getScheduleTime(scheduleTimeId);
 
@@ -86,8 +86,9 @@ public class ScheduleInquiryService { // 스케줄 조회 서비스
                 schedule,
                 mentorNickname,
                 menteeNickname,
-                scheduleTime.getStartTime(),
-                scheduleTime.getEndTime());
+                scheduleTime,
+                schedule.getRole(memberId)
+        );
     }
 
     // 상태 일치 스케쥴 조회(결제 대기, 승인 대기, 승인, 취소, 완료) / 스케쥴 1개 조회이기 떄문에 페이지 네이션 불필요
@@ -187,10 +188,9 @@ public class ScheduleInquiryService { // 스케줄 조회 서비스
 
         // filter에서 title을 꺼내는데 검색어가 없을 경우 null 처리
         String titleParam = (filter.title() != null && !filter.title().isBlank()) ? filter.title() : null;
-        // 상태값 String을 Enum으로 변환하거나 null 처리
-        ScheduleStatus statusParam = (filter.status() != null && !filter.status().isBlank())
-                ? ScheduleStatus.valueOf(filter.status().toUpperCase()) // Enum 변환
-                : null;
+
+        // 입력된 문자열 상태값을 Enum으로 변환 (유효하지 않을 경우 예외 발생)
+        ScheduleStatus statusParam = ScheduleStatus.from(filter.status());
 
         // 로그인한 사용자가 연관된 스케줄을 필터링
         Page<Schedule> schedulePage = scheduleRepository.findAllByMemberIdWithFilter(loginMemberId, titleParam, startInstant, endInstant, statusParam, pageable);
