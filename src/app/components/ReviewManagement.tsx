@@ -20,8 +20,11 @@ import {
 
 
 
+import { useNavigate } from "@tanstack/react-router";
+
 interface WrittenReview {
   id: string;
+  lessonId: string;
   classTitle: string;
   optionName: string;
   mentorNickname: string; // Changed from menteeNickname
@@ -41,6 +44,7 @@ import { Skeleton } from "./ui/skeleton";
 import { formatDateWithLocale, formatDateTimeWithLocale } from "../../utils/date";
 
 export function ReviewManagement() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"pending" | "written">("pending");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<UnwrittenReviewResponseDTO | null>(null);
@@ -89,6 +93,7 @@ export function ReviewManagement() {
       const pageResponse = await reviewService.getMyReviews(page - 1, itemsPerPage);
       const reviews = pageResponse.content.map(r => ({
         id: r.reviewId,
+        lessonId: r.lessonId,
         classTitle: r.lessonName,
         optionName: r.optionName,
         mentorNickname: r.mentorNickname,
@@ -272,7 +277,12 @@ export function ReviewManagement() {
                             {(pendingPage - 1) * itemsPerPage + index + 1}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {review.lessonName}
+                            <span
+                              className="hover:text-[#00C471] hover:underline cursor-pointer"
+                              onClick={() => navigate({ to: `/service/${review.lessonId}` })}
+                            >
+                              {review.lessonName}
+                            </span>
                           </TableCell>
                           <TableCell className="text-gray-600">
                             {review.optionName}
@@ -358,7 +368,15 @@ export function ReviewManagement() {
                             {(writtenPage - 1) * itemsPerPage + index + 1}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {review.classTitle}
+                            <span
+                              className="hover:text-[#00C471] hover:underline cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate({ to: `/service/${review.lessonId}` });
+                              }}
+                            >
+                              {review.classTitle}
+                            </span>
                           </TableCell>
                           <TableCell className="text-gray-600">
                             {review.optionName}
@@ -410,7 +428,15 @@ export function ReviewManagement() {
             <div className="space-y-6">
               {/* 클래스 정보 */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">
+                <h3
+                  className="font-semibold text-lg mb-2 hover:text-[#00C471] hover:underline cursor-pointer w-fit"
+                  onClick={() => {
+                    const lessonId = selectedReview ? selectedReview.lessonId : viewingReview?.lessonId;
+                    if (lessonId) {
+                      navigate({ to: `/service/${lessonId}` });
+                    }
+                  }}
+                >
                   {selectedReview ? selectedReview.lessonName : viewingReview?.classTitle}
                 </h3>
                 <div className="text-sm text-gray-600 space-y-1">
