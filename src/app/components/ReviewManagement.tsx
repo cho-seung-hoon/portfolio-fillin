@@ -463,7 +463,9 @@ export function ReviewManagement() {
                   {selectedReview ? selectedReview.lessonName : viewingReview?.classTitle}
                 </h3>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p>옵션: {selectedReview ? selectedReview.optionName : viewingReview?.optionName}</p>
+                  {(selectedReview?.lessonType === "MENTORING" || viewingReview?.lessonType === "MENTORING") && (
+                    <p>옵션: {selectedReview ? selectedReview.optionName : viewingReview?.optionName}</p>
+                  )}
                   <p>멘토: {selectedReview ? selectedReview.mentorNickname : viewingReview?.mentorNickname}</p>
                   <p>수강일: {formatDateTimeWithLocale(selectedReview ? selectedReview.reservationDate : viewingReview?.reservationDate || "")}</p>
                 </div>
