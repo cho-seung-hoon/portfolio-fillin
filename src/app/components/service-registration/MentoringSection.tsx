@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Plus, Trash2, Clock } from "lucide-react";
+import { Plus, Trash2, Clock, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -15,6 +15,7 @@ import {
 } from "../ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { CalendarModule } from "./CalendarModule";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { useMentoringRegistrationStore, AvailableTime } from "../../../store/useMentoringRegistrationStore";
 
 export function MentoringSection() {
@@ -151,8 +152,74 @@ export function MentoringSection() {
         return `${start}-${end}`;
     };
 
+    // Check completion status for guide
+    const hasOptions = mentoringOptions.some(opt => opt.name.trim() !== "");
+    const hasPriceOptions = mentoringOptions.some(opt => opt.priceOptions.length > 0);
+    const hasAvailableTimes = availableTimeList.length > 0;
+
     return (
         <div className="space-y-6">
+            {/* 등록 단계 안내 */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Info className="size-5" />
+                        등록 단계 안내
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                            <Info className="size-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 space-y-2">
+                                <h4 className="font-medium text-blue-900">등록 단계 안내</h4>
+                                <div className="space-y-2 text-sm text-blue-800">
+                                    <div className="flex items-center gap-2">
+                                        {hasOptions ? (
+                                            <CheckCircle2 className="size-4 text-green-600" />
+                                        ) : (
+                                            <div className="size-4 rounded-full border-2 border-blue-400" />
+                                        )}
+                                        <span className={hasOptions ? "line-through text-gray-500" : ""}>
+                                            1단계: 멘토링 옵션 추가
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {hasPriceOptions ? (
+                                            <CheckCircle2 className="size-4 text-green-600" />
+                                        ) : (
+                                            <div className="size-4 rounded-full border-2 border-blue-400" />
+                                        )}
+                                        <span className={hasPriceOptions ? "line-through text-gray-500" : ""}>
+                                            2단계: 각 옵션별 시간/가격 설정
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {hasAvailableTimes ? (
+                                            <CheckCircle2 className="size-4 text-green-600" />
+                                        ) : (
+                                            <div className="size-4 rounded-full border-2 border-blue-400" />
+                                        )}
+                                        <span className={hasAvailableTimes ? "line-through text-gray-500" : ""}>
+                                            3단계: 가능한 시간 설정
+                                        </span>
+                                    </div>
+                                </div>
+                                {!hasOptions && (
+                                    <Alert className="mt-3 bg-white border-blue-300">
+                                        <AlertCircle className="size-4 text-blue-600" />
+                                        <AlertTitle className="text-blue-900">시작하기</AlertTitle>
+                                        <AlertDescription className="text-blue-700">
+                                            아래에서 멘토링 옵션을 추가하고 시간/가격을 설정한 후, 가능한 시간을 등록해주세요.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* 멘토링 옵션 부분 */}
             <Card>
                 <CardHeader>
