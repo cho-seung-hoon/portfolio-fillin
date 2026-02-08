@@ -1,0 +1,189 @@
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { ProjectHeader } from "./ProjectHeader";
+import { SearchSection } from "./SearchSection";
+import { CategoryTabs } from "./CategoryTabs";
+import { SearchFilters } from "./SearchFilters";
+import { SearchResults } from "./SearchResults";
+import { ProjectFooter } from "./ProjectFooter";
+import { Lesson } from "../../types/lesson";
+import { lessonService } from "../../api/lesson";
+
+interface HomeProps {
+  onLoginClick: () => void;
+  onSignupClick: () => void;
+  searchQuery?: string;
+  page?: number;
+  sort?: string;
+  categoryId?: number;
+  lessonType?: string;
+}
+
+export default function Home({ onLoginClick, onSignupClick, searchQuery: initialSearchQuery = "", page = 1, sort: initialSort = "popular", categoryId: initialCategoryId, lessonType: initialLessonType = "all" }: HomeProps) {
+  const navigate = useNavigate();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const itemsPerPage = 20;
+
+  // Local state for filters that are NOT in URL yet (can be moved to URL later if needed)
+  const [priceFilter, setPriceFilter] = useState("all");
+  const [levelFilter, setLevelFilter] = useState("all");
+  // serviceTypeFilter removed as it is now server-side via lessonType prop
+
+  useEffect(() => {
+    const fetchLessons = async () => {
+      setLoading(true);
+      try {
+        // API 호출 시 검색어, 페이지(0-based), 정렬, 카테고리 ID, 레슨 타입 전달
+        const { lessons: data, totalCount } = await lessonService.getLessons(
+          initialSearchQuery,
+          Math.max(0, page - 1),
+          initialSort,
+          initialCategoryId || undefined,
+          initialLessonType === "all" ? undefined : initialLessonType
+        );
+        setLessons(data);
+        setTotalCount(totalCount);
+      } catch (error) {
+        console.error("Failed to fetch lessons:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLessons();
+  }, [initialSearchQuery, page, initialSort, initialCategoryId, initialLessonType]);
+
+  const handleLessonClick = (lessonId: string) => {
+    navigate({ to: "/service/$id", params: { id: lessonId.toString() } });
+  };
+
+  // Client-side filtering/sorting is temporarily applied ONLY to the current page
+  // Category & Service Type filtering is now handled by API, but other filters remain client-side
+  const filteredAndSortedLessons = useMemo(() => {
+    let filtered = lessons;
+
+    // Filter by price
+    if (priceFilter === "free") {
+      filtered = filtered.filter((lesson) => lesson.price === 0);
+    } else if (priceFilter === "paid") {
+      filtered = filtered.filter((lesson) => lesson.price > 0);
+    } else if (priceFilter === "discount") {
+      filtered = filtered.filter((lesson) => lesson.originalPrice);
+    }
+
+    // Filter by level
+    if (levelFilter !== "all") {
+      filtered = filtered.filter((lesson) => lesson.level === levelFilter);
+    }
+
+    // Service Type filtering is now handled by API
+
+    // Sorting is now handled by the API, so we just return the filtered list
+    return filtered;
+  }, [lessons, priceFilter, levelFilter]);
+
+  // Pagination logic using server totalCount
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    navigate({
+      to: ".",
+      search: {
+        search: initialSearchQuery,
+        page: newPage,
+        sort: initialSort,
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
+      }
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCategoryChange = (newCategoryId: number | null) => {
+    navigate({
+      to: ".",
+      search: {
+        search: initialSearchQuery,
+        page: 1, // Reset page on category change
+        sort: initialSort,
+        categoryId: newCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
+      }
+    });
+  };
+
+  const handleSearchChange = (query: string) => {
+    navigate({
+      to: ".",
+      search: {
+        search: query,
+        sort: initialSort,
+        page: 1,
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
+      }
+    });
+  };
+
+  const handleSortChange = (sort: string) => {
+    navigate({
+      to: ".",
+      search: {
+        search: initialSearchQuery,
+        page: 1,
+        sort: sort,
+        categoryId: initialCategoryId ?? undefined,
+        lessonType: initialLessonType !== "all" ? initialLessonType : undefined
+      }
+    });
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white">
+      <ProjectHeader
+        onLoginClick={onLoginClick}
+        onSignupClick={onSignupClick}
+        onNavigateToMyPage={() => navigate({ to: "/mypage" })}
+        onNavigateToMain={() => navigate({ to: "/" })}
+        onNavigateToServiceRegistration={() => navigate({ to: "/service/register" })}
+      />
+      <SearchSection
+        searchQuery={initialSearchQuery}
+        onSearchChange={handleSearchChange}
+      />
+      <CategoryTabs
+        selectedCategoryId={initialCategoryId ?? null}
+        onCategoryChange={handleCategoryChange}
+      />
+      <SearchFilters
+        sortBy={initialSort}
+        onSortChange={handleSortChange}
+        serviceTypeFilter={initialLessonType}
+        onServiceTypeFilterChange={(type) => {
+          navigate({
+            to: ".",
+            search: {
+              search: initialSearchQuery,
+              page: 1,
+              sort: initialSort,
+              categoryId: initialCategoryId ?? undefined,
+              lessonType: type !== "all" ? type : undefined
+            }
+          });
+        }}
+        resultCount={totalCount}
+      />
+      <SearchResults
+        lessons={filteredAndSortedLessons}
+        searchQuery={initialSearchQuery}
+        onLessonClick={handleLessonClick}
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        isLoading={loading}
+      />
+      <ProjectFooter />
+    </div>
+  );
+}
