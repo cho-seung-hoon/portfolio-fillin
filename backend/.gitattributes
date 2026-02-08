@@ -1,0 +1,68 @@
+########################################
+# 기본 정책
+########################################
+
+# 모든 텍스트 파일은 자동 판별 + LF로 통일
+* text=auto eol=lf
+
+
+########################################
+# Gradle Wrapper
+########################################
+
+# 유닉스 계열 실행 파일
+gradlew text eol=lf
+
+# 윈도우 배치 파일
+*.bat text eol=crlf
+
+
+########################################
+# Java / Spring
+########################################
+
+*.java text eol=lf
+*.kt text eol=lf
+*.groovy text eol=lf
+
+*.properties text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+
+########################################
+# Web (HTML / CSS / JS)
+########################################
+
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+
+
+########################################
+# 문서
+########################################
+
+*.md text eol=lf
+*.txt text eol=lf
+
+
+########################################
+# Shell Script
+########################################
+
+*.sh text eol=lf
+
+
+########################################
+# Binary files
+########################################
+
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
