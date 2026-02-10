@@ -7,6 +7,7 @@ import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.repository.LessonTempRepository;
 import com.kosa.fillinv.review.dto.ReviewStatsDTO;
 import com.kosa.fillinv.review.repository.ReviewRepository;
+import com.kosa.fillinv.schedule.entity.ScheduleStatus;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -79,6 +80,18 @@ public class LessonPopularityScheduler {
                         row -> (String) row[0],
                         row -> (Long) row[1]));
 
+        // 전체 기간 상태별 신청 수 조회 (취소율 계산용)
+        List<Object[]> statusStats = scheduleRepository.countByLessonIdGroupedByStatus();
+        Map<String, Map<ScheduleStatus, Long>> statusCountsMap = new HashMap<>();
+
+        for (Object[] row : statusStats) {
+            String lessonId = (String) row[0];
+            ScheduleStatus status = (ScheduleStatus) row[1];
+            Long count = (Long) row[2];
+
+            statusCountsMap.computeIfAbsent(lessonId, k -> new HashMap<>()).put(status, count);
+        }
+
         // 리뷰 관련 계산
         List<ReviewStatsDTO> reviewStatsList = reviewRepository.findReviewStatsByLessonId();
         Map<String, ReviewStat> reviewStatsMap = new HashMap<>();
@@ -86,11 +99,9 @@ public class LessonPopularityScheduler {
         long totalReviewCount = 0;
         double totalReviewScoreSum = 0.0;
 
-        // 정규화를 위한 최대값 계산 변수
         long maxRecentAppCount = 0;
         long maxReviewCount = 0;
 
-        // 최근 신청 수 최대값 구하기
         for (Long count : recentStatsMap.values()) {
             if (count > maxRecentAppCount)
                 maxRecentAppCount = count;
@@ -106,13 +117,12 @@ public class LessonPopularityScheduler {
             totalReviewCount += count;
             totalReviewScoreSum += (count * avgScore);
 
-            // 리뷰 수 최대값 갱신
             if (count > maxReviewCount)
                 maxReviewCount = count;
         }
 
         double C = (totalReviewCount > 0) ? (totalReviewScoreSum / totalReviewCount) : 0.0;
-        final double MAX_RATING = 5.0; // 평점 만점 기준
+        final double MAX_RATING = 5.0;
 
         List<LessonTemp> tempToSave = new ArrayList<>();
 
@@ -133,17 +143,29 @@ public class LessonPopularityScheduler {
                         + ((double) BAYESIAN_AVERAGE_WEIGHT / (v + BAYESIAN_AVERAGE_WEIGHT)) * C;
             }
 
-            // Min-Max Normalization (0 ~ 1.0 범위로 변환)
             double normRecentApp = (maxRecentAppCount > 0) ? (double) recentAppCount / maxRecentAppCount : 0.0;
             double normReviewCount = (maxReviewCount > 0) ? (double) v / maxReviewCount : 0.0;
-            double normRating = bayesianAvg / MAX_RATING; // 5.0 만점 기준 정규화
+            double normRating = bayesianAvg / MAX_RATING;
 
-            // 가중치 적용 (0.6, 0.2, 0.2)
-            double finalScore = (normRecentApp * RECENT_APP_COUNT_WEIGHT)
+            // 기본 점수 (가중치 적용)
+            double baseScore = (normRecentApp * RECENT_APP_COUNT_WEIGHT)
                     + (normReviewCount * REVIEW_COUNT_WEIGHT)
                     + (normRating * BAYESIAN_AVG_WEIGHT);
 
-            // 100점 만점으로 환산
+            // 취소율 패널티 적용
+            Map<ScheduleStatus, Long> counts = statusCountsMap.getOrDefault(lessonId, new HashMap<>());
+            long canceled = counts.getOrDefault(ScheduleStatus.CANCELED, 0L);
+            long approved = counts.getOrDefault(ScheduleStatus.APPROVED, 0L);
+            long completed = counts.getOrDefault(ScheduleStatus.COMPLETED, 0L);
+            long pending = counts.getOrDefault(ScheduleStatus.APPROVAL_PENDING, 0L);
+
+            // PAYMENT_PENDING 은 허수일 가능성이 높으므로 모수에서 제외
+            long totalValidRequests = canceled + approved + completed + pending;
+            double cancellationRate = (totalValidRequests > 0) ? (double) canceled / totalValidRequests : 0.0;
+
+            // 패널티 적용: (1 - 취소율) 곱하기
+            double finalScore = baseScore * (1.0 - cancellationRate);
+
             double scaledScore = finalScore * 100.0;
             double roundedScore = Math.round(scaledScore * 100.0) / 100.0;
 
