@@ -86,6 +86,16 @@ public class LessonPopularityScheduler {
         long totalReviewCount = 0;
         double totalReviewScoreSum = 0.0;
 
+        // 정규화를 위한 최대값 계산 변수
+        long maxRecentAppCount = 0;
+        long maxReviewCount = 0;
+
+        // 최근 신청 수 최대값 구하기
+        for (Long count : recentStatsMap.values()) {
+            if (count > maxRecentAppCount)
+                maxRecentAppCount = count;
+        }
+
         for (ReviewStatsDTO row : reviewStatsList) {
             String lessonId = row.lessonId();
             Long count = row.count();
@@ -95,9 +105,14 @@ public class LessonPopularityScheduler {
 
             totalReviewCount += count;
             totalReviewScoreSum += (count * avgScore);
+
+            // 리뷰 수 최대값 갱신
+            if (count > maxReviewCount)
+                maxReviewCount = count;
         }
 
         double C = (totalReviewCount > 0) ? (totalReviewScoreSum / totalReviewCount) : 0.0;
+        final double MAX_RATING = 5.0; // 평점 만점 기준
 
         List<LessonTemp> tempToSave = new ArrayList<>();
 
@@ -118,9 +133,19 @@ public class LessonPopularityScheduler {
                         + ((double) BAYESIAN_AVERAGE_WEIGHT / (v + BAYESIAN_AVERAGE_WEIGHT)) * C;
             }
 
-            double finalScore = (recentAppCount * RECENT_APP_COUNT_WEIGHT) + (v * REVIEW_COUNT_WEIGHT)
-                    + (bayesianAvg * BAYESIAN_AVG_WEIGHT);
-            double roundedScore = Math.round(finalScore * 100.0) / 100.0;
+            // Min-Max Normalization (0 ~ 1.0 범위로 변환)
+            double normRecentApp = (maxRecentAppCount > 0) ? (double) recentAppCount / maxRecentAppCount : 0.0;
+            double normReviewCount = (maxReviewCount > 0) ? (double) v / maxReviewCount : 0.0;
+            double normRating = bayesianAvg / MAX_RATING; // 5.0 만점 기준 정규화
+
+            // 가중치 적용 (0.6, 0.2, 0.2)
+            double finalScore = (normRecentApp * RECENT_APP_COUNT_WEIGHT)
+                    + (normReviewCount * REVIEW_COUNT_WEIGHT)
+                    + (normRating * BAYESIAN_AVG_WEIGHT);
+
+            // 100점 만점으로 환산
+            double scaledScore = finalScore * 100.0;
+            double roundedScore = Math.round(scaledScore * 100.0) / 100.0;
 
             tempToSave.add(new LessonTemp(lessonId, roundedScore));
         }
