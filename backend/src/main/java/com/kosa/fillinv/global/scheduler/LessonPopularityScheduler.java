@@ -5,7 +5,7 @@ import com.kosa.fillinv.lesson.entity.LessonTemp;
 import com.kosa.fillinv.lesson.repository.LessonBulkRepository;
 import com.kosa.fillinv.lesson.repository.LessonRepository;
 import com.kosa.fillinv.lesson.repository.LessonTempRepository;
-import com.kosa.fillinv.review.dto.ReviewStatsDTO;
+
 import com.kosa.fillinv.review.repository.ReviewRepository;
 import com.kosa.fillinv.schedule.entity.ScheduleStatus;
 import com.kosa.fillinv.schedule.repository.ScheduleRepository;
@@ -67,12 +67,13 @@ public class LessonPopularityScheduler {
 
     private void calculateAndSaveToTemp() {
 
+        Instant now = Instant.now();
         List<Lesson> activeLessons = lessonRepository.findAllByDeletedAtIsNull();
         if (activeLessons.isEmpty()) {
             return;
         }
 
-        Instant startDate = Instant.now().minus(7, ChronoUnit.DAYS);
+        Instant startDate = now.minus(7, ChronoUnit.DAYS);
 
         // 최근 7일 신청 조회
         Map<String, Long> recentStatsMap = scheduleRepository.countByLessonIdAndCreatedAtAfter(startDate).stream()
@@ -93,35 +94,54 @@ public class LessonPopularityScheduler {
         }
 
         // 리뷰 관련 계산
-        List<ReviewStatsDTO> reviewStatsList = reviewRepository.findReviewStatsByLessonId();
+        List<Object[]> allReviews = reviewRepository.findAllReviewsForRanking();
         Map<String, ReviewStat> reviewStatsMap = new HashMap<>();
-
-        long totalReviewCount = 0;
-        double totalReviewScoreSum = 0.0;
 
         long maxRecentAppCount = 0;
         long maxReviewCount = 0;
+
+        Map<String, Double> lessonWeightedScoreSum = new HashMap<>();
+        Map<String, Double> lessonWeightSum = new HashMap<>();
+        Map<String, Long> lessonReviewCount = new HashMap<>();
+
+        double totalGlobalWeightedScoreSum = 0.0;
+        double totalGlobalWeightSum = 0.0;
+
+        for (Object[] row : allReviews) {
+            String lessonId = (String) row[0];
+            Double score = (Double) row[1];
+            Instant createdAt = (Instant) row[2];
+
+            // Time Decay 가중치 계산 (반감기 1년 = 365일)
+            long daysSince = ChronoUnit.DAYS.between(createdAt, now);
+            double weight = Math.pow(0.5, daysSince / 365.0);
+
+            lessonWeightedScoreSum.merge(lessonId, score * weight, Double::sum);
+            lessonWeightSum.merge(lessonId, weight, Double::sum);
+            lessonReviewCount.merge(lessonId, 1L, Long::sum);
+
+            totalGlobalWeightedScoreSum += (score * weight);
+            totalGlobalWeightSum += weight;
+        }
+
+        for (String lessonId : lessonReviewCount.keySet()) {
+            Long count = lessonReviewCount.get(lessonId);
+            Double wSum = lessonWeightedScoreSum.get(lessonId);
+            Double wWeight = lessonWeightSum.get(lessonId);
+            Double weightedAvg = (wWeight > 0) ? (wSum / wWeight) : 0.0;
+
+            reviewStatsMap.put(lessonId, new ReviewStat(count, weightedAvg));
+
+            if (count > maxReviewCount)
+                maxReviewCount = count;
+        }
 
         for (Long count : recentStatsMap.values()) {
             if (count > maxRecentAppCount)
                 maxRecentAppCount = count;
         }
 
-        for (ReviewStatsDTO row : reviewStatsList) {
-            String lessonId = row.lessonId();
-            Long count = row.count();
-            Double avgScore = row.averageScore();
-
-            reviewStatsMap.put(lessonId, new ReviewStat(count, avgScore));
-
-            totalReviewCount += count;
-            totalReviewScoreSum += (count * avgScore);
-
-            if (count > maxReviewCount)
-                maxReviewCount = count;
-        }
-
-        double C = (totalReviewCount > 0) ? (totalReviewScoreSum / totalReviewCount) : 0.0;
+        double C = (totalGlobalWeightSum > 0) ? (totalGlobalWeightedScoreSum / totalGlobalWeightSum) : 0.0;
         final double MAX_RATING = 5.0;
 
         List<LessonTemp> tempToSave = new ArrayList<>();

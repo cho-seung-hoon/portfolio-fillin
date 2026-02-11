@@ -19,30 +19,32 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, String> {
 
-    @Query("SELECT AVG(r.score) FROM Review r WHERE r.lessonId = :lessonId")
-    Double findAverageScoreByLessonId(@Param("lessonId") String lessonId);
+        @Query("SELECT AVG(r.score) FROM Review r WHERE r.lessonId = :lessonId")
+        Double findAverageScoreByLessonId(@Param("lessonId") String lessonId);
 
-    @Query("SELECT new com.kosa.fillinv.review.dto.LessonAvgScore(r.lessonId, AVG(r.score)) FROM Review r WHERE r.lessonId IN :lessonIds GROUP BY r.lessonId")
-    List<LessonAvgScore> findAverageScoreByLessonIds(@Param("lessonIds") Collection<String> lessonIds);
+        @Query("SELECT new com.kosa.fillinv.review.dto.LessonAvgScore(r.lessonId, AVG(r.score)) FROM Review r WHERE r.lessonId IN :lessonIds GROUP BY r.lessonId")
+        List<LessonAvgScore> findAverageScoreByLessonIds(@Param("lessonIds") Collection<String> lessonIds);
 
     @EntityGraph(attributePaths = {"writer"})
-    @Query("SELECT new com.kosa.fillinv.review.dto.ReviewWithNicknameVO(r, r.writer.nickname) " +
-            "FROM Review r " +
-            "WHERE r.lessonId = :lessonId")
+        @Query("SELECT new com.kosa.fillinv.review.dto.ReviewWithNicknameVO(r, r.writer.nickname) " +
+                        "FROM Review r " +
+                        "WHERE r.lessonId = :lessonId")
     Page<ReviewWithNicknameVO> findReviewsWithNicknameByLessonId(@Param("lessonId") String lessonId, Pageable pageable);
 
-    @Query("SELECT new com.kosa.fillinv.review.dto.MyReviewVO(" +
-            "r, s.lessonTitle, s.optionName, s.createdAt, m.nickname) " +
-            "FROM Review r " +
-            "JOIN r.schedule s " +
-            "JOIN Lesson l ON s.lessonId = l.id " +
-            "JOIN Member m ON l.mentorId = m.id " +
-            "WHERE r.writerId = :writerId")
-    Page<MyReviewVO> findByWriterId(@Param("writerId") String writerId, Pageable pageable);
+        @Query("SELECT new com.kosa.fillinv.review.dto.MyReviewVO(" +
+                        "r, s.lessonTitle, s.optionName, s.createdAt, m.nickname) " +
+                        "FROM Review r " +
+                        "JOIN r.schedule s " +
+                        "JOIN Lesson l ON s.lessonId = l.id " +
+                        "JOIN Member m ON l.mentorId = m.id " +
+                        "WHERE r.writerId = :writerId")
+        Page<MyReviewVO> findByWriterId(@Param("writerId") String writerId, Pageable pageable);
 
-    boolean existsByScheduleId(String scheduleId);
+        boolean existsByScheduleId(String scheduleId);
 
-    @Query("SELECT r.lessonId, COUNT(r), AVG(r.score) FROM Review r JOIN Lesson l ON r.lessonId = l.id WHERE r.deletedAt IS NULL AND l.deletedAt IS NULL GROUP BY r.lessonId")
-    List<ReviewStatsDTO> findReviewStatsByLessonId();
+        @Query("SELECT r.lessonId, COUNT(r), AVG(r.score) FROM Review r JOIN Lesson l ON r.lessonId = l.id WHERE r.deletedAt IS NULL AND l.deletedAt IS NULL GROUP BY r.lessonId")
+        List<ReviewStatsDTO> findReviewStatsByLessonId();
 
+        @Query("SELECT r.lessonId, r.score, r.createdAt FROM Review r WHERE r.deletedAt IS NULL")
+        List<Object[]> findAllReviewsForRanking();
 }
